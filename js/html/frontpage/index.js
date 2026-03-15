@@ -71,7 +71,7 @@ async function HandleDownload()
 
     try
     {
-        const response = await fetch(Api.GetLink("manifest"), { cache: 'no-store' });
+        const response = await fetch(await Api.GetLink("manifest"), { cache: 'no-store' });
 
         if(!response.ok)
         {
