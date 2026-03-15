@@ -65,9 +65,7 @@ async function HandleDownload()
     const downloadButton = document.getElementById('download-btn');
     if(!downloadButton) return;
 
-    const originalText = downloadButton.textContent;
     downloadButton.disabled = true;
-    downloadButton.textContent = 'LOADING...';
 
     try
     {
@@ -94,7 +92,6 @@ async function HandleDownload()
     } finally
     {
         downloadButton.disabled = false;
-        downloadButton.textContent = originalText;
     }
 } 
 const downloadButton = document.getElementById('download-btn');
