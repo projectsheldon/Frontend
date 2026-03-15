@@ -2,7 +2,7 @@ import Api from "./backend.js";
 
 export async function RedirectToPlatform(platform, newTab = true)
 {
-    const link = Api.GetLink(platform)
+    const link = await Api.GetLink(platform)
 
     if(link)
     {
