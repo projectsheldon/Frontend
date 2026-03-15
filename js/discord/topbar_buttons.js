@@ -106,7 +106,7 @@ async function LoadLicenses()
 
     try
     {
-        const response = await fetch(`http://localhost:3350/auth/user-licenses`, {
+        const response = await fetch(`${await Api.GetApiUrl()}/auth/user-licenses`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

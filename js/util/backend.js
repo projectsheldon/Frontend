@@ -3,7 +3,6 @@ const Api = {
 
     async _fetchBackendUrl()
     {
-
         const remoteServer = 'https://projectsheldon.xyz';
         const localServer = 'http://localhost:3350';
 
