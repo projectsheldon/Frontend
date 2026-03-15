@@ -1,4 +1,5 @@
 // License page script
+import Api from "../util/backend.js";
 
 let keys = [];
 
@@ -78,7 +79,8 @@ async function loadLicenses()
                 const sessionToken = localStorage.getItem('discord_session');
                 if(sessionToken)
                 {
-                    const userRes = await fetch('http://localhost:3350/discord/me?token=' + encodeURIComponent(sessionToken));
+                    const apiUrl = await Api.GetApiUrl();
+                    const userRes = await fetch(`${apiUrl}/discord/me?token=` + encodeURIComponent(sessionToken));
                     const userData = await userRes.json();
                     if(userData.success && userData.user)
                     {
@@ -87,7 +89,8 @@ async function loadLicenses()
                 }
             }
 
-            const response = await fetch('http://localhost:3350/workink/generate', {
+            const apiUrl = await Api.GetApiUrl();
+            const response = await fetch(`${apiUrl}/workink/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: token, discordId: discordId })
