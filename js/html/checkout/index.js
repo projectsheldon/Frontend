@@ -90,9 +90,10 @@ function TogglePaymentForm(enabled)
 
 async function LoadProductInfo()
 {
+    console.log(productKey)
     if(productKey === "free")
     {
-        window.location.href = "/workink";
+        window.location.href = await Api.GetLink("workink");
         return;
     }
 
