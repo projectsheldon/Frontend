@@ -2,18 +2,14 @@ import Api from "./backend.js";
 
 export async function RedirectToPlatform(platform, newTab = true)
 {
-    const apiUrl = await Api.GetApiUrl();
-    const endpoint = `${apiUrl}/links/${platform}`;
+    const link = Api.GetLink(platform)
 
-    const response = await fetch(endpoint);
-    const data = await response.json();
-
-    if(data.link)
+    if(link)
     {
         if(newTab)
-            window.open(data.link, '_blank');
+            window.open(link, '_blank');
         else
-            window.location.href = data.link;
+            window.location.href = link;
     }
 };
 export default RedirectToPlatform;
