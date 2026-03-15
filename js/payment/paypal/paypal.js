@@ -45,27 +45,24 @@ export function CreatePaypalButtons()
         onApprove: async (data, actions) => 
         {
             const orderId = data.orderID;
-            
-            try {
-                const req = await fetch(`${await Api.GetApiUrl()}/paypal/capture`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        orderId: orderId
-                    })
-                });
-                const response = await req.json();
 
-                if(response.ok)
-                {
-                    window.NotifySuccess('Payment successful! Your license has been generated.');
-                } else
-                {
-                    window.NotifyError('Payment failed: ' + response.message);
-                }
-            } catch(e)
+            const req = await fetch(`${await Api.GetApiUrl()}/paypal/capture`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    orderId: orderId
+                })
+            });
+            const response = await req.json();
+
+            if(response.ok && response.license)
             {
-                window.NotifyError('Payment error: ' + e.message);
+                const licenseParams = response.license.map(l => `${l.key}:${encodeURIComponent(l.product)}`).join(',');
+                window.location.href = `/license/?showKeys=${licenseParams}`;
+            }
+            else
+            {
+                window.NotifyError('Payment failed: ' + response.message);
             }
         }
     });

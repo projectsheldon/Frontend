@@ -49,7 +49,12 @@ async function loadLicenses() {
     const showKeys = urlParams.get('showKeys');
     if (showKeys) {
         const keyList = showKeys.split(',').map(k => k.trim()).filter(k => k);
-        keys = keyList.map(key => ({ key: key, tier: 'License' }));
+        keys = keyList.map(item => {
+            const parts = item.split(':');
+            const key = parts[0];
+            const tier = parts[1] ? decodeURIComponent(parts[1]) : 'License';
+            return { key: key, tier: tier };
+        });
         render();
         return;
     }
