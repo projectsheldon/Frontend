@@ -1,5 +1,5 @@
 // License page script
-import Api from "../util/backend.js";
+import Api from "../../util/backend.js";
 
 let keys = [];
 
