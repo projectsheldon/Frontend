@@ -40,7 +40,6 @@ document.addEventListener("DOMContentLoaded", async function()
         {
             payCrypto.addEventListener('click', async () =>
             {
-                console.log('Payment clicked - currency:', window.selectedCurrency, 'quantity:', window.quantity);
             });
         }
 

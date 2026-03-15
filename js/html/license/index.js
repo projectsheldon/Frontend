@@ -5,7 +5,8 @@ let keys = [];
 const copyIcon = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>`;
 const checkIcon = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
 
-function copyKey(btn, val) {
+function copyKey(btn, val)
+{
     const el = document.createElement('textarea');
     el.value = val;
     document.body.appendChild(el);
@@ -16,17 +17,20 @@ function copyKey(btn, val) {
     btn.innerHTML = checkIcon;
     btn.classList.add('success');
 
-    setTimeout(() => {
+    setTimeout(() =>
+    {
         btn.innerHTML = copyIcon;
         btn.classList.remove('success');
     }, 2000);
 }
 
-function render() {
+function render()
+{
     const list = document.getElementById('license-list');
-    if (!list) return;
-    
-    if (keys.length === 0) {
+    if(!list) return;
+
+    if(keys.length === 0)
+    {
         list.innerHTML = '<p class="text-neutral-500">No licenses found.</p>';
         return;
     }
@@ -43,16 +47,19 @@ function render() {
     `).join('');
 }
 
-async function loadLicenses() {
+async function loadLicenses()
+{
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     const showKeys = urlParams.get('showKeys');
-    if (showKeys) {
+    if(showKeys)
+    {
         const keyList = showKeys.split(',').map(k => k.trim()).filter(k => k);
-        keys = keyList.map(item => {
+        keys = keyList.map(item =>
+        {
             const parts = item.split(':');
-            const key = parts[0];
-            const tier = parts[1] ? decodeURIComponent(parts[1]) : 'License';
+            const key = parts[ 0 ];
+            const tier = parts[ 1 ] ? decodeURIComponent(parts[ 1 ]) : 'License';
             return { key: key, tier: tier };
         });
         render();
@@ -60,21 +67,22 @@ async function loadLicenses() {
     }
 
     const token = urlParams.get('token');
-    if (token) {
-        try {
+    if(token)
+    {
+        try
+        {
             let discordId = window.DiscordAuth?.currentUser?.id || null;
 
-            if (!discordId) {
+            if(!discordId)
+            {
                 const sessionToken = localStorage.getItem('discord_session');
-                if (sessionToken) {
-                    try {
-                        const userRes = await fetch('http://localhost:3350/discord/me?token=' + encodeURIComponent(sessionToken));
-                        const userData = await userRes.json();
-                        if (userData.success && userData.user) {
-                            discordId = userData.user.id;
-                        }
-                    } catch (e) {
-                        console.log('Could not fetch user:', e);
+                if(sessionToken)
+                {
+                    const userRes = await fetch('http://localhost:3350/discord/me?token=' + encodeURIComponent(sessionToken));
+                    const userData = await userRes.json();
+                    if(userData.success && userData.user)
+                    {
+                        discordId = userData.user.id;
                     }
                 }
             }
@@ -85,12 +93,15 @@ async function loadLicenses() {
                 body: JSON.stringify({ token: token, discordId: discordId })
             });
             const data = await response.json();
-            if (data.ok && data.license) {
-                keys = [{ key: data.license.key, tier: data.license.product }];
-            } else {
+            if(data.ok && data.license)
+            {
+                keys = [ { key: data.license.key, tier: data.license.product } ];
+            } else
+            {
                 keys = [];
             }
-        } catch (e) {
+        } catch(e)
+        {
             console.error('Failed to generate license:', e);
             keys = [];
         }
@@ -102,8 +113,10 @@ async function loadLicenses() {
 }
 
 // Initialize
-window.onload = () => {
-    if (typeof initParticles === 'function') {
+window.onload = () =>
+{
+    if(typeof initParticles === 'function')
+    {
         initParticles();
     }
     loadLicenses();
