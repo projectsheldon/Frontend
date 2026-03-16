@@ -41,7 +41,6 @@ function CreateLicensesMenu()
     userMenu.style.cssText = `
         position: fixed;
         width: 360px;
-        max-height: 450px;
         background: rgba(30, 30, 30, 0.98);
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.15);
@@ -50,7 +49,6 @@ function CreateLicensesMenu()
         z-index: 10000;
         display: none;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        overflow-y: auto;
     `;
     document.body.appendChild(userMenu);
     return userMenu;
@@ -100,8 +98,10 @@ async function LoadLicenses()
     const discordId = user.id;
 
     menu.innerHTML = `
-        <div class="text-white font-bold text-sm mb-4">Your Licenses</div>
-        <div class="text-neutral-400 text-xs text-center py-4">Loading...</div>
+        <div class="text-white font-bold text-sm mb-2">Your Licenses</div>
+        <div id="licenses-scroll-rect" style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
+            <div class="text-neutral-400 text-xs text-center py-4">Loading...</div>
+        </div>
     `;
 
     try
@@ -118,36 +118,92 @@ async function LoadLicenses()
 
         if(data.ok && data.licenses && data.licenses.length > 0)
         {
-            const licensesHtml = data.licenses.slice(0, 5).map(lic => `
-                <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px;">
-                    <div style="font-family: monospace; font-size: 11px; color: #c7b18f; word-break: break-all;">${lic.key}</div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px;">${lic.product}</div>
+            const licensesHtml = data.licenses.map((lic, index) => `
+                <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 13px; color: #c7b18f; word-break: break-all;">${lic.key}</div>
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 1px;">${lic.product}</div>
+                    </div>
+                    <button class="copy-license-btn" data-key="${lic.key}" style="background: rgba(255,255,255,0.1); border: none; border-radius: 6px; padding: 6px; cursor: pointer; color: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 28px; height: 28px; position: relative;">
+                        <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: all 0.2s;">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c7b18f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; opacity: 0; transform: scale(0.5); transition: all 0.2s;">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </button>
                 </div>
             `).join('');
 
-            const moreText = data.licenses.length > 5 ? `<div class="text-center text-neutral-500 text-xs mt-2">+${data.licenses.length - 5} more</div>` : '';
-
             menu.innerHTML = `
-                <div class="text-white font-bold text-sm mb-4">Your Licenses</div>
-                ${licensesHtml}
-                ${moreText}
+                <div class="text-white font-bold text-sm mb-2">Your Licenses</div>
+                <div id="licenses-scroll-rect" style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
+                    ${licensesHtml}
+                </div>
             `;
+
+            document.querySelectorAll('.copy-license-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const key = this.getAttribute('data-key');
+                    navigator.clipboard.writeText(key).then(() => {
+                        const copyIcon = this.querySelector('.copy-icon');
+                        const checkIcon = this.querySelector('.check-icon');
+                        
+                        this.style.background = 'rgba(199, 177, 143, 0.3)';
+                        copyIcon.style.opacity = '0';
+                        copyIcon.style.transform = 'scale(0.5)';
+                        checkIcon.style.opacity = '1';
+                        checkIcon.style.transform = 'scale(1)';
+                        
+                        setTimeout(() => {
+                            copyIcon.style.opacity = '1';
+                            copyIcon.style.transform = 'scale(1)';
+                            checkIcon.style.opacity = '0';
+                            checkIcon.style.transform = 'scale(0.5)';
+                            this.style.background = 'rgba(255,255,255,0.1)';
+                        }, 1200);
+                    });
+                });
+            });
+
+            const scrollRect = document.getElementById('licenses-scroll-rect');
+            if (scrollRect) {
+                scrollRect.style.scrollbarWidth = 'thin';
+                scrollRect.style.scrollbarColor = 'rgba(255,255,255,0.2) transparent';
+                scrollRect.style.msOverflowStyle = 'none';
+                scrollRect.style.overflowY = 'auto';
+                scrollRect.style.paddingRight = '4px';
+            }
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                #licenses-scroll-rect::-webkit-scrollbar { width: 6px; }
+                #licenses-scroll-rect::-webkit-scrollbar-track { background: transparent; }
+                #licenses-scroll-rect::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+                #licenses-scroll-rect::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+            `;
+            document.head.appendChild(style);
 
             return true;
         } 
         else
         {
             menu.innerHTML = `
-                <div class="text-white font-bold text-sm mb-4">Your Licenses</div>
-                <div class="text-neutral-400 text-xs text-center py-4">No licenses found</div>
+                <div class="text-white font-bold text-sm mb-2">Your Licenses</div>
+                <div id="licenses-scroll-rect" style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
+                    <div class="text-neutral-400 text-xs text-center py-4">No licenses found</div>
+                </div>
             `;
             return true;
         }
     } catch(e)
     {
         menu.innerHTML = `
-            <div class="text-white font-bold text-sm mb-4">Your Licenses</div>
-            <div class="text-neutral-400 text-xs text-center py-4">Failed to load licenses</div>
+            <div class="text-white font-bold text-sm mb-2">Your Licenses</div>
+            <div id="licenses-scroll-rect" style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
+                <div class="text-neutral-400 text-xs text-center py-4">Failed to load licenses</div>
+            </div>
         `;
 
         return false;

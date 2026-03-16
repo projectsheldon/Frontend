@@ -115,6 +115,62 @@
             position: relative;
         }
 
+        .license-scroll-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .license-scroll-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .license-scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 2px;
+        }
+
+        .license-scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .license-item {
+            padding: 16px 20px;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            margin-bottom: 8px;
+        }
+
+        .license-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .license-scroll-container {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .license-scroll-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .license-scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 2px;
+        }
+
+        .license-scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
         .license-item {
             padding: 16px 20px;
             text-align: left;
@@ -304,8 +360,9 @@
             Thanks for choosing Project Sheldon! You can view your licenses at the topbar by clicking your avatar.
         </p>
 
-        <div class="glass-box" id="license-list">
-
+        <div class="glass-box">
+            <div class="license-scroll-container" id="license-list">
+            </div>
         </div>
     </div>
 
