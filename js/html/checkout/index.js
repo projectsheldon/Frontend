@@ -17,11 +17,9 @@ document.addEventListener("DOMContentLoaded", async function()
 {
     // Auth & Status
     {
-        CheckAuthStatus();
+        const isLoggedIn = await CheckAuthStatus();
 
-        await new Promise(resolve => setTimeout(resolve, 400));
-
-        if(window.DiscordAuth?.currentUser)
+        if(isLoggedIn)
         {
             TogglePaymentForm(true);
             LoadProductInfo();
@@ -63,22 +61,19 @@ function ShowLoginForm()
         });
     }
 
-    window.addEventListener('message', function handleLogin(event)
+    window.addEventListener('message', async function handleLogin(event)
     {
         if(event.data && event.data.type === 'discord_session')
         {
             window.DiscordAuth.SetSessionToken(event.data.token);
-            CheckAuthStatus();
+            const isLoggedIn = await CheckAuthStatus();
 
-            setTimeout(() =>
+            if(isLoggedIn)
             {
-                if(window.DiscordAuth?.currentUser)
-                {
-                    window.removeEventListener('message', handleLogin);
-                    TogglePaymentForm(true);
-                    LoadProductInfo();
-                }
-            }, 200);
+                window.removeEventListener('message', handleLogin);
+                TogglePaymentForm(true);
+                LoadProductInfo();
+            }
         }
     });
 }

@@ -7,7 +7,7 @@ export async function CheckAuthStatus()
     if(!token)
     {
         UpdateUI();
-        return;
+        return false;
     }
 
     const apiUrl = await Api.GetApiUrl();
@@ -25,16 +25,19 @@ export async function CheckAuthStatus()
         {
             DiscordAuth.currentUser = data.user;
             UpdateUI(true, data.user);
+            return true;
         } else
         {
             DiscordAuth.currentUser = null;
             DiscordAuth.DeleteSessionToken();
             UpdateUI();
+            return false;
         }
     }
     catch(error)
     {
         UpdateUI();
+        return false;
     }
 }
 function UpdateUI(loggedIn, user = null)
