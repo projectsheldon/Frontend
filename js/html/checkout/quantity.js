@@ -14,31 +14,79 @@ window.switchPaymentTab = function(tab)
     document.getElementById(`payment-${tab}`)?.classList.add('active');
 };
 
-document.getElementById('qty-minus').addEventListener('click', () =>
-{
-    if(window.quantity > 1)
-    {
-        window.quantity--;
-        document.getElementById('qty-value').value = window.quantity;
-        window.updatePriceDisplay();
-    }
-});
+function clampQuantity(val) {
+    const v = parseInt(val) || 1;
+    return Math.max(1, Math.min(10, v));
+}
 
-document.getElementById('qty-plus').addEventListener('click', () =>
-{
-    if(window.quantity < 10)
-    {
-        window.quantity++;
-        document.getElementById('qty-value').value = window.quantity;
-        window.updatePriceDisplay();
-    }
-});
+const qtyMinus = document.getElementById('qty-minus');
+const qtyPlus = document.getElementById('qty-plus');
+const qtyValue = document.getElementById('qty-value');
 
-document.getElementById('qty-value').addEventListener('change', (e) =>
-{
-    let val = parseInt(e.target.value) || 1;
-    val = Math.max(1, Math.min(10, val));
-    window.quantity = val;
-    e.target.value = window.quantity;
+function updateQuantityUI() {
+    if (qtyValue) {
+        qtyValue.value = window.quantity;
+        qtyValue.setAttribute('aria-valuenow', window.quantity);
+    }
     window.updatePriceDisplay();
-});
+}
+
+if (qtyMinus) {
+    qtyMinus.addEventListener('click', () => {
+        const next = clampQuantity(window.quantity - 1);
+        if (next !== window.quantity) {
+            window.quantity = next;
+            qtyMinus.style.transform = 'scale(0.9)';
+            setTimeout(() => qtyMinus.style.transform = '', 100);
+            updateQuantityUI();
+        }
+    });
+}
+
+if (qtyPlus) {
+    qtyPlus.addEventListener('click', () => {
+        const next = clampQuantity(window.quantity + 1);
+        if (next !== window.quantity) {
+            window.quantity = next;
+            qtyPlus.style.transform = 'scale(0.9)';
+            setTimeout(() => qtyPlus.style.transform = '', 100);
+            updateQuantityUI();
+        }
+    });
+}
+
+if (qtyValue) {
+    qtyValue.setAttribute('role', 'spinbutton');
+    qtyValue.setAttribute('aria-valuemin', '1');
+    qtyValue.setAttribute('aria-valuemax', '10');
+    qtyValue.setAttribute('aria-valuenow', window.quantity);
+    qtyValue.setAttribute('aria-label', 'Quantity');
+    qtyValue.setAttribute('inputmode', 'numeric');
+
+    qtyValue.addEventListener('change', (e) => {
+        let val = parseInt(e.target.value) || 1;
+        val = clampQuantity(val);
+        window.quantity = val;
+        e.target.value = window.quantity;
+        e.target.setAttribute('aria-valuenow', window.quantity);
+        window.updatePriceDisplay();
+    });
+
+    qtyValue.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp' || e.key === '+') {
+            e.preventDefault();
+            const next = clampQuantity(window.quantity + 1);
+            if (next !== window.quantity) {
+                window.quantity = next;
+                updateQuantityUI();
+            }
+        } else if (e.key === 'ArrowDown' || e.key === '-') {
+            e.preventDefault();
+            const next = clampQuantity(window.quantity - 1);
+            if (next !== window.quantity) {
+                window.quantity = next;
+                updateQuantityUI();
+            }
+        }
+    });
+}

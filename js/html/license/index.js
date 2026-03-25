@@ -73,6 +73,13 @@ async function loadLicenses()
         try
         {
             let discordId = window.DiscordAuth?.currentUser?.id || null;
+            let sessionToken = localStorage.getItem('discord_session');
+
+            if(!sessionToken)
+            {
+                list.innerHTML = '<p class="text-neutral-500">Please log in with Discord first to claim your free license.</p>';
+                return;
+            }
 
             if(!discordId)
             {
@@ -93,7 +100,7 @@ async function loadLicenses()
             const response = await fetch(`${apiUrl}/workink/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: token, discordId: discordId })
+                body: JSON.stringify({ token: token, discordId: discordId, sessionToken: sessionToken })
             });
             const data = await response.json();
             if(data.ok && data.license)
@@ -102,6 +109,11 @@ async function loadLicenses()
             } else
             {
                 keys = [];
+                if(data.message === "Not logged in" || data.message === "Invalid session")
+                {
+                    list.innerHTML = '<p class="text-neutral-500">Please log in with Discord first to claim your free license.</p>';
+                    return;
+                }
             }
         } catch(e)
         {

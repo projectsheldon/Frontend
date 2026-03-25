@@ -23,13 +23,15 @@ async function LoadProducts()
 
     productsContainer.innerHTML = '';
 
-    products.forEach((product) =>
+    products.forEach((product, index) =>
     {
         let cardClass = 'glass-card p-5 rounded-2xl flex flex-col justify-between h-full min-h-[200px]';
         if(product.IsLifetime) cardClass += ' border border-[#c7b18f]/40';
 
+        const staggerClass = `stagger-${Math.min(index + 1, 4)}`;
+
         const html = `
-            <div class="${cardClass}">
+            <div class="${cardClass} animate-on-scroll ${staggerClass}" style="transition-delay: ${index * 0.1}s;">
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-[#c7b18f]">${product.FormatDuration()}</span>
                     ${product.IsLifetime ? '<span class="text-[10px] font-bold text-[#c7b18f]">★</span>' : ''}
@@ -57,6 +59,12 @@ async function LoadProducts()
             window.location.href = `/checkout/?product=${productKey}`;
         });
     });
+
+    if (window.animateOnScrollObserver) {
+        document.querySelectorAll('#products-grid .glass-card').forEach(el => {
+            window.animateOnScrollObserver.observe(el);
+        });
+    }
 }
 document.addEventListener('DOMContentLoaded', LoadProducts);
 

@@ -116,9 +116,7 @@ async function LoadProductInfo()
 window.updatePriceDisplay = function()
 {
     const subtotal = window.basePrice * window.quantity;
-    const amountEl = document.getElementById('amount-count');
     const subtotalEl = document.getElementById('subtotal-price');
 
-    if(amountEl) amountEl.textContent = window.quantity;
     if(subtotalEl) subtotalEl.textContent = '€' + subtotal.toFixed(2);
 };

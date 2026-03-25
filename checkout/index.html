@@ -187,10 +187,11 @@
 
         .payment-form {
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
             display: flex;
             flex-direction: column;
             min-height: 400px;
+            align-items: center;
         }
 
         .payment-tabs {
@@ -370,6 +371,19 @@
             -webkit-appearance: none;
             margin: 0;
         }
+
+        .qty-input-compact::-webkit-outer-spin-button,
+        .qty-input-compact::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .qty-input-compact::-moz-range-spin-button,
+        .qty-input-compact::-moz-range-progress,
+        .qty-input-compact::-moz-range-track {
+            -moz-appearance: none;
+            background: transparent;
+        }
     </style>
 </head>
 
@@ -444,15 +458,21 @@
                 </div>
                 <div class="mt-auto">
                     <div class="h-px bg-white/5 w-full my-4"></div>
-                    <div class="price-details">
-                        <div class="flex justify-between text-sm text-neutral-400 mb-1">
-                            <span>Amount:</span>
-                            <span id="amount-count">1</span>
+                    
+                    <!-- Amount + Quantity row -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="text-xs font-bold" style="color: rgba(255,255,255,0.5);">Amount:</span>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <button id="qty-minus" class="qty-btn-compact" style="width: 24px; height: 24px; border-radius: 4px; background: rgba(255,255,255,0.05); color: white; font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center;" aria-label="Decrease quantity">−</button>
+                            <input type="number" id="qty-value" class="qty-input-compact" value="1" min="1" max="10" style="width: 28px; background: transparent; border: none; color: white; font-size: 12px; font-weight: 700; text-align: center; outline: none; -moz-appearance: textfield; -webkit-appearance: none;">
+                            <button id="qty-plus" class="qty-btn-compact" style="width: 24px; height: 24px; border-radius: 4px; background: rgba(255,255,255,0.05); color: white; font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center;" aria-label="Increase quantity">+</button>
                         </div>
-                        <div class="flex justify-between text-lg font-bold">
-                            <span>Subtotal:</span>
-                            <span id="subtotal-price">€0.00</span>
-                        </div>
+                    </div>
+                    
+                    <!-- Total row -->
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span class="text-lg font-bold text-white">Total:</span>
+                        <span id="subtotal-price" class="text-2xl font-bold">€0.00</span>
                     </div>
                 </div>
             </div>
@@ -470,55 +490,10 @@
                 </div>
 
                 <div class="payment-form" id="payment-form" style="display: none;">
-                    <div class="payment-tabs">
-                        <div class="payment-tab active" onclick="switchPaymentTab('crypto')">Crypto</div>
-                        <div class="payment-tab" onclick="switchPaymentTab('paypal')">PayPal</div>
-                    </div>
-
-                    <div id="payment-crypto" class="payment-content active">
-                        <div class="mb-6">
-                            <label class="text-xs font-bold text-neutral-500 uppercase tracking-wider block mb-4">Choose
-                                Asset</label>
-                            <div class="crypto-options">
-                                <div class="crypto-option selected" onclick="selectCoin(this, 'BTC')">
-                                    <div class="icon-box">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/4/46/Bitcoin.svg"
-                                            alt="BTC">
-                                    </div>
-                                    <span class="text-xs font-bold uppercase tracking-tight">BTC</span>
-                                </div>
-                                <div class="crypto-option" onclick="selectCoin(this, 'LTC')">
-                                    <div class="icon-box">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/1/1c/Litecoin.svg"
-                                            alt="LTC">
-                                    </div>
-                                    <span class="text-xs font-bold uppercase tracking-tight">LTC</span>
-                                </div>
-                                <div class="crypto-option" onclick="selectCoin(this, 'USDC')">
-                                    <div class="icon-box">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Circle_USDC_Logo.svg"
-                                            alt="USDC">
-                                    </div>
-                                    <span class="text-xs font-bold uppercase tracking-tight">USDC</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button id="connect-wallet" class="btn-action" style="margin-top: auto; padding: 13px;">Connect Wallet</button>
-                    </div>
-
-                    <div id="payment-paypal" class="payment-content">
-                        <div id="paypal-button-container"></div>
-                    </div>
-
-                    <div class="mb-4" style="margin-top: 20px;">
-                        <label
-                            class="text-xs font-bold text-neutral-500 uppercase tracking-wider block mb-2">Quantity</label>
-                        <div class="qty-selector">
-                            <button id="qty-minus" class="qty-btn">−</button>
-                            <input type="number" id="qty-value" class="qty-input" value="1" min="1" max="10">
-                            <button id="qty-plus" class="qty-btn">+</button>
-                        </div>
+                    <!-- PayPal only - centered and bigger -->
+                    <div id="payment-paypal" class="payment-content active" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; width: 100%;">
+                        <label class="text-sm font-bold text-neutral-400 uppercase tracking-wider block mb-6" style="text-align: center; width: 100%;">Pay with PayPal</label>
+                        <div id="paypal-button-container" style="display: flex; justify-content: center; width: 100%; max-width: 300px;"></div>
                     </div>
                 </div>
 
