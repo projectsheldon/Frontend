@@ -60,8 +60,10 @@ async function LoadProducts()
         });
     });
 
-    if (window.animateOnScrollObserver) {
-        document.querySelectorAll('#products-grid .glass-card').forEach(el => {
+    if(window.animateOnScrollObserver)
+    {
+        document.querySelectorAll('#products-grid .glass-card').forEach(el =>
+        {
             window.animateOnScrollObserver.observe(el);
         });
     }
@@ -101,6 +103,27 @@ async function HandleDownload()
     {
         downloadButton.disabled = false;
     }
-} 
+}
 const downloadButton = document.getElementById('download-btn');
 downloadButton.addEventListener('click', HandleDownload);
+
+async function updateMemberCount()
+{
+    try
+    {
+        const apiUrl = await Api.GetApiUrl();
+        const res = await fetch(`${apiUrl}/discord/servercount`);
+        const data = await res.json();
+        const el = document.getElementById('discord-count');
+        if(el && data.count !== undefined)
+        {
+            el.textContent = data.count.toLocaleString();
+        }
+    } catch(e)
+    {
+        console.log('Member count fetch failed:', e);
+    }
+}
+
+updateMemberCount();
+setInterval(updateMemberCount, 30000);
