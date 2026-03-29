@@ -127,6 +127,18 @@ async function loadLicenses()
     render();
 }
 
+// Confetti on license success
+function triggerConfetti() {
+  if (typeof confetti !== 'undefined') {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#bb86fc', '#c7b18f', '#5865F2', '#22c55e', '#fbbf24']
+    });
+  }
+}
+
 // Initialize
 window.onload = () =>
 {
@@ -135,4 +147,21 @@ window.onload = () =>
         initParticles();
     }
     loadLicenses();
+};
+
+// Trigger confetti after render if success
+const originalRender = render;
+render = function() {
+  originalRender.apply(this, arguments);
+  if (keys.length > 0) {
+    setTimeout(triggerConfetti, 500); // Short delay for visual effect
+  }
+};
+
+const originalLoadLicenses = loadLicenses;
+loadLicenses = async function() {
+  await originalLoadLicenses.apply(this, arguments);
+  if (keys.length > 0) {
+    setTimeout(triggerConfetti, 800);
+  }
 };
