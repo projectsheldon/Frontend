@@ -29,7 +29,6 @@ class Product
     FormatDuration()
     {
         if(this.IsLifetime) return 'LIFETIME';
-        if(this.IsFree) return 'FREE';
         return String(this.duration_text).toUpperCase();
     }
 }
