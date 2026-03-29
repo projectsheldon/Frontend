@@ -577,14 +577,22 @@
     <script type="module" src="./js/util/redirect.js"></script>
 
     <script>
-        setInterval(() => {
-            const el = document.getElementById('discord-count');
-            if (el) {
-                const current = parseInt(el.innerText.replace(',', ''));
-                const next = current + (Math.random() > 0.6 ? 1 : (Math.random() > 0.8 ? -1 : 0));
-                el.innerText = next.toLocaleString();
+        async function updateMemberCount() {
+            try {
+                const apiUrl = await window.Api.GetApiUrl();
+                const res = await fetch(`${apiUrl}/discord/servercount`);
+                const data = await res.json();
+                const el = document.getElementById('discord-count');
+                if (el && data.count !== undefined) {
+                    el.textContent = data.count.toLocaleString();
+                }
+            } catch (e) {
+                console.log('Member count fetch failed:', e);
             }
-        }, 4000);
+        }
+
+        updateMemberCount();
+        setInterval(updateMemberCount, 30000);
     </script>
 
     <script>
