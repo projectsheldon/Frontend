@@ -85,7 +85,6 @@ function TogglePaymentForm(enabled)
 
 async function LoadProductInfo()
 {
-    console.log(productKey)
     if(productKey === "free")
     {
         window.location.href = await Api.GetLink("workink");

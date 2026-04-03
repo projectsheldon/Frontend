@@ -121,7 +121,6 @@ async function updateMemberCount()
         }
     } catch(e)
     {
-        console.log('Member count fetch failed:', e);
     }
 }
 
