@@ -310,6 +310,95 @@
             background: #dc2626;
             transition: width 0.3s, background 0.3s;
         }
+
+        .dashboard-tab {
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .dashboard-tab:hover {
+            color: #a3a3a3;
+        }
+        .dashboard-tab.active {
+            color: #c7b18f;
+        }
+
+        /* Styles copied directly from admin licenses explorer - no modifications */
+        .licenses-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        .licenses-table thead {
+            border: none;
+        }
+        .licenses-table th, .licenses-table td {
+            border: none !important;
+        }
+        .licenses-table th, .licenses-table td {
+            text-align: left;
+            padding: 0.1rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #999;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            position: relative;
+            line-height: 1.2;
+            padding-right: 1.5rem;
+        }
+        .licenses-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+        }
+        .licenses-table th {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.75rem 0.5rem;
+            color: #c7b18f;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .licenses-table td:first-child {
+            font-family: 'JetBrains Mono', monospace;
+            color: #e5e5e5;
+        }
+        .licenses-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #737373;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            border-radius: 6px;
+        }
+        .copy-btn:hover {
+            color: #e5e5e5;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .copy-btn.copied {
+            color: #22c55e;
+        }
+        .table-wrapper::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.02);
+            border-radius: 3px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
     </style>
 </head>
 
@@ -380,8 +469,19 @@
                 <h2 class="card-title">Reseller Login</h2>
                 <p class="card-desc">Enter your reseller password to continue.</p>
                 <form id="reseller-login-form" class="flex flex-col gap-3 mt-4">
-                    <input type="password" id="reseller-password-input" placeholder="Enter your password" 
-                        class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full">
+                    <div class="relative">
+                        <input type="password" id="reseller-password-input" placeholder="Enter your password" 
+                            class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full pr-12">
+                        <button type="button" onclick="togglePasswordVisibility('reseller-password-input', 'login-eye', 'login-eye-off')" class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white transition-colors">
+                            <svg id="login-eye" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            <svg id="login-eye-off" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                            </svg>
+                        </button>
+                    </div>
                     <button type="submit" class="btn-primary card-btn">Login</button>
                 </form>
             </div>
@@ -410,8 +510,19 @@
                 <p class="card-desc">Create a password to submit your reseller application.</p>
                 <form id="signup-form" class="flex flex-col gap-3 mt-4">
                     <div id="password-section">
-                        <input type="password" id="signup-password" placeholder="Create password" 
-                            class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full">
+                        <div class="relative">
+                            <input type="password" id="signup-password" placeholder="Create password" 
+                                class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full pr-12">
+                            <button type="button" onclick="togglePasswordVisibility('signup-password', 'signup-eye', 'signup-eye-off')" class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white transition-colors">
+                                <svg id="signup-eye" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                <svg id="signup-eye-off" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                </svg>
+                            </button>
+                        </div>
                         <div class="password-bar-container">
                             <div id="password-bar" class="password-bar"></div>
                         </div>
@@ -453,26 +564,145 @@
             </div>
         </div>
 
+        <div id="delete-account-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
+            <div class="p-8 rounded-2xl max-w-md mx-4 text-center" style="background: rgba(15, 15, 15, 0.98); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <div class="w-16 h-16 rounded-full bg-red-950/50 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Delete Your Account?</h3>
+                <p class="text-red-400 text-sm mb-6">Warning: This will permanently delete your account and all associated data. This action cannot be undone.</p>
+                <form id="delete-account-form" class="space-y-4">
+                    <div class="relative">
+                        <input type="password" id="delete-account-password" placeholder="Enter your password" 
+                            class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-red-500/50 w-full pr-12">
+                        <button type="button" id="toggle-password-visibility" class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white transition-colors">
+                            <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            <svg id="eye-off-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="delete-account-error" class="text-red-400 text-sm hidden"></p>
+                    <div class="flex gap-3 justify-center pt-2">
+                        <button type="button" id="cancel-delete-account" class="btn-secondary">Cancel</button>
+                        <button type="submit" id="confirm-delete-account" class="btn-red" disabled style="background: #dc2626; color: white; font-weight: 700; padding: 0.75rem 1.5rem; border-radius: 0.75rem; border: none; cursor: pointer; opacity: 0.5;">Delete Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="assign-license-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
+            <div class="p-8 rounded-2xl max-w-md mx-4 text-center" style="background: rgba(15, 15, 15, 0.98); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <div class="w-16 h-16 rounded-full bg-green-950/50 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Assign License</h3>
+                <p class="text-neutral-400 text-sm mb-4">Enter the Discord User ID to assign this license to:</p>
+                <p id="assign-license-key" class="text-[#c7b18f] font-mono text-sm mb-4"></p>
+                <form id="assign-form" class="space-y-4">
+                    <input type="text" id="assign-discord-id" placeholder="Discord User ID" 
+                        class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-green-500/50 w-full">
+                    <p id="assign-error" class="text-red-400 text-sm hidden"></p>
+                    <div class="flex gap-3 justify-center pt-2">
+                        <button type="button" id="cancel-assign" class="btn-secondary">Cancel</button>
+                        <button type="submit" class="btn-primary">Next</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="assign-confirm-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center">
+            <div class="p-8 rounded-2xl max-w-md mx-4 text-center" style="background: rgba(15, 15, 15, 0.98); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <h3 class="text-xl font-bold text-white mb-2">Confirm Assignment</h3>
+                <p class="text-neutral-400 text-sm mb-4">You are about to assign this license to:</p>
+                <div class="flex items-center justify-center gap-4 mb-6 p-4 bg-white/5 rounded-xl">
+                    <img id="assign-user-avatar" src="" alt="" class="w-16 h-16 rounded-full">
+                    <div class="text-left">
+                        <p id="assign-user-username" class="text-white font-bold"></p>
+                        <p id="assign-user-discord-id" class="text-neutral-500 text-sm font-mono"></p>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <input type="password" id="assign-password" placeholder="Enter your reseller password" 
+                        class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-green-500/50 w-full">
+                    <p id="assign-password-error" class="text-red-400 text-sm hidden"></p>
+                </div>
+                <div class="flex gap-3 justify-center pt-6">
+                    <button type="button" id="cancel-assign-confirm" class="btn-secondary">Cancel</button>
+                    <button type="button" id="confirm-assign-btn" class="btn-primary" disabled style="opacity: 0.5;">Confirm</button>
+                </div>
+            </div>
+        </div>
+
         <div id="dashboard-state" class="hidden">
-            <div class="max-w-6xl mx-auto">
-                <div class="text-center mb-12">
-                    <h2 class="text-5xl md:text-6xl font-black mb-6 tracking-tighter uppercase">Reseller Dashboard</h2>
-                    <p class="text-neutral-500 text-lg">Welcome, verified reseller!</p>
+            <div class="max-w-[1100px] mx-auto" style="padding-top: 5rem; padding-bottom: 3rem;">
+                <!-- Pending Deletion Banner -->
+                <div id="pending-deletion-banner" class="hidden mb-6 p-4 rounded-xl bg-red-950/50 border border-red-800/50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-red-400 font-bold text-sm">⚠️ Your account is scheduled for deletion</p>
+                            <p class="text-red-300/70 text-xs mt-1">Deletion date: <span id="deletion-date"></span></p>
+                        </div>
+                        <button id="cancel-deletion-btn" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase rounded-lg transition-all">
+                            Cancel Deletion
+                        </button>
+                    </div>
                 </div>
 
-                <div id="verified-list" class="glass-card">
-                    <h3 class="text-lg font-bold mb-4 text-white">Verified Resellers</h3>
-                    <table class="reseller-table">
-                        <thead>
-                            <tr>
-                                <th>Avatar</th>
-                                <th>Username</th>
-                                <th>Verified At</th>
-                            </tr>
-                        </thead>
-                        <tbody id="verified-tbody">
-                        </tbody>
-                    </table>
+                <!-- Tabs -->
+                <div class="flex gap-8 mb-6" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+                    <button id="tab-licenses" class="dashboard-tab active pb-3 text-base font-medium transition-all" onclick="switchDashboardTab('licenses')" style="color: #c7b18f; border-bottom: 2px solid #c7b18f; margin-bottom: -1px;">
+                        License Explorer
+                    </button>
+                    <button id="tab-settings" class="dashboard-tab pb-3 text-base font-medium transition-all" onclick="switchDashboardTab('settings')" style="color: #737373;">
+                        Settings
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="table-wrapper" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; overflow: hidden; max-height: 70vh; overflow-y: auto;">
+                    <!-- License Explorer Tab -->
+                    <div id="tab-content-licenses">
+                        <div id="licenses-loading" class="text-center py-12">
+                            <div class="inline-block w-8 h-8 border-2 border-white/20 border-t-[#c7b18f] rounded-full animate-spin"></div>
+                        </div>
+                        <div id="licenses-list" class="p-0"></div>
+                        <div id="licenses-empty" class="hidden text-center py-12">
+                            <p class="text-neutral-500">No licenses available for resale</p>
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div id="tab-content-settings" class="hidden p-6">
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-white font-bold text-lg mb-2">Account Settings</h3>
+                                <p class="text-neutral-500 text-sm">Manage your reseller account preferences.</p>
+                            </div>
+                            
+                            <div class="border-t border-white/5 pt-6">
+                                <h4 class="text-red-400 font-bold text-sm mb-3">Danger Zone</h4>
+                                <div class="bg-red-950/20 border border-red-900/30 rounded-xl p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-white font-bold text-sm">Delete Account</p>
+                                            <p class="text-neutral-500 text-xs mt-1">Permanently delete your reseller account and all data.</p>
+                                        </div>
+                                        <button id="delete-account-btn" class="px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white text-xs font-bold uppercase rounded-lg transition-all">
+                                            Delete Account
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -612,6 +842,17 @@
                     return;
                 }
                 
+                if (data.state === 'pending_deletion') {
+                    stopVerificationCheck();
+                    if (!sessionStorage.getItem(SESSION_KEY)) {
+                        showState('resellerLogin');
+                        return;
+                    }
+                    showState('dashboard');
+                    showPendingDeletionBanner(data.deletionTime, data.requestedAt);
+                    return;
+                }
+                
                 if (data.state === 'verified') {
                     stopVerificationCheck();
                     if (!sessionStorage.getItem(SESSION_KEY)) {
@@ -619,7 +860,7 @@
                         return;
                     }
                     showState('dashboard');
-                    loadVerifiedResellers(apiUrl);
+                    switchDashboardTab('licenses');
                     return;
                 }
                 
@@ -685,6 +926,250 @@
                 `).join('');
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-red-400">Failed to load</td></tr>';
+            }
+        }
+
+        window.switchDashboardTab = function(tab) {
+            const licensesTab = document.getElementById('tab-licenses');
+            const settingsTab = document.getElementById('tab-settings');
+            
+            if (tab === 'licenses') {
+                licensesTab.style.color = '#c7b18f';
+                licensesTab.style.borderBottom = '2px solid #c7b18f';
+                licensesTab.style.marginBottom = '-1px';
+                settingsTab.style.color = '#737373';
+                settingsTab.style.borderBottom = 'none';
+            } else {
+                settingsTab.style.color = '#c7b18f';
+                settingsTab.style.borderBottom = '2px solid #c7b18f';
+                settingsTab.style.marginBottom = '-1px';
+                licensesTab.style.color = '#737373';
+                licensesTab.style.borderBottom = 'none';
+            }
+            
+            document.getElementById('tab-content-licenses')?.classList.toggle('hidden', tab !== 'licenses');
+            document.getElementById('tab-content-settings')?.classList.toggle('hidden', tab !== 'settings');
+            
+            if (tab === 'licenses') {
+                loadAvailableLicenses();
+            }
+        };
+
+        async function loadAvailableLicenses() {
+            const apiUrl = await getApiUrl();
+            const token = DiscordAuth.GetSessionToken();
+            
+            const loadingEl = document.getElementById('licenses-loading');
+            const listEl = document.getElementById('licenses-list');
+            const emptyEl = document.getElementById('licenses-empty');
+            
+            if (loadingEl) loadingEl.classList.remove('hidden');
+            if (listEl) listEl.innerHTML = '';
+            if (emptyEl) emptyEl.classList.add('hidden');
+            
+            try {
+                const response = await fetch(`${apiUrl}/resellers/stock`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                
+                if (loadingEl) loadingEl.classList.add('hidden');
+                
+                if (data.ok && data.licenses && data.licenses.length > 0) {
+                    if (listEl) {
+                        // Styles copied directly from admin licenses explorer - no modifications
+                        listEl.innerHTML = `
+                            <table class="licenses-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40%;">License Key</th>
+                                        <th style="width: 20%;">Product</th>
+                                        <th style="width: 20%;">Created</th>
+                                        <th style="width: 20%;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.licenses.map(lic => `
+                                        <tr>
+                                            <td>${lic.key}</td>
+                                            <td class="capitalize">${lic.product}</td>
+                                            <td>${new Date(lic.created_at).toLocaleDateString()}</td>
+                                            <td>
+                                                <div class="flex gap-2">
+                                                    <button class="copy-btn" onclick="copyLicense('${lic.key}', this)" title="Copy">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                                        </svg>
+                                                    </button>
+                                                    <button class="copy-btn" onclick="showAssignModal('${lic.key}')" title="Assign">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    }
+                } else {
+                    if (emptyEl) emptyEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                if (loadingEl) loadingEl.classList.add('hidden');
+                if (listEl) {
+                    listEl.innerHTML = '<div class="p-4 text-center text-red-400 text-sm">Failed to load</div>';
+                }
+            }
+        }
+
+        window.copyLicense = function(key, btn) {
+            navigator.clipboard.writeText(key).then(() => {
+                if (btn) {
+                    btn.innerHTML = `<svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                    btn.classList.add('copied');
+                    setTimeout(() => {
+                        btn.innerHTML = `<svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
+                        btn.classList.remove('copied');
+                    }, 2000);
+                }
+            });
+        };
+
+        let currentAssignLicenseKey = '';
+        let currentAssignDiscordId = '';
+        let currentAssignUserInfo = null;
+
+        window.showAssignModal = function(licenseKey) {
+            currentAssignLicenseKey = licenseKey;
+            currentAssignDiscordId = '';
+            currentAssignUserInfo = null;
+            
+            const modal = document.getElementById('assign-license-modal');
+            const keyDisplay = document.getElementById('assign-license-key');
+            const idInput = document.getElementById('assign-discord-id');
+            const errorEl = document.getElementById('assign-error');
+            
+            keyDisplay.textContent = licenseKey;
+            idInput.value = '';
+            errorEl.classList.add('hidden');
+            modal.classList.remove('hidden');
+            idInput.focus();
+        };
+
+        function hideAssignModal() {
+            const modal = document.getElementById('assign-license-modal');
+            modal.classList.add('hidden');
+            currentAssignLicenseKey = '';
+            currentAssignDiscordId = '';
+            currentAssignUserInfo = null;
+        }
+
+        function hideAssignConfirmModal() {
+            const modal = document.getElementById('assign-confirm-modal');
+            modal.classList.add('hidden');
+            document.getElementById('assign-password').value = '';
+            document.getElementById('assign-password-error').classList.add('hidden');
+            document.getElementById('confirm-assign-btn').disabled = true;
+            document.getElementById('confirm-assign-btn').style.opacity = '0.5';
+        }
+
+        async function fetchDiscordUser(discordId) {
+            const apiUrl = await getApiUrl();
+            const token = DiscordAuth.GetSessionToken();
+            
+            const response = await fetch(`${apiUrl}/resellers/discord-user-lookup?discord_id=${discordId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            return await response.json();
+        }
+
+        async function assignLicense() {
+            const discordId = document.getElementById('assign-discord-id').value.trim();
+            const errorEl = document.getElementById('assign-error');
+            
+            if (!discordId) {
+                errorEl.textContent = 'Please enter a Discord User ID';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (!/^\d+$/.test(discordId)) {
+                errorEl.textContent = 'Invalid Discord ID format';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            errorEl.classList.add('hidden');
+            
+            try {
+                const userData = await fetchDiscordUser(discordId);
+                
+                if (!userData.ok || !userData.user) {
+                    errorEl.textContent = 'Discord user not found';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                
+                currentAssignDiscordId = discordId;
+                currentAssignUserInfo = userData.user;
+                
+                document.getElementById('assign-user-avatar').src = getDiscordAvatar(discordId, userData.user.avatar);
+                document.getElementById('assign-user-username').textContent = userData.user.global_name || userData.user.username;
+                document.getElementById('assign-user-discord-id').textContent = discordId;
+                
+                document.getElementById('assign-license-modal').classList.add('hidden');
+                document.getElementById('assign-confirm-modal').classList.remove('hidden');
+                document.getElementById('assign-password').focus();
+                
+            } catch (err) {
+                errorEl.textContent = 'Failed to verify user';
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function confirmAssign() {
+            const password = document.getElementById('assign-password').value;
+            const errorEl = document.getElementById('assign-password-error');
+            
+            if (!password) {
+                errorEl.textContent = 'Please enter your password';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            const apiUrl = await getApiUrl();
+            const token = DiscordAuth.GetSessionToken();
+            
+            try {
+                const response = await fetch(`${apiUrl}/resellers/assign-license`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        license_key: currentAssignLicenseKey,
+                        discord_user_id: currentAssignDiscordId,
+                        password: password
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.ok) {
+                    hideAssignModal();
+                    hideAssignConfirmModal();
+                    window.Notify?.(data.message || 'License assigned successfully', 'success');
+                    loadAvailableLicenses();
+                } else {
+                    errorEl.textContent = data.message || 'Failed to assign license';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorEl.textContent = 'Connection error';
+                errorEl.classList.remove('hidden');
             }
         }
 
@@ -773,6 +1258,21 @@
             window.location.reload();
         }
 
+        window.togglePasswordVisibility = function(inputId, eyeId, eyeOffId) {
+            const input = document.getElementById(inputId);
+            const eye = document.getElementById(eyeId);
+            const eyeOff = document.getElementById(eyeOffId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye?.classList.add('hidden');
+                eyeOff?.classList.remove('hidden');
+            } else {
+                input.type = 'password';
+                eye?.classList.remove('hidden');
+                eyeOff?.classList.add('hidden');
+            }
+        };
+
         function checkPasswordStrength(password) {
             const hasNumber = /\d/.test(password);
             const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
@@ -836,8 +1336,12 @@
                     
                     if (data.reseller?.is_verified === 1) {
                         stopVerificationCheck();
+                        if (!sessionStorage.getItem(SESSION_KEY)) {
+                            showState('resellerLogin');
+                            return;
+                        }
                         showState('dashboard');
-                        loadVerifiedResellers(apiUrl);
+                        switchDashboardTab('licenses');
                     }
                 } catch (err) {}
             }, 10000);
@@ -847,6 +1351,106 @@
             if (verificationCheckInterval) {
                 clearInterval(verificationCheckInterval);
                 verificationCheckInterval = null;
+            }
+        }
+
+        function showPendingDeletionBanner(deletionTime, requestedAt) {
+            const banner = document.getElementById('pending-deletion-banner');
+            const dateDisplay = document.getElementById('deletion-date');
+            if (banner && dateDisplay) {
+                const date = new Date(deletionTime);
+                dateDisplay.textContent = date.toLocaleString();
+                banner.classList.remove('hidden');
+            }
+        }
+
+        function hideDeleteAccountModal() {
+            const modal = document.getElementById('delete-account-modal');
+            if (modal) modal.classList.add('hidden');
+            const passwordInput = document.getElementById('delete-account-password');
+            const errorEl = document.getElementById('delete-account-error');
+            const confirmBtn = document.getElementById('confirm-delete-account');
+            if (passwordInput) passwordInput.value = '';
+            if (errorEl) errorEl.classList.add('hidden');
+            if (confirmBtn) confirmBtn.disabled = true;
+        }
+
+        function showDeleteAccountModal() {
+            const modal = document.getElementById('delete-account-modal');
+            if (modal) modal.classList.remove('hidden');
+            const passwordInput = document.getElementById('delete-account-password');
+            if (passwordInput) passwordInput.focus();
+        }
+
+        async function requestDeleteAccount() {
+            const passwordInput = document.getElementById('delete-account-password');
+            const errorEl = document.getElementById('delete-account-error');
+            const password = passwordInput?.value;
+            
+            if (!password) {
+                if (errorEl) {
+                    errorEl.textContent = 'Please enter your password';
+                    errorEl.classList.remove('hidden');
+                }
+                return;
+            }
+            
+            const apiUrl = await getApiUrl();
+            const token = DiscordAuth.GetSessionToken();
+            
+            try {
+                const response = await fetch(`${apiUrl}/resellers/delete-account`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ password })
+                });
+                const data = await response.json();
+                
+                if (data.ok) {
+                    hideDeleteAccountModal();
+                    if (data.deletionTime) {
+                        showPendingDeletionBanner(data.deletionTime, Date.now());
+                    }
+                    window.Notify?.(data.message || 'Account deletion scheduled', 'success');
+                } else {
+                    if (errorEl) {
+                        errorEl.textContent = data.message || 'Failed to delete account';
+                        errorEl.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                if (errorEl) {
+                    errorEl.textContent = 'Connection error. Please try again.';
+                    errorEl.classList.remove('hidden');
+                }
+            }
+        }
+
+        async function cancelDeletion() {
+            const apiUrl = await getApiUrl();
+            const token = DiscordAuth.GetSessionToken();
+            
+            try {
+                const response = await fetch(`${apiUrl}/resellers/cancel-deletion`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.ok) {
+                    const banner = document.getElementById('pending-deletion-banner');
+                    if (banner) banner.classList.add('hidden');
+                    window.Notify?.(data.message || 'Deletion cancelled', 'success');
+                } else {
+                    window.Notify?.(data.message || 'Failed to cancel deletion', 'error');
+                }
+            } catch (err) {
+                window.Notify?.('Connection error', 'error');
             }
         }
 
@@ -862,6 +1466,75 @@
         // Modal buttons
         document.getElementById('cancel-delete')?.addEventListener('click', hideDeleteModal);
         document.getElementById('confirm-delete')?.addEventListener('click', confirmDelete);
+        
+        // Delete Account modal
+        document.getElementById('delete-account-btn')?.addEventListener('click', showDeleteAccountModal);
+        document.getElementById('cancel-delete-account')?.addEventListener('click', hideDeleteAccountModal);
+        document.getElementById('delete-account-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'delete-account-modal') hideDeleteAccountModal();
+        });
+        
+        // Password input for delete account - enable/disable confirm button
+        document.getElementById('delete-account-password')?.addEventListener('input', (e) => {
+            const confirmBtn = document.getElementById('confirm-delete-account');
+            if (confirmBtn) {
+                confirmBtn.disabled = !e.target.value;
+                confirmBtn.style.opacity = e.target.value ? '1' : '0.5';
+            }
+        });
+        
+        // Delete account form submit
+        document.getElementById('delete-account-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            requestDeleteAccount();
+        });
+        
+        // Assign license modal
+        document.getElementById('cancel-assign')?.addEventListener('click', hideAssignModal);
+        document.getElementById('assign-license-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'assign-license-modal') hideAssignModal();
+        });
+        document.getElementById('assign-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            assignLicense();
+        });
+        
+        // Assign confirm modal
+        document.getElementById('cancel-assign-confirm')?.addEventListener('click', () => {
+            hideAssignConfirmModal();
+            document.getElementById('assign-license-modal').classList.remove('hidden');
+        });
+        document.getElementById('assign-confirm-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'assign-confirm-modal') {
+                hideAssignConfirmModal();
+                document.getElementById('assign-license-modal').classList.remove('hidden');
+            }
+        });
+        document.getElementById('confirm-assign-btn')?.addEventListener('click', confirmAssign);
+        document.getElementById('assign-password')?.addEventListener('input', (e) => {
+            const btn = document.getElementById('confirm-assign-btn');
+            btn.disabled = !e.target.value;
+            btn.style.opacity = e.target.value ? '1' : '0.5';
+        });
+        
+        // Toggle password visibility
+        document.getElementById('toggle-password-visibility')?.addEventListener('click', () => {
+            const passwordInput = document.getElementById('delete-account-password');
+            const eyeIcon = document.getElementById('eye-icon');
+            const eyeOffIcon = document.getElementById('eye-off-icon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon?.classList.add('hidden');
+                eyeOffIcon?.classList.remove('hidden');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon?.classList.remove('hidden');
+                eyeOffIcon?.classList.add('hidden');
+            }
+        });
+        
+        // Cancel deletion button
+        document.getElementById('cancel-deletion-btn')?.addEventListener('click', cancelDeletion);
         
         // Reapply button
         document.getElementById('reapply-btn')?.addEventListener('click', reapply);
@@ -982,8 +1655,23 @@
             if (valid) {
                 onResellerLogin();
                 showState('dashboard');
+                
+                // Check if pending deletion
                 const apiUrl = await getApiUrl();
-                loadVerifiedResellers(apiUrl);
+                const token = DiscordAuth.GetSessionToken();
+                try {
+                    const res = await fetch(`${apiUrl}/resellers/me`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await res.json();
+                    if (data.state === 'pending_deletion' && data.deletionTime) {
+                        showPendingDeletionBanner(data.deletionTime, data.requestedAt);
+                    } else {
+                        switchDashboardTab('licenses');
+                    }
+                } catch {
+                    switchDashboardTab('licenses');
+                }
             } else {
                 passwordInput.value = '';
                 passwordInput.placeholder = 'Invalid password';
