@@ -1,5 +1,6 @@
 const Api = {
     _backendUrl: null,
+    _apiKey: null,
 
     async _fetchBackendUrl()
     {
@@ -38,6 +39,21 @@ const Api = {
             await this._fetchBackendUrl();
         }
         return this._backendUrl;
+    },
+
+    async GetApiKey()
+    {
+        if(this._apiKey) return this._apiKey;
+        
+        const apiUrl = await this.GetApiUrl();
+        try {
+            const response = await fetch(`${apiUrl}/license/key`);
+            if(response.ok) {
+                const data = await response.json();
+                this._apiKey = data.key || null;
+            }
+        } catch(e) {}
+        return this._apiKey;
     },
 
     async GetLink(platform)

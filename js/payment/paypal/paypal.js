@@ -22,6 +22,7 @@ export function CreatePaypalButtons()
 
             const discordId = user.id;
             const product = new URLSearchParams(window.location.search).get('product');
+            const personalUse = document.getElementById('personal-use-checkbox')?.checked || false;
 
             const req = await fetch(`${await Api.GetApiUrl()}/paypal/create`, {
                 method: "POST",
@@ -29,7 +30,8 @@ export function CreatePaypalButtons()
                 body: JSON.stringify({
                     discordId: discordId,
                     product: product,
-                    quantity: window.quantity
+                    quantity: window.quantity,
+                    personalUse: personalUse
                 })
             });
             const response = await req.json();
@@ -57,8 +59,12 @@ export function CreatePaypalButtons()
 
             if(response.ok && response.license)
             {
-                const licenseParams = response.license.map(l => `${l.key}:${encodeURIComponent(l.product)}`).join(',');
-                window.location.href = `/license/?showKeys=${licenseParams}`;
+                if (response.forResell) {
+                    window.location.href = '/resellers/';
+                } else {
+                    const licenseParams = response.license.map(l => `${l.key}:${encodeURIComponent(l.product)}`).join(',');
+                    window.location.href = `/license/?showKeys=${licenseParams}`;
+                }
             }
             else
             {

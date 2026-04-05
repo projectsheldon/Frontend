@@ -377,6 +377,50 @@
         footer a:hover::after {
             width: 100%;
         }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .admin-table th, .admin-table td {
+            text-align: left;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #999;
+        }
+
+        .admin-table th {
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #c7b18f;
+            font-size: 0.65rem;
+        }
+
+        .admin-table td {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .reseller-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #c7b18f;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 
@@ -398,7 +442,7 @@
             <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full">
                 <a href="#" class="nav-tab active">Home</a>
                 <a href="#api" class="nav-tab">API</a>
-                <a href="#resell" class="nav-tab">Resell</a>
+                <a href="./resellers/" class="nav-tab">Resell</a>
             </div>
 
             <div class="flex items-center gap-5 z-10 shrink-0">
@@ -528,6 +572,114 @@
         </div>
     </section>
 
+    <section id="resell" class="py-20 px-6" style="display: none;">
+        <div class="max-w-6xl mx-auto">
+            <div id="resellers-loading" class="flex flex-col items-center justify-center" style="min-height: 60vh;">
+                <div class="loading-spinner mb-4"></div>
+                <p class="text-neutral-500">Loading...</p>
+            </div>
+            
+            <div id="resellers-login" class="hidden" style="display: none;">
+                <div class="glass-card p-12 rounded-2xl text-center" style="max-width: 480px; margin: 0 auto; min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <h2 class="text-3xl font-black mb-4 tracking-tighter uppercase">Reseller Access</h2>
+                    <p class="text-neutral-500 mb-8">Log in with Discord to check your reseller status.</p>
+                    <button onclick="DiscordAuth.LoginPopup()" class="btn-discord px-8 py-4 rounded-xl text-sm font-bold uppercase inline-flex items-center gap-3">
+                        <svg class="w-5 h-5" viewBox="0 0 127.14 96.36" fill="#ffffff">
+                            <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a.41.41,0,0,0-.43.2,72.48,72.48,0,0,0-3.17,6.52,97.26,97.26,0,0,0-29,0,72.84,72.84,0,0,0-3.19-6.52.4.4,0,0,0-.43-.2A105.09,105.09,0,0,0,19.44,8.07a.44.44,0,0,0-.2.07C2.12,34,1.15,59.39,3.46,84.41a.48.48,0,0,0,.19.34A105.77,105.77,0,0,0,35.77,96.36a.42.42,0,0,0,.46-.22,74.22,74.22,0,0,0,6.42-10.38.4.4,0,0,0-.22-.56,68.7,68.7,0,0,1-10-4.76.41.41,0,0,1,0-.69c.83-.62,1.67-1.28,2.46-1.95a.39.39,0,0,1,.41-.05,73.4,73.4,0,0,0,57.48,0,.39.39,0,0,1,.41.05c.79.67,1.63,1.33,2.46,1.95a.41.41,0,0,1,0,.69,68.61,68.61,0,0,1-10,4.76.41.41,0,0,0-.22.56,74.8,74.8,0,0,0,6.43,10.38.42.42,0,0,0,.46.22,105.48,105.48,0,0,0,32.11-11.61.45.45,0,0,0,.19-.34c2.72-28.53-4.67-53.59-20-76.27A.39.39,0,0,0,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.07,65.69,84.69,65.69Z" />
+                        </svg>
+                        Login with Discord
+                    </button>
+                </div>
+            </div>
+            
+            <div id="resellers-not-member" class="hidden" style="display: none;">
+                <div class="glass-card p-12 rounded-2xl text-center" style="max-width: 480px; margin: 0 auto; min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <h2 class="text-3xl font-black mb-4 tracking-tighter uppercase">Not a Reseller</h2>
+                    <p class="text-neutral-500 mb-8">You are not registered as a reseller. Contact an administrator to join the Project Sheldon reseller program.</p>
+                    <button onclick="ResellersModule.logout()" class="btn-secondary">Logout</button>
+                </div>
+            </div>
+            
+            <div id="resellers-dashboard" class="hidden" style="display: none;">
+                <div class="text-center mb-12 animate-on-scroll">
+                    <h2 class="text-5xl md:text-6xl font-black mb-6 tracking-tighter uppercase">Reseller Dashboard</h2>
+                    <p class="text-neutral-500 text-lg">Manage your reseller status</p>
+                </div>
+                
+                <div id="resellers-admin-tabs" class="hidden mb-6 flex gap-2 justify-center">
+                    <button class="nav-tab active" onclick="ResellersModule.switchTab('verified')">Verified</button>
+                    <button class="nav-tab" onclick="ResellersModule.switchTab('unverified')">Unverified</button>
+                    <button class="nav-tab" onclick="ResellersModule.switchTab('deleted')">Deleted</button>
+                </div>
+                
+                <div id="resellers-public" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                </div>
+                
+                <div id="resellers-verified" class="hidden" style="display: none;">
+                    <div class="glass-card p-6 rounded-2xl overflow-x-auto">
+                        <table class="admin-table w-full">
+                            <thead>
+                                <tr>
+                                    <th>Avatar</th>
+                                    <th>Username</th>
+                                    <th>Verified At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="verified-resellers-tbody">
+                                <tr><td colspan="4" class="text-center py-8 text-neutral-500">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div id="resellers-unverified" class="hidden" style="display: none;">
+                    <div class="glass-card p-6 rounded-2xl mb-6">
+                        <div class="flex gap-3 mb-4">
+                            <input type="text" id="new-reseller-discord-id" placeholder="Enter Discord ID" 
+                                class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20">
+                            <button onclick="ResellersModule.createReseller()" class="btn-primary px-4 py-2 rounded-lg text-xs font-bold uppercase">Add Reseller</button>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl overflow-x-auto">
+                        <table class="admin-table w-full">
+                            <thead>
+                                <tr>
+                                    <th>Avatar</th>
+                                    <th>Username</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unverified-resellers-tbody">
+                                <tr><td colspan="4" class="text-center py-8 text-neutral-500">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="resellers-deleted" class="hidden" style="display: none;">
+                    <div class="glass-card p-6 rounded-2xl overflow-x-auto">
+                        <table class="admin-table w-full">
+                            <thead>
+                                <tr>
+                                    <th>Avatar</th>
+                                    <th>Username</th>
+                                    <th>Deleted At</th>
+                                    <th>Cooldown</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deleted-resellers-tbody">
+                                <tr><td colspan="5" class="text-center py-8 text-neutral-500">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <footer class="pt-32 pb-16 border-t border-white/5 relative bg-black/40">
         <div class="max-w-6xl mx-auto px-6">
             <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-20">
@@ -574,6 +726,7 @@
     <script src="./js/html/render/canvas.js"></script>
     <script type="module" src="./js/html/frontpage/index.js"></script>
     <script type="module" src="./js/discord/topbar_buttons.js"></script>
+    <script type="module" src="./js/discord/resellers.js"></script>
     <script type="module" src="./js/util/redirect.js"></script>
 
     <script>
@@ -604,6 +757,28 @@
                         navbar.classList.add('scrolled');
                     } else {
                         navbar.classList.remove('scrolled');
+                    }
+                });
+            }
+            
+            // Handle resell tab click
+            const resellTab = document.querySelector('a[href="#resell"]');
+            if (resellTab) {
+                resellTab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const resellSection = document.getElementById('resell');
+                    if (resellSection) {
+                        resellSection.style.display = 'block';
+                        resellSection.scrollIntoView({ behavior: 'smooth' });
+                        
+                        // Update active tab
+                        document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+                        resellTab.classList.add('active');
+                        
+                        // Load resellers (checks auth and shows correct state)
+                        if (window.ResellersModule) {
+                            window.ResellersModule.loadResellers();
+                        }
                     }
                 });
             }

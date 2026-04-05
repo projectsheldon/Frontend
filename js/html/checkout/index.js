@@ -1,4 +1,4 @@
-import { CheckAuthStatus } from "../../discord/auth.js";
+import { CheckAuthStatus, DiscordAuth } from "../../discord/auth.js";
 import PaypalManager from "../../payment/paypal/manager.js";
 import { CreatePaypalButtons } from "../../payment/paypal/paypal.js";
 import Api from "../../util/backend.js";
@@ -12,6 +12,7 @@ window.basePrice = 0;
 
 const loginRequiredEl = document.getElementById('login-required');
 const paymentFormEl = document.getElementById('payment-form');
+const personalUseSection = document.getElementById('personal-use-section');
 
 document.addEventListener("DOMContentLoaded", async function()
 {
@@ -23,6 +24,7 @@ document.addEventListener("DOMContentLoaded", async function()
         {
             TogglePaymentForm(true);
             LoadProductInfo();
+            CheckResellerStatus();
         }
         else
         {
@@ -47,6 +49,29 @@ document.addEventListener("DOMContentLoaded", async function()
         await paypalButtons.render('#paypal-button-container');
     }
 });
+
+async function CheckResellerStatus() {
+    const token = DiscordAuth.GetSessionToken();
+    if (!token) return;
+    
+    try {
+        const response = await fetch(`${await Api.GetApiUrl()}/resellers/is-reseller`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        
+        if (data.ok && data.isReseller) {
+            if (personalUseSection) {
+                personalUseSection.classList.remove('hidden');
+                const checkbox = document.getElementById('personal-use-checkbox');
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            }
+        }
+    } catch (error) {
+    }
+}
 
 function ShowLoginForm()
 {

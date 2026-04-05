@@ -405,7 +405,7 @@
             <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full">
                 <a href="../" class="nav-tab active">Home</a>
                 <a href="../#api" class="nav-tab">API</a>
-                <a href="../#resell" class="nav-tab">Resell</a>
+                <a href="../resellers/" class="nav-tab">Resell</a>
             </div>
 
             <div class="flex items-center gap-5 z-10 shrink-0">
@@ -473,6 +473,17 @@
                     <div style="display: flex; align-items: center; justify-content: space-between;">
                         <span class="text-lg font-bold text-white">Total:</span>
                         <span id="subtotal-price" class="text-2xl font-bold">€0.00</span>
+                    </div>
+                    
+                    <!-- Personal Use checkbox (for resellers only) -->
+                    <div id="personal-use-section" class="hidden" style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" id="personal-use-checkbox" class="w-4 h-4 mt-0.5 accent-[#c7b18f]">
+                            <div>
+                                <span class="text-sm font-bold text-white">Personal Use</span>
+                                <p class="text-xs text-neutral-500 mt-1">Check = License locked to your Discord<br>Uncheck = Added to your resale stock</p>
+                            </div>
+                        </label>
                     </div>
                 </div>
             </div>
