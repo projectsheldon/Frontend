@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>API Documentation - Project Sheldon</title>
+    <script src="https://cdn.tailwindcss.com?warn=false"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="../favicon/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        window.addEventListener('error', function (e) {
+            if (e.message && (e.message.includes('youtube.com') || e.message.includes('ERR_BLOCKED_BY_CLIENT') || e.filename.includes('youtube.com'))) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bg-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 1) 0%, rgba(5, 5, 5, 1) 100%);
+            z-index: -2;
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .logo-box {
+            transition: transform 0.3s ease;
+        }
+
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s;
+        }
+
+        .nav-tab:hover, .nav-tab.active {
+            color: white;
+        }
+
+        .btn-discord {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #5865F2;
+            color: white;
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-discord:hover {
+            background: #4752c4;
+            transform: translateY(-1px);
+        }
+
+        footer a {
+            position: relative;
+        }
+
+        footer a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: #c7b18f;
+            transition: width 0.3s ease;
+        }
+
+        footer a:hover::after {
+            width: 100%;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .method-get {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .method-post {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .endpoint-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .param-table th {
+            text-align: left;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+        }
+
+        .param-table td {
+            padding: 10px 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .param-name {
+            font-family: 'JetBrains Mono', monospace;
+            color: #c7b18f;
+        }
+
+        .param-type {
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 11px;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+    <div class="bg-mesh"></div>
+
+    <nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center">
+        <div class="w-full max-w-[1100px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">
+            <a href="../" class="flex items-center gap-3 z-10 shrink-0">
+                <div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">
+                    <img src="../favicon/favicon.ico" alt="Logo" class="w-8 h-8 rounded-lg">
+                </div>
+                <span class="text-xl font-black tracking-tighter text-white hidden sm:block">SHELDON</span>
+            </a>
+
+            <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full">
+                <a href="../" class="nav-tab">Home</a>
+                <a href="../#api" class="nav-tab">API</a>
+                <a href="../resellers/" class="nav-tab">Resell</a>
+                <a href="../api-docs/" class="nav-tab active">API</a>
+            </div>
+
+            <div class="flex items-center gap-5 z-10 shrink-0">
+                <div id="user-profile-trigger" class="hidden flex items-center gap-2 cursor-pointer group" style="position: relative;">
+                    <div class="text-right">
+                        <div class="user-name text-[0.7rem] font-bold text-neutral-400 group-hover:text-white transition-colors">Username</div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group-hover:bg-white/10 transition-all">
+                        <img class="user-avatar w-full h-full object-cover hidden" src="" alt="Avatar">
+                        <svg class="default-avatar w-full h-full text-neutral-400" fill="#ffffff" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <button id="discord-login-btn" class="btn-discord">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 127.14 96.36" fill="#ffffff">
+                        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a.41.41,0,0,0-.43.2,72.48,72.48,0,0,0-3.17,6.52,97.26,97.26,0,0,0-29,0,72.84,72.84,0,0,0-3.19-6.52.4.4,0,0,0-.43-.2A105.09,105.09,0,0,0,19.44,8.07a.44.44,0,0,0-.2.07C2.12,34,1.15,59.39,3.46,84.41a.48.48,0,0,0,.19.34A105.77,105.77,0,0,0,35.77,96.36a.42.42,0,0,0,.46-.22,74.22,74.22,0,0,0,6.42-10.38.4.4,0,0,0-.22-.56,68.7,68.7,0,0,1-10-4.76.41.41,0,0,1,0-.69c.83-.62,1.67-1.28,2.46-1.95a.39.39,0,0,1,.41-.05,73.4,73.4,0,0,0,57.48,0,.39.39,0,0,1,.41.05c.79.67,1.63,1.33,2.46,1.95a.41.41,0,0,1,0,.69,68.61,68.61,0,0,1-10,4.76.41.41,0,0,0-.22.56,74.8,74.8,0,0,0,6.43,10.38.42.42,0,0,0,.46.22,105.48,105.48,0,0,0,32.11-11.61.45.45,0,0,0,.19-.34c2.72-28.53-4.67-53.59-20-76.27A.39.39,0,0,0,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.07,65.69,84.69,65.69Z" />
+                    </svg>
+                    <span id="discord-login-txt" class="hidden sm:inline">Login</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-32 pb-20 px-6 min-h-screen">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-black tracking-tighter text-white mb-4">Reseller API</h1>
+                <p class="text-neutral-500 text-sm">Programmatically manage your licenses with our REST API.</p>
+            </div>
+
+            <!-- Authentication Section -->
+            <div class="endpoint-card">
+                <h2 class="text-xl font-bold text-white mb-4">Authentication</h2>
+                <p class="text-neutral-400 text-sm mb-4">All API requests require your API key to be passed in the Authorization header:</p>
+                <div class="code-block text-[#c7b18f]">
+Authorization: Bearer YOUR_API_KEY
+                </div>
+                <p class="text-neutral-500 text-xs mt-4">Generate your API key in the <a href="../resellers/" class="text-[#c7b18f] hover:underline">Reseller Dashboard</a> under Settings.</p>
+            </div>
+
+            <!-- Base URL -->
+            <div class="endpoint-card">
+                <h2 class="text-xl font-bold text-white mb-4">Base URL</h2>
+                <div class="code-block">
+<span class="text-neutral-500"># Production</span>
+<span class="text-[#c7b18f]">https://api.projectsheldon.com/reseller</span>
+
+<span class="text-neutral-500 mt-4 block"># Local Development</span>
+<span class="text-[#c7b18f]">http://localhost:3350/reseller</span>
+                </div>
+            </div>
+
+            <!-- Endpoints -->
+            <div class="space-y-6">
+                <!-- GET /myavailable -->
+                <div class="endpoint-card">
+                    <h2 class="text-xl font-bold text-white mb-4">
+                        <span class="method-badge method-get">GET</span>
+                        <span class="ml-2">/myavailable</span>
+                    </h2>
+                    <p class="text-neutral-400 text-sm mb-4">Returns all available licenses that are not yet resold.</p>
+                    
+                    <h3 class="text-sm font-bold text-white mb-2">Example Request</h3>
+                    <div class="code-block text-white">
+curl -X GET "https://api.projectsheldon.com/reseller/myavailable" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+                    </div>
+
+                    <h3 class="text-sm font-bold text-white mb-2 mt-4">Response</h3>
+                    <div class="code-block text-white">
+{
+  "ok": true,
+  "licenses": [
+    {
+      "key": "ps-XXXX-XXXXXXX-XXX",
+      "product": "lifetime",
+      "expiration": "2027-01-01T00:00:00.000Z",
+      "created_at": "2026-01-01T00:00:00.000Z"
+    }
+  ]
+}
+                    </div>
+                </div>
+
+                <!-- POST /licenseinfo -->
+                <div class="endpoint-card">
+                    <h2 class="text-xl font-bold text-white mb-4">
+                        <span class="method-badge method-post">POST</span>
+                        <span class="ml-2">/licenseinfo</span>
+                    </h2>
+                    <p class="text-neutral-400 text-sm mb-4">Get information about a specific license.</p>
+                    
+                    <h3 class="text-sm font-bold text-white mb-2">Request Body</h3>
+                    <table class="param-table mb-4">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="param-name">license</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td class="text-neutral-400">The license key</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 class="text-sm font-bold text-white mb-2">Example Request</h3>
+                    <div class="code-block text-white">
+curl -X POST "https://api.projectsheldon.com/reseller/licenseinfo" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"license": "ps-XXXX-XXXXXXX-XXX"}'
+                    </div>
+
+                    <h3 class="text-sm font-bold text-white mb-2 mt-4">Response</h3>
+                    <div class="code-block text-white">
+{
+  "ok": true,
+  "info": {
+    "key": "ps-XXXX-XXXXXXX-XXX",
+    "product": "lifetime",
+    "expiration": "2027-01-01T00:00:00.000Z",
+    "is_expired": false,
+    "is_assigned": false,
+    "created_at": "2026-01-01T00:00:00.000Z"
+  }
+}
+                    </div>
+                </div>
+
+                <!-- GET /fetchlicense -->
+                <div class="endpoint-card">
+                    <h2 class="text-xl font-bold text-white mb-4">
+                        <span class="method-badge method-get">GET</span>
+                        <span class="ml-2">/fetchlicense</span>
+                    </h2>
+                    <p class="text-neutral-400 text-sm mb-4">Get a random available license from your stock.</p>
+                    
+                    <h3 class="text-sm font-bold text-white mb-2">Example Request</h3>
+                    <div class="code-block text-white">
+curl -X GET "https://api.projectsheldon.com/reseller/fetchlicense" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+                    </div>
+
+                    <h3 class="text-sm font-bold text-white mb-2 mt-4">Response</h3>
+                    <div class="code-block text-white">
+{
+  "ok": true,
+  "license": {
+    "key": "ps-XXXX-XXXXXXX-XXX",
+    "expiration": "2027-01-01T00:00:00.000Z"
+  }
+}
+                    </div>
+                </div>
+
+                <!-- POST /assignlicense -->
+                <div class="endpoint-card">
+                    <h2 class="text-xl font-bold text-white mb-4">
+                        <span class="method-badge method-post">POST</span>
+                        <span class="ml-2">/assignlicense</span>
+                    </h2>
+                    <p class="text-neutral-400 text-sm mb-4">Assign a license to a Discord user. A claim token will be generated and sent to the user via DM.</p>
+                    
+                    <h3 class="text-sm font-bold text-white mb-2">Request Body</h3>
+                    <table class="param-table mb-4">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="param-name">license</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td class="text-neutral-400">The license key to assign</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">discord_user_id</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td class="text-neutral-400">The Discord user ID to assign to</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 class="text-sm font-bold text-white mb-2">Example Request</h3>
+                    <div class="code-block text-white">
+curl -X POST "https://api.projectsheldon.com/reseller/assignlicense" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"license": "ps-XXXX-XXXXXXX-XXX", "discord_user_id": "123456789012345678"}'
+                    </div>
+
+                    <h3 class="text-sm font-bold text-white mb-2 mt-4">Response</h3>
+                    <div class="code-block text-white">
+{
+  "ok": true,
+  "message": "License assigned successfully"
+}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rate Limiting -->
+            <div class="endpoint-card mt-8">
+                <h2 class="text-xl font-bold text-white mb-4">Rate Limiting</h2>
+                <p class="text-neutral-400 text-sm">API requests are limited to <span class="text-[#c7b18f]">100 requests per minute</span> per API key. If you exceed this limit, you'll receive:</p>
+                <div class="code-block mt-4">
+{
+  "ok": false,
+  "message": "Rate limit exceeded. Try again later."
+}
+                </div>
+            </div>
+
+            <!-- Error Responses -->
+            <div class="endpoint-card">
+                <h2 class="text-xl font-bold text-white mb-4">Error Responses</h2>
+                <p class="text-neutral-400 text-sm mb-4">All errors follow this format:</p>
+                <div class="code-block text-white">
+{
+  "ok": false,
+  "message": "Error description here"
+}
+                </div>
+                <table class="param-table mt-4">
+                    <thead>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Meaning</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="param-name">401</span></td>
+                            <td class="text-neutral-400">Invalid or missing API key</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">400</span></td>
+                            <td class="text-neutral-400">Invalid request parameters</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">403</span></td>
+                            <td class="text-neutral-400">Access denied (not a verified reseller)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">429</span></td>
+                            <td class="text-neutral-400">Rate limit exceeded</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="pt-32 pb-16 border-t border-white/5 relative bg-black/40">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-20">
+                <div class="space-y-6 max-w-sm">
+                    <div class="text-3xl font-black tracking-tighter text-white flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm">
+                            <div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">
+                                <img src="../favicon/favicon.ico" alt="Logo" class="w-8 h-8 rounded-lg">
+                            </div>
+                        </div>SHELDON
+                    </div>
+                    <p class="text-neutral-500 text-sm font-medium leading-relaxed">Have fun using Project Sheldon, and
+                        also if you can support me!</p>
+                </div>
+                <div class="grid grid-cols-2 gap-16 md:gap-24">
+                    <div class="space-y-6">
+                        <h4 class="text-[0.65rem] font-black text-white uppercase tracking-[0.2em]">Community</h4>
+                        <ul class="space-y-4 text-sm font-bold">
+                            <li>
+                                <a href="javascript:void(0)" onclick="RedirectToPlatform('personal_youtube')"
+                                    class="text-neutral-400 hover:text-white transition-colors">YouTube</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0)" onclick="RedirectToPlatform('discord_invite')"
+                                    class="text-neutral-400 hover:text-white transition-colors">Discord Server</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="space-y-6">
+                        <h4 class="text-[0.65rem] font-black text-white uppercase tracking-[0.2em]">Legal</h4>
+                        <ul class="space-y-4 text-sm font-bold">
+                            <li><a href="/terms" class="text-neutral-400 hover:text-white transition-colors">Terms of
+                                    Service</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-white/5 flex justify-center md:justify-start">
+                <p class="text-neutral-600 text-[0.6rem] font-bold tracking-[0.1em] uppercase">&copy; 2026 PROJECT
+                    SHELDON • ALL RIGHTS RESERVED</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="../js/discord/topbar_buttons.js"></script>
+    <script type="module" src="../js/util/redirect.js"></script>
+</body>
+
+</html>
