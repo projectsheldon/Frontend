@@ -6,24 +6,6 @@ import Api from "../../util/backend.js";
 const urlParams = new URLSearchParams(window.location.search);
 const productKey = urlParams.get('product') || 'lifetime';
 
-window.selectedCurrency = 'BTC';
-window.quantity = 1;
-window.basePrice = 0;
-window.isReseller = false;
-window.personalUse = true;
-
-window.calculateDiscount = function() {
-    if (!window.isReseller || window.personalUse || window.quantity <= 4) {
-        return 0;
-    }
-    return window.basePrice * window.quantity * 0.24;
-}
-
-window.getFinalTotal = function() {
-    const subtotal = window.basePrice * window.quantity;
-    return subtotal - window.calculateDiscount();
-}
-
 const loginRequiredEl = document.getElementById('login-required');
 const paymentFormEl = document.getElementById('payment-form');
 const personalUseSection = document.getElementById('personal-use-section');
@@ -48,7 +30,6 @@ document.addEventListener("DOMContentLoaded", async function()
 
     // Payment Buttons
     {
-        // crypto
         const payCrypto = document.getElementById('connect-wallet');
         if(payCrypto)
         {
@@ -57,7 +38,6 @@ document.addEventListener("DOMContentLoaded", async function()
             });
         }
 
-        // paypal
         await PaypalManager.LoadSDK();
         const paypalButtons = CreatePaypalButtons();
         await paypalButtons.render('#paypal-button-container');
@@ -81,10 +61,6 @@ async function CheckResellerStatus() {
                 const checkbox = document.getElementById('personal-use-checkbox');
                 if (checkbox) {
                     checkbox.checked = window.personalUse;
-                    checkbox.addEventListener('change', (e) => {
-                        window.personalUse = e.target.checked;
-                        window.updatePriceDisplay();
-                    });
                 }
             }
             window.updatePriceDisplay();
@@ -156,27 +132,3 @@ async function LoadProductInfo()
         console.error('Failed to load product:', error);
     }
 }
-
-window.updatePriceDisplay = function()
-{
-    const subtotal = window.basePrice * window.quantity;
-    const discount = window.calculateDiscount();
-    const finalTotal = subtotal - discount;
-    const subtotalEl = document.getElementById('subtotal-price');
-    const discountEl = document.getElementById('discount-price');
-    const discountRow = document.getElementById('discount-row');
-    const finalTotalEl = document.getElementById('final-total-price');
-
-    if(subtotalEl) subtotalEl.textContent = '€' + subtotal.toFixed(2);
-    
-    if (discountRow) {
-        if (discount > 0) {
-            discountRow.classList.remove('hidden');
-            if (discountEl) discountEl.textContent = '-€' + discount.toFixed(2);
-            if (finalTotalEl) finalTotalEl.textContent = '€' + finalTotal.toFixed(2);
-        } else {
-            discountRow.classList.add('hidden');
-            if (finalTotalEl) finalTotalEl.textContent = '€' + subtotal.toFixed(2);
-        }
-    }
-};

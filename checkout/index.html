@@ -45,10 +45,17 @@
         window.personalUse = true;
 
         window.calculateDiscount = function() {
-            if (!window.isReseller || window.personalUse || window.quantity <= 4) {
+            const subtotal = window.basePrice * window.quantity;
+            
+            // Three conditions for 24% bulk discount:
+            // 1. User must be a verified reseller
+            // 2. Licenses must be for resale (personal use unchecked)
+            // 3. Quantity must be 4 or more
+            if (!window.isReseller || window.personalUse || window.quantity < 4) {
                 return 0;
             }
-            return window.basePrice * window.quantity * 0.24;
+            
+            return subtotal * 0.24;
         }
 
         window.getFinalTotal = function() {
@@ -69,17 +76,30 @@
             if (amountEl) amountEl.textContent = window.quantity;
             if (subtotalEl) subtotalEl.textContent = '€' + subtotal.toFixed(2);
             
-            if (discountRow) {
-                if (discount > 0) {
-                    discountRow.classList.remove('hidden');
-                    if (discountEl) discountEl.textContent = '-€' + discount.toFixed(2);
-                    if (finalTotalEl) finalTotalEl.textContent = '€' + finalTotal.toFixed(2);
-                } else {
-                    discountRow.classList.add('hidden');
-                    if (subtotalEl) subtotalEl.textContent = '€' + subtotal.toFixed(2);
-                }
-            }
+            // Update discount and total
+            if (discountEl) discountEl.textContent = '-€' + discount.toFixed(2);
+            if (finalTotalEl) finalTotalEl.textContent = '€' + finalTotal.toFixed(2);
         }
+        
+        // Personal Use Tooltip
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltip = document.getElementById('personal-use-tooltip');
+            const tooltipTrigger = document.getElementById('personal-use-tooltip-trigger');
+            
+            if (tooltip && tooltipTrigger) {
+                tooltipTrigger.addEventListener('mouseenter', () => {
+                    tooltip.style.visibility = 'visible';
+                    tooltip.style.opacity = '1';
+                });
+                
+                tooltipTrigger.addEventListener('mouseleave', () => {
+                    tooltip.style.opacity = '0';
+                    setTimeout(() => {
+                        tooltip.style.visibility = 'hidden';
+                    }, 200);
+                });
+            }
+        });
     </script>
     <style>
         body {
@@ -172,7 +192,7 @@
             border-radius: 32px;
             display: flex;
             flex-direction: column;
-            width: 95%;
+            width: 100%;
             max-width: 1100px;
             min-height: 480px;
             overflow: hidden;
@@ -483,9 +503,30 @@
                         id="product-name">{ product_name }</h2>
                     <p class="text-neutral-400 text-xs leading-relaxed mb-2">
                         After buying you can view your license by clicking your Discord avatar in the topbar.
-                        <!-- <br>
-                        Includes all future updates and community support. -->
                     </p>
+                    
+                    <!-- Personal Use toggle (for resellers only) -->
+                    <div id="personal-use-section" class="hidden" style="margin-top: 12px; position: relative;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <div class="relative">
+                                    <input type="checkbox" id="personal-use-checkbox" class="sr-only peer" onclick="window.personalUse = this.checked; window.updatePriceDisplay();">
+                                    <div class="w-10 h-6 bg-white/10 rounded-full peer peer-checked:bg-[#c7b18f]/30 transition-all"></div>
+                                    <div class="absolute left-1 top-1 w-4 h-4 bg-white/50 rounded-full transition-all peer-checked:translate-x-4 peer-checked:bg-[#c7b18f]"></div>
+                                </div>
+                                <span class="text-sm font-bold text-white">Personal Use</span>
+                            </label>
+                            <span id="personal-use-tooltip-trigger" class="text-neutral-500 hover:text-neutral-300 cursor-help text-xs" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">?</span>
+                        </div>
+                        <div id="personal-use-tooltip" style="visibility: hidden; opacity: 0; transition: opacity 0.2s ease, visibility 0.2s ease; position: absolute; top: 100%; left: 0; z-index: 50; margin-top: 8px; padding: 10px 12px; background: rgba(20,20,20,0.98); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.8); max-width: 240px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                            <div style="margin-bottom: 6px;">
+                                <span class="font-bold" style="color: #c7b18f;">OFF</span> = For resale (buy 4+ for 24% off!)
+                            </div>
+                            <div>
+                                <span class="font-bold" style="color: #c7b18f;">ON</span> = Personal use only
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="mt-auto">
                     <div class="h-px bg-white/5 w-full my-4"></div>
@@ -501,9 +542,15 @@
                     </div>
                     
                     <!-- Subtotal row -->
-                    <div id="discount-row" class="hidden" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="text-xs font-bold text-green-400">Bulk Discount (24%):</span>
-                        <span id="discount-price" class="text-sm font-bold text-green-400">-€0.00</span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="text-xs font-bold" style="color: rgba(255,255,255,0.5);">Subtotal:</span>
+                        <span id="subtotal-price" class="text-sm font-bold">€0.00</span>
+                    </div>
+                    
+                    <!-- Discount row -->
+                    <div id="discount-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="text-xs font-bold" style="color: rgba(255,255,255,0.5);">Reseller Discount (24%):</span>
+                        <span id="discount-price" class="text-xs font-bold">€0.00</span>
                     </div>
                     
                     <!-- Total row -->
@@ -512,16 +559,6 @@
                         <span id="final-total-price" class="text-2xl font-bold">€0.00</span>
                     </div>
                     
-                    <!-- Personal Use checkbox (for resellers only) -->
-                    <div id="personal-use-section" class="hidden" style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;">
-                        <label class="flex items-start gap-3 cursor-pointer">
-                            <input type="checkbox" id="personal-use-checkbox" class="w-4 h-4 mt-0.5 accent-[#c7b18f]">
-                            <div>
-                                <span class="text-sm font-bold text-white">Personal Use</span>
-                                <p class="text-xs text-neutral-500 mt-1">Check = License locked to your Discord<br>Uncheck = Added to your resale stock</p>
-                            </div>
-                        </label>
-                    </div>
                 </div>
             </div>
 

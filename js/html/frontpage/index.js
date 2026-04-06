@@ -75,6 +75,8 @@ async function HandleDownload()
     const downloadButton = document.getElementById('download-btn');
     if(!downloadButton) return;
 
+    const originalText = downloadButton.textContent;
+    downloadButton.innerHTML = '<div class="download-spinner"></div>';
     downloadButton.disabled = true;
 
     try
@@ -101,6 +103,7 @@ async function HandleDownload()
         alert('Failed to get the latest download. Please try again.');
     } finally
     {
+        downloadButton.textContent = originalText;
         downloadButton.disabled = false;
     }
 }

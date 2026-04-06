@@ -179,6 +179,16 @@
             animation: spin 1s linear infinite;
         }
 
+        .loading-spinner-sm {
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            border-top-color: #000;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -466,7 +476,7 @@
 
         <div id="reseller-login-state" class="centered-card hidden">
             <div class="centered-content">
-                <h2 class="card-title">Reseller Login</h2>
+                <h2 class="card-title">Login</h2>
                 <p class="card-desc">Enter your reseller password to continue.</p>
                 <form id="reseller-login-form" class="flex flex-col gap-3 mt-4">
                     <div class="relative">
@@ -1105,7 +1115,19 @@
                 return;
             }
             
+            const currentUser = await DiscordAuth.GetUser();
+            if (currentUser && currentUser.id === discordId) {
+                errorEl.textContent = 'Cannot assign license to yourself';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
             errorEl.classList.add('hidden');
+            
+            const nextBtn = document.querySelector('#assign-form button[type="submit"]');
+            const originalBtnText = nextBtn.innerHTML;
+            nextBtn.innerHTML = '<div class="loading-spinner-sm"></div>';
+            nextBtn.disabled = true;
             
             try {
                 const userData = await fetchDiscordUser(discordId);
@@ -1113,6 +1135,8 @@
                 if (!userData.ok || !userData.user) {
                     errorEl.textContent = 'Discord user not found';
                     errorEl.classList.remove('hidden');
+                    nextBtn.innerHTML = originalBtnText;
+                    nextBtn.disabled = false;
                     return;
                 }
                 
@@ -1130,18 +1154,26 @@
             } catch (err) {
                 errorEl.textContent = 'Failed to verify user';
                 errorEl.classList.remove('hidden');
+            } finally {
+                nextBtn.innerHTML = originalBtnText;
+                nextBtn.disabled = false;
             }
         }
 
         async function confirmAssign() {
             const password = document.getElementById('assign-password').value;
             const errorEl = document.getElementById('assign-password-error');
+            const confirmBtn = document.getElementById('confirm-assign-btn');
+            const originalBtnText = confirmBtn.innerHTML;
             
             if (!password) {
                 errorEl.textContent = 'Please enter your password';
                 errorEl.classList.remove('hidden');
                 return;
             }
+            
+            confirmBtn.innerHTML = '<div class="loading-spinner-sm"></div>';
+            confirmBtn.disabled = true;
             
             const apiUrl = await getApiUrl();
             const token = DiscordAuth.GetSessionToken();
@@ -1169,10 +1201,14 @@
                 } else {
                     errorEl.textContent = data.message || 'Failed to assign license';
                     errorEl.classList.remove('hidden');
+                    confirmBtn.innerHTML = originalBtnText;
+                    confirmBtn.disabled = false;
                 }
             } catch (err) {
                 errorEl.textContent = 'Connection error';
                 errorEl.classList.remove('hidden');
+                confirmBtn.innerHTML = originalBtnText;
+                confirmBtn.disabled = false;
             }
         }
 

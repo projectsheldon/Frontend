@@ -285,6 +285,20 @@
             box-shadow: 0 10px 40px rgba(199, 177, 143, 0.3);
         }
 
+        .download-spinner {
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            border-top-color: #000;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: downloadSpin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes downloadSpin {
+            to { transform: rotate(360deg); }
+        }
+
         .btn-secondary {
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
@@ -711,7 +725,7 @@
                     <div class="space-y-6">
                         <h4 class="text-[0.65rem] font-black text-white uppercase tracking-[0.2em]">Legal</h4>
                         <ul class="space-y-4 text-sm font-bold">
-                            <li><a href="#" class="text-neutral-400 hover:text-white transition-colors">Terms of
+                            <li><a href="/terms" class="text-neutral-400 hover:text-white transition-colors">Terms of
                                     Service</a></li>
                         </ul>
                     </div>
