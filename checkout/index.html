@@ -41,13 +41,44 @@
         window.selectedCurrency = 'BTC';
         window.quantity = 1;
         window.basePrice = 0;
+        window.isReseller = false;
+        window.personalUse = true;
+
+        window.calculateDiscount = function() {
+            if (!window.isReseller || window.personalUse || window.quantity <= 4) {
+                return 0;
+            }
+            return window.basePrice * window.quantity * 0.24;
+        }
+
+        window.getFinalTotal = function() {
+            const subtotal = window.basePrice * window.quantity;
+            return subtotal - window.calculateDiscount();
+        }
 
         window.updatePriceDisplay = function () {
             const subtotal = window.basePrice * window.quantity;
+            const discount = window.calculateDiscount();
+            const finalTotal = subtotal - discount;
             const amountEl = document.getElementById('amount-count');
             const subtotalEl = document.getElementById('subtotal-price');
+            const discountEl = document.getElementById('discount-price');
+            const discountRow = document.getElementById('discount-row');
+            const finalTotalEl = document.getElementById('final-total-price');
+            
             if (amountEl) amountEl.textContent = window.quantity;
             if (subtotalEl) subtotalEl.textContent = '€' + subtotal.toFixed(2);
+            
+            if (discountRow) {
+                if (discount > 0) {
+                    discountRow.classList.remove('hidden');
+                    if (discountEl) discountEl.textContent = '-€' + discount.toFixed(2);
+                    if (finalTotalEl) finalTotalEl.textContent = '€' + finalTotal.toFixed(2);
+                } else {
+                    discountRow.classList.add('hidden');
+                    if (subtotalEl) subtotalEl.textContent = '€' + subtotal.toFixed(2);
+                }
+            }
         }
     </script>
     <style>
@@ -469,10 +500,16 @@
                         </div>
                     </div>
                     
+                    <!-- Subtotal row -->
+                    <div id="discount-row" class="hidden" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="text-xs font-bold text-green-400">Bulk Discount (24%):</span>
+                        <span id="discount-price" class="text-sm font-bold text-green-400">-€0.00</span>
+                    </div>
+                    
                     <!-- Total row -->
                     <div style="display: flex; align-items: center; justify-content: space-between;">
                         <span class="text-lg font-bold text-white">Total:</span>
-                        <span id="subtotal-price" class="text-2xl font-bold">€0.00</span>
+                        <span id="final-total-price" class="text-2xl font-bold">€0.00</span>
                     </div>
                     
                     <!-- Personal Use checkbox (for resellers only) -->

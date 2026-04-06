@@ -659,7 +659,7 @@
                 <!-- Tabs -->
                 <div class="flex gap-8 mb-6" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
                     <button id="tab-licenses" class="dashboard-tab active pb-3 text-base font-medium transition-all" onclick="switchDashboardTab('licenses')" style="color: #c7b18f; border-bottom: 2px solid #c7b18f; margin-bottom: -1px;">
-                        License Explorer
+                        Available
                     </button>
                     <button id="tab-settings" class="dashboard-tab pb-3 text-base font-medium transition-all" onclick="switchDashboardTab('settings')" style="color: #737373;">
                         Settings
@@ -933,18 +933,21 @@
             const licensesTab = document.getElementById('tab-licenses');
             const settingsTab = document.getElementById('tab-settings');
             
+            const resetTabs = () => {
+                licensesTab.style.color = '#737373';
+                licensesTab.style.borderBottom = 'none';
+                settingsTab.style.color = '#737373';
+                settingsTab.style.borderBottom = 'none';
+            };
+            
+            resetTabs();
+            
             if (tab === 'licenses') {
                 licensesTab.style.color = '#c7b18f';
                 licensesTab.style.borderBottom = '2px solid #c7b18f';
-                licensesTab.style.marginBottom = '-1px';
-                settingsTab.style.color = '#737373';
-                settingsTab.style.borderBottom = 'none';
-            } else {
+            } else if (tab === 'settings') {
                 settingsTab.style.color = '#c7b18f';
                 settingsTab.style.borderBottom = '2px solid #c7b18f';
-                settingsTab.style.marginBottom = '-1px';
-                licensesTab.style.color = '#737373';
-                licensesTab.style.borderBottom = 'none';
             }
             
             document.getElementById('tab-content-licenses')?.classList.toggle('hidden', tab !== 'licenses');
