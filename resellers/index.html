@@ -101,23 +101,47 @@
             color: #c7b18f;
         }
 
-        @media (max-width: 768px) {
-            .nav-tabs-desktop {
-                display: none;
-            }
-            
-            .mobile-menu-btn {
-                display: block;
-            }
-            
-            .mobile-menu {
-                display: none;
-            }
-            
-            .mobile-menu.show {
-                display: flex;
-            }
-        }
+@media (max-width: 768px) {
+    .nav-tabs-desktop {
+        display: none;
+    }
+    
+    .mobile-menu-btn {
+        display: block;
+    }
+    
+    .mobile-menu {
+        display: none;
+    }
+    
+    .mobile-menu.show {
+        display: flex;
+    }
+
+    nav {
+        padding: 0.5rem !important;
+    }
+
+    nav > div {
+        height: 3rem !important;
+        padding: 0 0.75rem !important;
+        border-radius: 0.75rem !important;
+    }
+
+    .logo-box {
+        width: 2rem !important;
+        height: 2rem !important;
+    }
+
+    .logo-box img {
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+    }
+
+    #discord-login-btn {
+        padding: 0.5rem 0.75rem !important;
+    }
+}
 
         .nav-tab::after {
             content: '';
