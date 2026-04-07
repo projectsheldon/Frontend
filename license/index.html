@@ -255,11 +255,29 @@
             text-transform: uppercase;
             letter-spacing: 0.1em;
             transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: #c7b18f;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
         }
 
         .nav-tab.active,
         .nav-tab:hover {
             color: white;
+        }
+
+        .nav-tab.active::after,
+        .nav-tab:hover::after {
+            width: 60%;
         }
 
         .btn-discord {
@@ -317,7 +335,7 @@
 
             <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full">
                 <a href="../" class="nav-tab">Home</a>
-                <a href="../#api" class="nav-tab">API</a>
+                <a href="../api-docs/" class="nav-tab">API</a>
                 <a href="../resellers/" class="nav-tab">Resell</a>
             </div>
 

@@ -1,16 +1,36 @@
 import Api from "../../util/backend.js";
 import { Product, ProductsManager } from "../../payment/products/manager.js";
 
-// tabs
-const navTabs = document.querySelectorAll('.nav-tab');
-navTabs.forEach(tab =>
-{
-    tab.addEventListener('click', () =>
+// Only run tab logic on homepage
+const isHomepage = window.location.pathname === '/' || window.location.pathname.endsWith('/index.html');
+
+if (isHomepage) {
+    // tabs
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+
+    navTabs.forEach(tab =>
     {
-        navTabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
+        tab.addEventListener('click', (e) =>
+        {
+            const href = tab.getAttribute('href');
+            if(!href || href === '#') {
+                e.preventDefault();
+                navTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                return;
+            }
+            
+            const targetPath = new URL(href, window.location.origin).pathname.replace(/\/$/, '') || '/';
+            
+            if(targetPath === currentPath) {
+                e.preventDefault();
+                navTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            }
+        });
     });
-});
+}
 
 // pricing
 const productsContainer = document.getElementById('products-grid');

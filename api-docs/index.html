@@ -10,6 +10,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="icon" href="../favicon/favicon.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
     <script>
         window.addEventListener('error', function (e) {
             if (e.message && (e.message.includes('youtube.com') || e.message.includes('ERR_BLOCKED_BY_CLIENT') || e.filename.includes('youtube.com'))) {
@@ -53,10 +59,28 @@
             text-transform: uppercase;
             letter-spacing: 0.1em;
             transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: #c7b18f;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
         }
 
         .nav-tab:hover, .nav-tab.active {
             color: white;
+        }
+
+        .nav-tab.active::after,
+        .nav-tab:hover::after {
+            width: 60%;
         }
 
         .btn-discord {
@@ -81,33 +105,79 @@
             transform: translateY(-1px);
         }
 
-        footer a {
-            position: relative;
-        }
-
-        footer a::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
+        .sidebar {
+            width: 280px;
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            height: calc(100vh - 64px);
+            position: fixed;
+            top: 64px;
             left: 0;
-            width: 0;
-            height: 1px;
-            background: #c7b18f;
-            transition: width 0.3s ease;
+            overflow-y: auto;
+            padding: 1rem 0;
         }
 
-        footer a:hover::after {
-            width: 100%;
+        .sidebar-section {
+            margin-bottom: 0.5rem;
         }
 
-        .code-block {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .sidebar-title {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .sidebar-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-link.active {
+            color: #c7b18f;
+            background: rgba(199, 177, 143, 0.1);
+            border-right: 2px solid #c7b18f;
+        }
+
+        .sidebar-link .method {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            min-height: calc(100vh - 64px);
+        }
+
+        .endpoint-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
             border-radius: 12px;
-            padding: 16px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            overflow-x: auto;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .endpoint-card:hover {
+            border-color: #3b4252;
         }
 
         .method-badge {
@@ -119,22 +189,22 @@
             text-transform: uppercase;
         }
 
-        .method-get {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-        }
-
         .method-post {
             background: rgba(59, 130, 246, 0.2);
             color: #3b82f6;
         }
 
-        .endpoint-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 24px;
+        .code-block {
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: Consolas, 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
 
         .param-table {
@@ -169,13 +239,80 @@
             color: rgba(255, 255, 255, 0.4);
             font-size: 11px;
         }
+
+        .lang-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .lang-tab {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .lang-tab svg {
+            flex-shrink: 0;
+        }
+
+        .lang-tab span {
+            margin-left: 4px;
+        }
+
+        .lang-tab.js-tab {
+            background: rgba(247, 223, 30, 0.1);
+            color: #f7df1e;
+            border-color: rgba(247, 223, 30, 0.2);
+        }
+
+        .lang-tab.js-tab.active {
+            background: rgba(247, 223, 30, 0.2);
+            border-color: #f7df1e;
+        }
+
+        .lang-tab.py-tab {
+            background: rgba(55, 118, 171, 0.1);
+            color: #3776ab;
+            border-color: rgba(55, 118, 171, 0.2);
+        }
+
+        .lang-tab.py-tab.active {
+            background: rgba(55, 118, 171, 0.2);
+            border-color: #3776ab;
+        }
+
+        .code-container {
+            display: none;
+        }
+
+        .code-container.active {
+            display: block;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
 
 <body class="antialiased">
     <div class="bg-mesh"></div>
 
-    <nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center">
+    <nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center" style="height: 64px;">
         <div class="w-full max-w-[1100px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">
             <a href="../" class="flex items-center gap-3 z-10 shrink-0">
                 <div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">
@@ -186,9 +323,8 @@
 
             <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full">
                 <a href="../" class="nav-tab">Home</a>
-                <a href="../#api" class="nav-tab">API</a>
-                <a href="../resellers/" class="nav-tab">Resell</a>
                 <a href="../api-docs/" class="nav-tab active">API</a>
+                <a href="../resellers/" class="nav-tab">Resell</a>
             </div>
 
             <div class="flex items-center gap-5 z-10 shrink-0">
@@ -214,72 +350,132 @@
         </div>
     </nav>
 
-    <main class="pt-32 pb-20 px-6 min-h-screen">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-title">Getting Started</div>
+            <a class="sidebar-link" href="#introduction">Introduction</a>
+            <a class="sidebar-link" href="#authentication">Authentication</a>
+            <a class="sidebar-link" href="#rate-limiting">Rate Limiting</a>
+            <a class="sidebar-link" href="#errors">Errors</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Endpoints</div>
+            <a class="sidebar-link" href="#myavailable">
+                <span class="method">POST</span>
+                /myavailable
+            </a>
+            <a class="sidebar-link" href="#licenseinfo">
+                <span class="method">POST</span>
+                /licenseinfo
+            </a>
+            <a class="sidebar-link" href="#fetchlicense">
+                <span class="method">POST</span>
+                /fetchlicense
+            </a>
+            <a class="sidebar-link" href="#assignlicense">
+                <span class="method">POST</span>
+                /assignlicense
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
         <div class="max-w-4xl mx-auto">
-            <div class="text-center mb-12">
+            <div class="mb-12">
                 <h1 class="text-4xl md:text-5xl font-black tracking-tighter text-white mb-4">Reseller API</h1>
                 <p class="text-neutral-500 text-sm">Programmatically manage your licenses with our REST API.</p>
             </div>
 
-            <!-- Authentication Section -->
-            <div class="endpoint-card">
-                <h2 class="text-xl font-bold text-white mb-4">Authentication</h2>
-                <p class="text-neutral-400 text-sm mb-4">All API requests require your API key to be passed in the Authorization header:</p>
-                <div class="code-block text-[#c7b18f]">
-Authorization: Bearer YOUR_API_KEY
-                </div>
+            <!-- Base URL -->
+            <div class="endpoint-card" id="introduction">
+                <h2 class="text-xl font-bold text-white mb-4">Base URL</h2>
+                <pre><code class="language-python code-block"># Your API base URL:
+__BASE_URL__/reseller
+
+# Example full endpoint:
+__BASE_URL__/reseller/myavailable</code></pre>
                 <p class="text-neutral-500 text-xs mt-4">Generate your API key in the <a href="../resellers/" class="text-[#c7b18f] hover:underline">Reseller Dashboard</a> under Settings.</p>
             </div>
 
-            <!-- Base URL -->
-            <div class="endpoint-card">
-                <h2 class="text-xl font-bold text-white mb-4">Base URL</h2>
-                <div class="code-block">
-<span class="text-neutral-500"># Production</span>
-<span class="text-[#c7b18f]">https://api.projectsheldon.com/reseller</span>
-
-<span class="text-neutral-500 mt-4 block"># Local Development</span>
-<span class="text-[#c7b18f]">http://localhost:3350/reseller</span>
-                </div>
+            <!-- Authentication Section -->
+            <div class="endpoint-card" id="authentication">
+                <h2 class="text-xl font-bold text-white mb-4">Authentication</h2>
+                <p class="text-neutral-400 text-sm mb-4">All API requests require your API key passed in the request body:</p>
+                <pre><code class="language-json code-block">{
+  "api_token": "YOUR_API_KEY",
+  // ... other parameters
+}</code></pre>
+                <p class="text-neutral-500 text-xs mt-4">Keep your API key secret. It provides full access to your reseller account.</p>
             </div>
 
             <!-- Endpoints -->
             <div class="space-y-6">
-                <!-- GET /myavailable -->
-                <div class="endpoint-card">
+                <!-- POST /myavailable -->
+                <div class="endpoint-card" id="myavailable">
                     <h2 class="text-xl font-bold text-white mb-4">
-                        <span class="method-badge method-get">GET</span>
-                        <span class="ml-2">/myavailable</span>
+                        <span class="method-badge method-post">POST</span>
+                        <span class="ml-2 font-mono">/myavailable</span>
                     </h2>
                     <p class="text-neutral-400 text-sm mb-4">Returns all available licenses that are not yet resold.</p>
                     
-                    <h3 class="text-sm font-bold text-white mb-2">Example Request</h3>
-                    <div class="code-block text-white">
-curl -X GET "https://api.projectsheldon.com/reseller/myavailable" \
-  -H "Authorization: Bearer YOUR_API_KEY"
+                    <div class="lang-tabs">
+                        <div class="lang-tab js-tab active" onclick="switchTab(this, 'myavailable', 'js')" role="tab" aria-label="JavaScript" aria-selected="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#F7DF1E"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#000">JS</text></svg>
+                            <span>JavaScript</span>
+                        </div>
+                        <div class="lang-tab py-tab" onclick="switchTab(this, 'myavailable', 'py')" role="tab" aria-label="Python" aria-selected="false">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#3776AB"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#FFD43B">PY</text></svg>
+                            <span>Python</span>
+                        </div>
+                    </div>
+                    
+                    <div id="code-myavailable-js" class="code-container active">
+                        <pre><code class="language-javascript code-block js">const BASE_URL = "__BASE_URL__/reseller";
+
+fetch(BASE_URL + "/myavailable", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    api_token: "YOUR_API_KEY"
+  })
+})
+.then(res => res.json())
+.then(console.log);</code></pre>
+                    </div>
+                    
+                    <div id="code-myavailable-py" class="code-container">
+                        <pre><code class="language-python code-block py">import requests
+
+BASE_URL = "__BASE_URL__/reseller"
+
+response = requests.post(
+    BASE_URL + "/myavailable",
+    json={"api_token": "YOUR_API_KEY"}
+)
+print(response.json())</code></pre>
                     </div>
 
                     <h3 class="text-sm font-bold text-white mb-2 mt-4">Response</h3>
-                    <div class="code-block text-white">
-{
+                    <pre><code class="language-json code-block">{
   "ok": true,
   "licenses": [
     {
       "key": "ps-XXXX-XXXXXXX-XXX",
       "product": "lifetime",
-      "expiration": "2027-01-01T00:00:00.000Z",
-      "created_at": "2026-01-01T00:00:00.000Z"
+      "expiration": 1767225600000,
+      "created_at": 1735689600000
     }
   ]
-}
-                    </div>
+}</code></pre>
                 </div>
 
                 <!-- POST /licenseinfo -->
-                <div class="endpoint-card">
+                <div class="endpoint-card" id="licenseinfo">
                     <h2 class="text-xl font-bold text-white mb-4">
                         <span class="method-badge method-post">POST</span>
-                        <span class="ml-2">/licenseinfo</span>
+                        <span class="ml-2 font-mono">/licenseinfo</span>
                     </h2>
                     <p class="text-neutral-400 text-sm mb-4">Get information about a specific license.</p>
                     
@@ -294,6 +490,11 @@ curl -X GET "https://api.projectsheldon.com/reseller/myavailable" \
                         </thead>
                         <tbody>
                             <tr>
+                                <td><span class="param-name">api_token</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td class="text-neutral-400">Your API key</td>
+                            </tr>
+                            <tr>
                                 <td><span class="param-name">license</span></td>
                                 <td><span class="param-type">string</span></td>
                                 <td class="text-neutral-400">The license key</td>
@@ -301,63 +502,123 @@ curl -X GET "https://api.projectsheldon.com/reseller/myavailable" \
                         </tbody>
                     </table>
                     
-                    <h3 class="text-sm font-bold text-white mb-2">Example Request</h3>
-                    <div class="code-block text-white">
-curl -X POST "https://api.projectsheldon.com/reseller/licenseinfo" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"license": "ps-XXXX-XXXXXXX-XXX"}'
+                    <div class="lang-tabs">
+                        <div class="lang-tab js-tab active" onclick="switchTab(this, 'licenseinfo', 'js')" role="tab" aria-label="JavaScript" aria-selected="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#F7DF1E"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#000">JS</text></svg>
+                            <span>JavaScript</span>
+                        </div>
+                        <div class="lang-tab py-tab" onclick="switchTab(this, 'licenseinfo', 'py')" role="tab" aria-label="Python" aria-selected="false">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#3776AB"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#FFD43B">PY</text></svg>
+                            <span>Python</span>
+                        </div>
+                    </div>
+                    
+                    <div id="code-licenseinfo-js" class="code-container active">
+                        <pre><code class="language-javascript code-block js">const BASE_URL = "__BASE_URL__/reseller";
+
+fetch(BASE_URL + "/licenseinfo", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    api_token: "YOUR_API_KEY",
+    license: "ps-XXXX-XXXXXXX-XXX"
+  })
+})
+.then(res => res.json())
+.then(console.log);</code></pre>
+                    </div>
+                    
+                    <div id="code-licenseinfo-py" class="code-container">
+                        <pre><code class="language-python code-block py">import requests
+
+BASE_URL = "__BASE_URL__/reseller"
+
+response = requests.post(
+    BASE_URL + "/licenseinfo",
+    json={
+        "api_token": "YOUR_API_KEY",
+        "license": "ps-XXXX-XXXXXXX-XXX"
+    }
+)
+print(response.json())</code></pre>
                     </div>
 
                     <h3 class="text-sm font-bold text-white mb-2 mt-4">Response</h3>
-                    <div class="code-block text-white">
-{
+                    <pre><code class="language-json code-block">{
   "ok": true,
   "info": {
     "key": "ps-XXXX-XXXXXXX-XXX",
     "product": "lifetime",
-    "expiration": "2027-01-01T00:00:00.000Z",
+    "expiration": 1767225600000,
     "is_expired": false,
     "is_assigned": false,
-    "created_at": "2026-01-01T00:00:00.000Z"
+    "created_at": 1735689600000
   }
-}
-                    </div>
+}</code></pre>
                 </div>
 
-                <!-- GET /fetchlicense -->
-                <div class="endpoint-card">
+                <!-- POST /fetchlicense -->
+                <div class="endpoint-card" id="fetchlicense">
                     <h2 class="text-xl font-bold text-white mb-4">
-                        <span class="method-badge method-get">GET</span>
-                        <span class="ml-2">/fetchlicense</span>
+                        <span class="method-badge method-post">POST</span>
+                        <span class="ml-2 font-mono">/fetchlicense</span>
                     </h2>
                     <p class="text-neutral-400 text-sm mb-4">Get a random available license from your stock.</p>
                     
-                    <h3 class="text-sm font-bold text-white mb-2">Example Request</h3>
-                    <div class="code-block text-white">
-curl -X GET "https://api.projectsheldon.com/reseller/fetchlicense" \
-  -H "Authorization: Bearer YOUR_API_KEY"
+                    <div class="lang-tabs">
+                        <div class="lang-tab js-tab active" onclick="switchTab(this, 'fetchlicense', 'js')" role="tab" aria-label="JavaScript" aria-selected="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#F7DF1E"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#000">JS</text></svg>
+                            <span>JavaScript</span>
+                        </div>
+                        <div class="lang-tab py-tab" onclick="switchTab(this, 'fetchlicense', 'py')" role="tab" aria-label="Python" aria-selected="false">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#3776AB"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#FFD43B">PY</text></svg>
+                            <span>Python</span>
+                        </div>
+                    </div>
+                    
+                    <div id="code-fetchlicense-js" class="code-container active">
+                        <pre><code class="language-javascript code-block js">const BASE_URL = "__BASE_URL__/reseller";
+
+fetch(BASE_URL + "/fetchlicense", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    api_token: "YOUR_API_KEY"
+  })
+})
+.then(res => res.json())
+.then(console.log);</code></pre>
+                    </div>
+                    
+                    <div id="code-fetchlicense-py" class="code-container">
+                        <pre><code class="language-python code-block py">import requests
+
+BASE_URL = "__BASE_URL__/reseller"
+
+response = requests.post(
+    BASE_URL + "/fetchlicense",
+    json={"api_token": "YOUR_API_KEY"}
+)
+print(response.json())</code></pre>
                     </div>
 
                     <h3 class="text-sm font-bold text-white mb-2 mt-4">Response</h3>
-                    <div class="code-block text-white">
-{
+                    <pre><code class="language-json code-block">{
   "ok": true,
   "license": {
     "key": "ps-XXXX-XXXXXXX-XXX",
-    "expiration": "2027-01-01T00:00:00.000Z"
+    "expiration": 1767225600000
   }
-}
-                    </div>
+}</code></pre>
                 </div>
 
                 <!-- POST /assignlicense -->
-                <div class="endpoint-card">
+                <div class="endpoint-card" id="assignlicense">
                     <h2 class="text-xl font-bold text-white mb-4">
                         <span class="method-badge method-post">POST</span>
-                        <span class="ml-2">/assignlicense</span>
+                        <span class="ml-2 font-mono">/assignlicense</span>
                     </h2>
-                    <p class="text-neutral-400 text-sm mb-4">Assign a license to a Discord user. A claim token will be generated and sent to the user via DM.</p>
+                    <p class="text-neutral-400 text-sm mb-4">Assign a license to a Discord user.</p>
                     
                     <h3 class="text-sm font-bold text-white mb-2">Request Body</h3>
                     <table class="param-table mb-4">
@@ -370,6 +631,11 @@ curl -X GET "https://api.projectsheldon.com/reseller/fetchlicense" \
                         </thead>
                         <tbody>
                             <tr>
+                                <td><span class="param-name">api_token</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td class="text-neutral-400">Your API key</td>
+                            </tr>
+                            <tr>
                                 <td><span class="param-name">license</span></td>
                                 <td><span class="param-type">string</span></td>
                                 <td class="text-neutral-400">The license key to assign</td>
@@ -377,127 +643,170 @@ curl -X GET "https://api.projectsheldon.com/reseller/fetchlicense" \
                             <tr>
                                 <td><span class="param-name">discord_user_id</span></td>
                                 <td><span class="param-type">string</span></td>
-                                <td class="text-neutral-400">The Discord user ID to assign to</td>
+                                <td class="text-neutral-400">Discord user ID to assign to</td>
                             </tr>
                         </tbody>
                     </table>
                     
-                    <h3 class="text-sm font-bold text-white mb-2">Example Request</h3>
-                    <div class="code-block text-white">
-curl -X POST "https://api.projectsheldon.com/reseller/assignlicense" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"license": "ps-XXXX-XXXXXXX-XXX", "discord_user_id": "123456789012345678"}'
+                    <div class="lang-tabs">
+                        <div class="lang-tab js-tab active" onclick="switchTab(this, 'assignlicense', 'js')" role="tab" aria-label="JavaScript" aria-selected="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#F7DF1E"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#000">JS</text></svg>
+                            <span>JavaScript</span>
+                        </div>
+                        <div class="lang-tab py-tab" onclick="switchTab(this, 'assignlicense', 'py')" role="tab" aria-label="Python" aria-selected="false">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#3776AB"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#FFD43B">PY</text></svg>
+                            <span>Python</span>
+                        </div>
+                    </div>
+                    
+                    <div id="code-assignlicense-js" class="code-container active">
+                        <pre><code class="language-javascript code-block js">const BASE_URL = "__BASE_URL__/reseller";
+
+fetch(BASE_URL + "/assignlicense", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    api_token: "YOUR_API_KEY",
+    license: "ps-XXXX-XXXXXXX-XXX",
+    discord_user_id: "123456789012345678"
+  })
+})
+.then(res => res.json())
+.then(console.log);</code></pre>
+                    </div>
+                    
+                    <div id="code-assignlicense-py" class="code-container">
+                        <pre><code class="language-python code-block py">import requests
+
+BASE_URL = "__BASE_URL__/reseller"
+
+response = requests.post(
+    BASE_URL + "/assignlicense",
+    json={
+        "api_token": "YOUR_API_KEY",
+        "license": "ps-XXXX-XXXXXXX-XXX",
+        "discord_user_id": "123456789012345678"
+    }
+)
+print(response.json())</code></pre>
                     </div>
 
                     <h3 class="text-sm font-bold text-white mb-2 mt-4">Response</h3>
-                    <div class="code-block text-white">
-{
+                    <pre><code class="language-json code-block">{
   "ok": true,
   "message": "License assigned successfully"
-}
-                    </div>
+}</code></pre>
                 </div>
             </div>
 
             <!-- Rate Limiting -->
-            <div class="endpoint-card mt-8">
+            <div class="endpoint-card mt-8" id="rate-limiting">
                 <h2 class="text-xl font-bold text-white mb-4">Rate Limiting</h2>
                 <p class="text-neutral-400 text-sm">API requests are limited to <span class="text-[#c7b18f]">100 requests per minute</span> per API key. If you exceed this limit, you'll receive:</p>
-                <div class="code-block mt-4">
-{
+                <pre><code class="language-json code-block mt-4">{
   "ok": false,
   "message": "Rate limit exceeded. Try again later."
-}
-                </div>
+}</code></pre>
             </div>
 
             <!-- Error Responses -->
-            <div class="endpoint-card">
+            <div class="endpoint-card" id="errors">
                 <h2 class="text-xl font-bold text-white mb-4">Error Responses</h2>
                 <p class="text-neutral-400 text-sm mb-4">All errors follow this format:</p>
-                <div class="code-block text-white">
-{
+                <pre><code class="language-json code-block">{
   "ok": false,
   "message": "Error description here"
-}
-                </div>
-                <table class="param-table mt-4">
-                    <thead>
-                        <tr>
-                            <th>Status Code</th>
-                            <th>Meaning</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><span class="param-name">401</span></td>
-                            <td class="text-neutral-400">Invalid or missing API key</td>
-                        </tr>
-                        <tr>
-                            <td><span class="param-name">400</span></td>
-                            <td class="text-neutral-400">Invalid request parameters</td>
-                        </tr>
-                        <tr>
-                            <td><span class="param-name">403</span></td>
-                            <td class="text-neutral-400">Access denied (not a verified reseller)</td>
-                        </tr>
-                        <tr>
-                            <td><span class="param-name">429</span></td>
-                            <td class="text-neutral-400">Rate limit exceeded</td>
-                        </tr>
-                    </tbody>
-                </table>
+}</code></pre>
             </div>
         </div>
     </main>
 
-    <footer class="pt-32 pb-16 border-t border-white/5 relative bg-black/40">
-        <div class="max-w-6xl mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-20">
-                <div class="space-y-6 max-w-sm">
-                    <div class="text-3xl font-black tracking-tighter text-white flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm">
-                            <div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">
-                                <img src="../favicon/favicon.ico" alt="Logo" class="w-8 h-8 rounded-lg">
-                            </div>
-                        </div>SHELDON
-                    </div>
-                    <p class="text-neutral-500 text-sm font-medium leading-relaxed">Have fun using Project Sheldon, and
-                        also if you can support me!</p>
-                </div>
-                <div class="grid grid-cols-2 gap-16 md:gap-24">
-                    <div class="space-y-6">
-                        <h4 class="text-[0.65rem] font-black text-white uppercase tracking-[0.2em]">Community</h4>
-                        <ul class="space-y-4 text-sm font-bold">
-                            <li>
-                                <a href="javascript:void(0)" onclick="RedirectToPlatform('personal_youtube')"
-                                    class="text-neutral-400 hover:text-white transition-colors">YouTube</a>
-                            </li>
-                            <li>
-                                <a href="javascript:void(0)" onclick="RedirectToPlatform('discord_invite')"
-                                    class="text-neutral-400 hover:text-white transition-colors">Discord Server</a>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="space-y-6">
-                        <h4 class="text-[0.65rem] font-black text-white uppercase tracking-[0.2em]">Legal</h4>
-                        <ul class="space-y-4 text-sm font-bold">
-                            <li><a href="/terms" class="text-neutral-400 hover:text-white transition-colors">Terms of
-                                    Service</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="pt-8 border-t border-white/5 flex justify-center md:justify-start">
-                <p class="text-neutral-600 text-[0.6rem] font-bold tracking-[0.1em] uppercase">&copy; 2026 PROJECT
-                    SHELDON • ALL RIGHTS RESERVED</p>
-            </div>
-        </div>
-    </footer>
-
     <script type="module" src="../js/discord/topbar_buttons.js"></script>
     <script type="module" src="../js/util/redirect.js"></script>
+    <script>
+        function getBaseUrl() {
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://localhost:3350';
+            }
+            return window.location.origin;
+        }
+
+        function initBaseUrl() {
+            const baseUrl = getBaseUrl();
+            
+            document.querySelectorAll('code').forEach(code => {
+                code.innerHTML = code.innerHTML.replace(/__BASE_URL__/g, baseUrl);
+            });
+        }
+
+        function switchTab(clickedTab, endpoint, lang) {
+            const container = clickedTab.closest('.endpoint-card');
+            
+            container.querySelectorAll('.lang-tab').forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            clickedTab.classList.add('active');
+            clickedTab.setAttribute('aria-selected', 'true');
+            
+            container.querySelectorAll('.code-container').forEach(c => c.classList.remove('active'));
+            const newContainer = document.getElementById('code-' + endpoint + '-' + lang);
+            newContainer.classList.add('active');
+            
+            const baseUrl = getBaseUrl();
+            newContainer.querySelectorAll('code').forEach(code => {
+                code.innerHTML = code.innerHTML.replace(/__BASE_URL__/g, baseUrl);
+            });
+            
+            hljs.highlightElement(newContainer.querySelector('code'));
+        }
+
+        // Highlight active sidebar link based on scroll
+        document.addEventListener('DOMContentLoaded', function() {
+            initBaseUrl();
+            hljs.highlightAll();
+            
+            // Smooth scroll to section when clicking sidebar
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) {
+                        const offsetTop = targetSection.offsetTop - 80;
+                        window.scrollTo({
+                            top: offsetTop,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            const sections = document.querySelectorAll('.endpoint-card');
+            
+            function updateActiveLink() {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (window.scrollY >= sectionTop - 150) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + current) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+            
+            window.addEventListener('scroll', updateActiveLink);
+            updateActiveLink();
+        });
+    </script>
 </body>
 
 </html>
