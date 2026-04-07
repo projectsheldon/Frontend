@@ -144,6 +144,13 @@
         .section-divider {
             border-color: rgba(255, 255, 255, 0.05);
         }
+
+        .mobile-menu-btn { display: none; background: none; border: none; color: white; cursor: pointer; padding: 8px; }
+        .mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(5, 5, 5, 0.98); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 1rem; z-index: 999; flex-direction: column; gap: 0.5rem; }
+        .mobile-menu.show { display: flex; }
+        .mobile-menu .nav-tab { text-align: center; padding: 1rem; border-radius: 8px; }
+        .mobile-menu .nav-tab.active { background: rgba(199, 177, 143, 0.1); color: #c7b18f; }
+        @media (max-width: 768px) { .nav-tabs-desktop { display: none; } .mobile-menu-btn { display: block; } }
     </style>
 </head>
 
@@ -160,11 +167,14 @@
                 <span class="text-xl font-black tracking-tighter text-white hidden sm:block">SHELDON</span>
             </div>
 
-            <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full">
+            <div class="nav-tabs-desktop absolute left-1/2 -translate-x-1/2 flex items-center h-full">
                 <a href="../" class="nav-tab">Home</a>
                 <a href="../api-docs/" class="nav-tab">API</a>
                 <a href="../resellers/" class="nav-tab">Resell</a>
             </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
+            <div class="mobile-menu" id="mobileMenu"><a href="../" class="nav-tab">Home</a><a href="../api-docs/" class="nav-tab">API</a><a href="../resellers/" class="nav-tab">Resell</a></div>
 
             <div class="flex items-center gap-5 z-10 shrink-0">
                 <div id="user-profile-trigger" class="hidden flex items-center gap-2 cursor-pointer group" style="position: relative;">
@@ -309,6 +319,7 @@
 
     <script type="module" src="../js/discord/topbar_buttons.js"></script>
     <script type="module" src="../js/util/redirect.js"></script>
+    <script>function toggleMobileMenu(){const menu=document.getElementById('mobileMenu');menu.classList.toggle('show');}</script>
 </body>
 
 </html>

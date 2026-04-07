@@ -510,7 +510,19 @@
                 <span class="text-xl font-black tracking-tighter text-white hidden sm:block">SHELDON</span>
             </div>
 
-            <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full">
+            <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full nav-tabs-desktop">
+                <a href="./" class="nav-tab active">Home</a>
+                <a href="./api-docs/" class="nav-tab">API</a>
+                <a href="./resellers/" class="nav-tab">Resell</a>
+            </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+
+            <div class="mobile-menu" id="mobileMenu">
                 <a href="./" class="nav-tab active">Home</a>
                 <a href="./api-docs/" class="nav-tab">API</a>
                 <a href="./resellers/" class="nav-tab">Resell</a>
@@ -852,6 +864,26 @@
                         }
                     }
                 });
+            }
+        });
+    </script>
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('show');
+        }
+        
+        // Close mobile menu when clicking a link
+        document.querySelectorAll('#mobileMenu .nav-tab').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('mobileMenu').classList.remove('show');
+            });
+        });
+        
+        // Close mobile menu on resize to desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                document.getElementById('mobileMenu').classList.remove('show');
             }
         });
     </script>
