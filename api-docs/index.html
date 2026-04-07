@@ -412,10 +412,10 @@ __BASE_URL__/reseller/myavailable</code></pre>
 
             <!-- Endpoints -->
             <div class="space-y-6">
-                <!-- POST /myavailable -->
+                <!-- GET /myavailable -->
                 <div class="endpoint-card" id="myavailable">
                     <h2 class="text-xl font-bold text-white mb-4">
-                        <span class="method-badge method-post">POST</span>
+                        <span class="method-badge" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">GET</span>
                         <span class="ml-2 font-mono">/myavailable</span>
                     </h2>
                     <p class="text-neutral-400 text-sm mb-4">Returns all available licenses that are not yet resold.</p>
@@ -434,15 +434,9 @@ __BASE_URL__/reseller/myavailable</code></pre>
                     <div id="code-myavailable-js" class="code-container active">
                         <pre><code class="language-javascript code-block js">const BASE_URL = "__BASE_URL__/reseller";
 
-fetch(BASE_URL + "/myavailable", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    api_token: "YOUR_API_KEY"
-  })
-})
-.then(res => res.json())
-.then(console.log);</code></pre>
+fetch(BASE_URL + "/myavailable?api_token=YOUR_API_KEY")
+  .then(res => res.json())
+  .then(console.log);</code></pre>
                     </div>
                     
                     <div id="code-myavailable-py" class="code-container">
@@ -450,9 +444,9 @@ fetch(BASE_URL + "/myavailable", {
 
 BASE_URL = "__BASE_URL__/reseller"
 
-response = requests.post(
+response = requests.get(
     BASE_URL + "/myavailable",
-    json={"api_token": "YOUR_API_KEY"}
+    params={"api_token": "YOUR_API_KEY"}
 )
 print(response.json())</code></pre>
                     </div>
@@ -471,15 +465,15 @@ print(response.json())</code></pre>
 }</code></pre>
                 </div>
 
-                <!-- POST /licenseinfo -->
+                <!-- GET /licenseinfo -->
                 <div class="endpoint-card" id="licenseinfo">
                     <h2 class="text-xl font-bold text-white mb-4">
-                        <span class="method-badge method-post">POST</span>
+                        <span class="method-badge" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">GET</span>
                         <span class="ml-2 font-mono">/licenseinfo</span>
                     </h2>
                     <p class="text-neutral-400 text-sm mb-4">Get information about a specific license.</p>
                     
-                    <h3 class="text-sm font-bold text-white mb-2">Request Body</h3>
+                    <h3 class="text-sm font-bold text-white mb-2">Query Parameters</h3>
                     <table class="param-table mb-4">
                         <thead>
                             <tr>
@@ -516,16 +510,9 @@ print(response.json())</code></pre>
                     <div id="code-licenseinfo-js" class="code-container active">
                         <pre><code class="language-javascript code-block js">const BASE_URL = "__BASE_URL__/reseller";
 
-fetch(BASE_URL + "/licenseinfo", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    api_token: "YOUR_API_KEY",
-    license: "ps-XXXX-XXXXXXX-XXX"
-  })
-})
-.then(res => res.json())
-.then(console.log);</code></pre>
+fetch(BASE_URL + "/licenseinfo?api_token=YOUR_API_KEY&license=ps-XXXX-XXXXXXX-XXX")
+  .then(res => res.json())
+  .then(console.log);</code></pre>
                     </div>
                     
                     <div id="code-licenseinfo-py" class="code-container">
@@ -533,9 +520,9 @@ fetch(BASE_URL + "/licenseinfo", {
 
 BASE_URL = "__BASE_URL__/reseller"
 
-response = requests.post(
+response = requests.get(
     BASE_URL + "/licenseinfo",
-    json={
+    params={
         "api_token": "YOUR_API_KEY",
         "license": "ps-XXXX-XXXXXXX-XXX"
     }
@@ -557,10 +544,10 @@ print(response.json())</code></pre>
 }</code></pre>
                 </div>
 
-                <!-- POST /fetchlicense -->
+                <!-- GET /fetchlicense -->
                 <div class="endpoint-card" id="fetchlicense">
                     <h2 class="text-xl font-bold text-white mb-4">
-                        <span class="method-badge method-post">POST</span>
+                        <span class="method-badge" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">GET</span>
                         <span class="ml-2 font-mono">/fetchlicense</span>
                     </h2>
                     <p class="text-neutral-400 text-sm mb-4">Get a random available license from your stock.</p>
@@ -579,15 +566,9 @@ print(response.json())</code></pre>
                     <div id="code-fetchlicense-js" class="code-container active">
                         <pre><code class="language-javascript code-block js">const BASE_URL = "__BASE_URL__/reseller";
 
-fetch(BASE_URL + "/fetchlicense", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    api_token: "YOUR_API_KEY"
-  })
-})
-.then(res => res.json())
-.then(console.log);</code></pre>
+fetch(BASE_URL + "/fetchlicense?api_token=YOUR_API_KEY")
+  .then(res => res.json())
+  .then(console.log);</code></pre>
                     </div>
                     
                     <div id="code-fetchlicense-py" class="code-container">
@@ -595,9 +576,9 @@ fetch(BASE_URL + "/fetchlicense", {
 
 BASE_URL = "__BASE_URL__/reseller"
 
-response = requests.post(
+response = requests.get(
     BASE_URL + "/fetchlicense",
-    json={"api_token": "YOUR_API_KEY"}
+    params={"api_token": "YOUR_API_KEY"}
 )
 print(response.json())</code></pre>
                     </div>
