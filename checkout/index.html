@@ -13,115 +13,12 @@
         rel="stylesheet">
     <meta http-equiv="Permissions-Policy" content="compute-pressure=()">
     <script>
-        (function () {
-            const originalError = console.error.bind(console);
-            console.error = function (...args) {
-                if (typeof args[0] === 'string' && (args[0].includes('youtube.com') || args[0].includes('ERR_BLOCKED_BY_CLIENT') || args[0].includes('net::'))) return;
-                return originalError(...args);
-            };
-            const originalWarn = console.warn.bind(console);
-            console.warn = function (...args) {
-                if (typeof args[0] === 'string' && (args[0].includes('youtube.com') || args[0].includes('Violation') || args[0].includes('Permissions policy'))) return;
-                return originalWarn(...args);
-            };
-            window.addEventListener('error', function (e) {
-                if (e.message && (e.message.includes('youtube.com') || e.message.includes('ERR_BLOCKED_BY_CLIENT') || e.filename.includes('youtube.com'))) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
-            window.addEventListener('unhandledrejection', function (e) {
-                if (e.reason && typeof e.reason === 'string' && e.reason.includes('youtube.com')) {
-                    e.preventDefault();
-                }
-            });
-        })();
-    </script>
-    <script>
         window.selectedCurrency = 'EUR';
         window.quantity = 1;
         window.basePrice = 0;
         window.isReseller = false;
         window.personalUse = true;
         window.productKey = new URLSearchParams(window.location.search).get('product') || 'lifetime';
-        window.currentPricing = null;
-
-        window.fetchPriceFromApi = async function() {
-            if (!window.basePrice || !window.productKey) {
-                return;
-            }
-            
-            try {
-                const apiUrl = 'http://localhost:3350';
-                const response = await fetch(`${apiUrl}/resellers/calculate-price`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        product_key: window.productKey,
-                        quantity: window.quantity,
-                        is_personal_use: window.personalUse
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.ok && data.pricing) {
-                    window.currentPricing = data.pricing;
-                }
-            } catch (e) {
-                console.error('Price fetch failed:', e);
-            }
-            
-            window.updatePriceDisplay();
-        }
-
-
-        // Tiered discount pricing - percentages only
-        window.tierPricing = [
-            { minQty: 1, maxQty: 4, discount: 0.20 },
-            { minQty: 5, maxQty: 7, discount: 0.27 },
-            { minQty: 8, maxQty: 10, discount: 0.33 },
-            { minQty: 11, maxQty: 20, discount: 0.39 }
-        ];
-
-        window.getTierPrice = function(tier) {
-            return window.basePrice * (1 - tier.discount);
-        }
-
-        window.getTierProfit = function(tier) {
-            return window.basePrice - window.getTierPrice(tier);
-        }
-
-        window.getCurrentTier = function() {
-            const baseTier = window.tierPricing.find(t => window.quantity >= t.minQty && window.quantity <= t.maxQty) || window.tierPricing[0];
-            return {
-                ...baseTier,
-                price: window.getTierPrice(baseTier),
-                profit: window.getTierProfit(baseTier)
-            };
-        }
-
-        window.calculateDiscount = function() {
-            if (!window.isReseller || window.personalUse) return 0;
-            const tier = window.getCurrentTier();
-            return (window.basePrice * window.quantity) - (tier.price * window.quantity);
-        }
-
-        window.getFinalTotal = function() {
-            if (!window.isReseller || window.personalUse) {
-                return window.basePrice * window.quantity;
-            }
-            const tier = window.getCurrentTier();
-            return tier.price * window.quantity;
-        }
-
-        window.getTotalProfit = function() {
-            if (!window.isReseller || window.personalUse) return 0;
-            const tier = window.getCurrentTier();
-            return tier.profit * window.quantity;
-        }
-
-        window.productKey = 'lifetime';
         window.currentPricing = null;
 
         window.fetchPriceFromApi = async function() {

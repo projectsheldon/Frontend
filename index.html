@@ -13,31 +13,6 @@
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <meta http-equiv="Permissions-Policy" content="compute-pressure=()">
-    <script>
-        (function () {
-            const originalError = console.error.bind(console);
-            console.error = function (...args) {
-                if (typeof args[0] === 'string' && (args[0].includes('youtube.com') || args[0].includes('ERR_BLOCKED_BY_CLIENT') || args[0].includes('net::'))) return;
-                return originalError(...args);
-            };
-            const originalWarn = console.warn.bind(console);
-            console.warn = function (...args) {
-                if (typeof args[0] === 'string' && (args[0].includes('youtube.com') || args[0].includes('Violation') || args[0].includes('Permissions policy'))) return;
-                return originalWarn(...args);
-            };
-            window.addEventListener('error', function (e) {
-                if (e.message && (e.message.includes('youtube.com') || e.message.includes('ERR_BLOCKED_BY_CLIENT') || e.filename.includes('youtube.com'))) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
-            window.addEventListener('unhandledrejection', function (e) {
-                if (e.reason && typeof e.reason === 'string' && e.reason.includes('youtube.com')) {
-                    e.preventDefault();
-                }
-            });
-        })();
-    </script>
     <style>
         body {
             background-color: #050505;
