@@ -16,7 +16,7 @@ window.switchPaymentTab = function(tab)
 
 function clampQuantity(val) {
     const v = parseInt(val) || 1;
-    return Math.max(1, Math.min(10, v));
+    return Math.max(1, Math.min(20, v));
 }
 
 const qtyMinus = document.getElementById('qty-minus');
@@ -28,7 +28,7 @@ function updateQuantityUI() {
         qtyValue.value = window.quantity;
         qtyValue.setAttribute('aria-valuenow', window.quantity);
     }
-    window.updatePriceDisplay();
+    window.fetchPriceFromApi();
 }
 
 if (qtyMinus) {
@@ -58,7 +58,7 @@ if (qtyPlus) {
 if (qtyValue) {
     qtyValue.setAttribute('role', 'spinbutton');
     qtyValue.setAttribute('aria-valuemin', '1');
-    qtyValue.setAttribute('aria-valuemax', '10');
+    qtyValue.setAttribute('aria-valuemax', '20');
     qtyValue.setAttribute('aria-valuenow', window.quantity);
     qtyValue.setAttribute('aria-label', 'Quantity');
     qtyValue.setAttribute('inputmode', 'numeric');
@@ -69,7 +69,7 @@ if (qtyValue) {
         window.quantity = val;
         e.target.value = window.quantity;
         e.target.setAttribute('aria-valuenow', window.quantity);
-        window.updatePriceDisplay();
+        window.fetchPriceFromApi();
     });
 
     qtyValue.addEventListener('keydown', (e) => {

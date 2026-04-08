@@ -5,6 +5,7 @@ import Api from "../../util/backend.js";
 
 const urlParams = new URLSearchParams(window.location.search);
 const productKey = urlParams.get('product') || 'lifetime';
+window.productKey = productKey;
 
 const loginRequiredEl = document.getElementById('login-required');
 const paymentFormEl = document.getElementById('payment-form');
@@ -63,7 +64,7 @@ async function CheckResellerStatus() {
                     checkbox.checked = window.personalUse;
                 }
             }
-            window.updatePriceDisplay();
+            window.fetchPriceFromApi();
         }
     } catch (error) {
     }
@@ -125,7 +126,7 @@ async function LoadProductInfo()
             if(nameEl) nameEl.textContent = product.name;
             if(priceEl) priceEl.textContent = '€' + parseFloat(product.price).toFixed(2);
             window.basePrice = parseFloat(product.price) || 0;
-            window.updatePriceDisplay();
+            window.fetchPriceFromApi();
         }
     } catch(error)
     {

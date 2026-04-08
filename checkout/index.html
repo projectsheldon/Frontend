@@ -38,47 +38,191 @@
         })();
     </script>
     <script>
-        window.selectedCurrency = 'BTC';
+        window.selectedCurrency = 'EUR';
         window.quantity = 1;
         window.basePrice = 0;
         window.isReseller = false;
         window.personalUse = true;
+        window.productKey = new URLSearchParams(window.location.search).get('product') || 'lifetime';
+        window.currentPricing = null;
 
-        window.calculateDiscount = function() {
-            const subtotal = window.basePrice * window.quantity;
-            
-            // Three conditions for 24% bulk discount:
-            // 1. User must be a verified reseller
-            // 2. Licenses must be for resale (personal use unchecked)
-            // 3. Quantity must be 4 or more
-            if (!window.isReseller || window.personalUse || window.quantity < 4) {
-                return 0;
+        window.fetchPriceFromApi = async function() {
+            if (!window.basePrice || !window.productKey) {
+                return;
             }
             
-            return subtotal * 0.24;
+            try {
+                const apiUrl = 'http://localhost:3350';
+                const response = await fetch(`${apiUrl}/resellers/calculate-price`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_key: window.productKey,
+                        quantity: window.quantity,
+                        is_personal_use: window.personalUse
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok && data.pricing) {
+                    window.currentPricing = data.pricing;
+                }
+            } catch (e) {
+                console.error('Price fetch failed:', e);
+            }
+            
+            window.updatePriceDisplay();
+        }
+
+
+        // Tiered discount pricing - percentages only
+        window.tierPricing = [
+            { minQty: 1, maxQty: 4, discount: 0.20 },
+            { minQty: 5, maxQty: 7, discount: 0.27 },
+            { minQty: 8, maxQty: 10, discount: 0.33 },
+            { minQty: 11, maxQty: 20, discount: 0.39 }
+        ];
+
+        window.getTierPrice = function(tier) {
+            return window.basePrice * (1 - tier.discount);
+        }
+
+        window.getTierProfit = function(tier) {
+            return window.basePrice - window.getTierPrice(tier);
+        }
+
+        window.getCurrentTier = function() {
+            const baseTier = window.tierPricing.find(t => window.quantity >= t.minQty && window.quantity <= t.maxQty) || window.tierPricing[0];
+            return {
+                ...baseTier,
+                price: window.getTierPrice(baseTier),
+                profit: window.getTierProfit(baseTier)
+            };
+        }
+
+        window.calculateDiscount = function() {
+            if (!window.isReseller || window.personalUse) return 0;
+            const tier = window.getCurrentTier();
+            return (window.basePrice * window.quantity) - (tier.price * window.quantity);
         }
 
         window.getFinalTotal = function() {
-            const subtotal = window.basePrice * window.quantity;
-            return subtotal - window.calculateDiscount();
+            if (!window.isReseller || window.personalUse) {
+                return window.basePrice * window.quantity;
+            }
+            const tier = window.getCurrentTier();
+            return tier.price * window.quantity;
+        }
+
+        window.getTotalProfit = function() {
+            if (!window.isReseller || window.personalUse) return 0;
+            const tier = window.getCurrentTier();
+            return tier.profit * window.quantity;
+        }
+
+        window.productKey = 'lifetime';
+        window.currentPricing = null;
+
+        window.fetchPriceFromApi = async function() {
+            if (!window.basePrice || !window.productKey) {
+                return;
+            }
+            
+            try {
+                const apiUrl = 'http://localhost:3350';
+                const response = await fetch(`${apiUrl}/resellers/calculate-price`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_key: window.productKey,
+                        quantity: window.quantity,
+                        is_personal_use: window.personalUse
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok && data.pricing) {
+                    window.currentPricing = data.pricing;
+                }
+            } catch (e) {
+                console.error('Price fetch failed:', e);
+            }
+            
+            window.updatePriceDisplay();
         }
 
         window.updatePriceDisplay = function () {
-            const subtotal = window.basePrice * window.quantity;
-            const discount = window.calculateDiscount();
-            const finalTotal = subtotal - discount;
+            function fadeUpdate(element, newText) {
+                if (!element) return;
+                element.style.transition = 'opacity 0.2s ease';
+                element.style.opacity = '0';
+                setTimeout(() => {
+                    element.textContent = newText;
+                    element.style.opacity = '1';
+                }, 200);
+            }
+
+            const tier = window.getCurrentTier();
+            let discount = window.calculateDiscount();
+            let finalTotal = window.getFinalTotal();
+            let totalProfit = window.getTotalProfit();
             const amountEl = document.getElementById('amount-count');
             const subtotalEl = document.getElementById('subtotal-price');
             const discountEl = document.getElementById('discount-price');
-            const discountRow = document.getElementById('discount-row');
             const finalTotalEl = document.getElementById('final-total-price');
+            const profitEl = document.getElementById('total-profit');
+            
+            if (window.currentPricing) {
+                discount = window.currentPricing.discount || 0;
+                finalTotal = window.currentPricing.total || finalTotal;
+                totalProfit = window.currentPricing.profit || 0;
+            }
             
             if (amountEl) amountEl.textContent = window.quantity;
-            if (subtotalEl) subtotalEl.textContent = '€' + subtotal.toFixed(2);
             
-            // Update discount and total
-            if (discountEl) discountEl.textContent = '-€' + discount.toFixed(2);
-            if (finalTotalEl) finalTotalEl.textContent = '€' + finalTotal.toFixed(2);
+            const retailSubtotal = window.basePrice * window.quantity;
+            fadeUpdate(subtotalEl, '€' + retailSubtotal.toFixed(2));
+            
+// Hide discount row when not a reseller or personal use is on
+const discountRow = document.getElementById('discount-row');
+if (discountRow) {
+    discountRow.style.display = (window.isReseller && !window.personalUse) ? 'flex' : 'none';
+}
+
+if (discountEl) {
+    const pct = window.currentPricing && window.currentPricing.discountPercent 
+        ? window.currentPricing.discountPercent.toFixed(0)
+        : (tier.discount * 100).toFixed(0);
+    fadeUpdate(discountEl, `-€${discount.toFixed(2)} (${pct}%)`);
+}
+            
+            fadeUpdate(finalTotalEl, '€' + finalTotal.toFixed(2));
+            
+            fadeUpdate(profitEl, '€' + totalProfit.toFixed(2));
+            
+            // Upsell messages
+            const upsellMsgEl = document.getElementById('upsell-message');
+            if (upsellMsgEl) {
+                const qty = window.quantity;
+                let msg = '';
+                if (qty >= 1 && qty <= 2) msg = 'Add 3 more to unlock 20% discount!';
+                else if (qty >= 3 && qty <= 4) msg = 'Add 2 more to unlock 27% discount!';
+                else if (qty >= 5 && qty <= 7) msg = 'Add 1 more to unlock 33% discount!';
+                else if (qty >= 8 && qty <= 10) msg = 'Add 1 more to unlock 39% discount!';
+                else if (qty >= 11) msg = 'Max discount achieved!';
+                upsellMsgEl.textContent = msg;
+            }
+            
+            // Highlight active tier
+            document.querySelectorAll('.tier-row').forEach(row => row.classList.remove('active-tier'));
+            const activeTier = document.getElementById('tier-' + tier.minQty);
+            if (activeTier) activeTier.classList.add('active-tier');
+            
+            // Show/hide reseller tools
+            const resellerTools = document.getElementById('reseller-tools');
+            if (resellerTools) resellerTools.classList.toggle('hidden', !window.isReseller || window.personalUse);
         }
         
         // Personal Use Tooltip
@@ -489,6 +633,73 @@
             -moz-appearance: none;
             background: transparent;
         }
+
+        .tier-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-top: 12px;
+        }
+        
+        .tier-table th {
+            text-align: left;
+            padding: 6px 8px;
+            color: rgba(255,255,255,0.5);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 9px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .tier-table td {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .tier-row {
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+        
+        .tier-row:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        
+        .tier-row.active-tier {
+            background: rgba(199, 177, 143, 0.15);
+        }
+        
+        .profit-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+        
+        .profit-card .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 4px;
+        }
+        
+        .profit-card .value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .upsell-msg {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            margin-top: 8px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -574,7 +785,7 @@
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                 <div class="relative">
-                                    <input type="checkbox" id="personal-use-checkbox" class="sr-only peer" onclick="window.personalUse = this.checked; window.updatePriceDisplay();">
+                                    <input type="checkbox" id="personal-use-checkbox" class="sr-only peer" onclick="window.personalUse = this.checked; window.fetchPriceFromApi();">
                                     <div class="w-10 h-6 bg-white/10 rounded-full peer peer-checked:bg-[#c7b18f]/30 transition-all"></div>
                                     <div class="absolute left-1 top-1 w-4 h-4 bg-white/50 rounded-full transition-all peer-checked:translate-x-4 peer-checked:bg-[#c7b18f]"></div>
                                 </div>
@@ -582,9 +793,9 @@
                             </label>
                             <span id="personal-use-tooltip-trigger" class="text-neutral-500 hover:text-neutral-300 cursor-help text-xs" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">?</span>
                         </div>
-                        <div id="personal-use-tooltip" style="visibility: hidden; opacity: 0; transition: opacity 0.2s ease, visibility 0.2s ease; position: absolute; top: 100%; left: 0; z-index: 50; margin-top: 8px; padding: 10px 12px; background: rgba(20,20,20,0.98); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.8); max-width: 240px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                        <div id="personal-use-tooltip" style="visibility: hidden; opacity: 0; transition: opacity 0.2s ease, visibility 0.2s ease; position: absolute; top: 100%; left: 0; z-index: 50; margin-top: 8px; padding: 10px 12px; background: rgba(20,20,20,0.98); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; font-size: 11px; color: rgba(255,255,255,0.8); max-width: 260px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
                             <div style="margin-bottom: 6px;">
-                                <span class="font-bold" style="color: #c7b18f;">OFF</span> = For resale (buy 4+ for 24% off!)
+                                <span class="font-bold" style="color: #c7b18f;">OFF</span> = For resale (Progressive discounts...)
                             </div>
                             <div>
                                 <span class="font-bold" style="color: #c7b18f;">ON</span> = Personal use only
@@ -600,7 +811,7 @@
                         <span class="text-xs font-bold" style="color: rgba(255,255,255,0.5);">Amount:</span>
                         <div style="display: flex; align-items: center; gap: 4px;">
                             <button id="qty-minus" class="qty-btn-compact" style="width: 24px; height: 24px; border-radius: 4px; background: rgba(255,255,255,0.05); color: white; font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center;" aria-label="Decrease quantity">−</button>
-                            <input type="number" id="qty-value" class="qty-input-compact" value="1" min="1" max="10" style="width: 28px; background: transparent; border: none; color: white; font-size: 12px; font-weight: 700; text-align: center; outline: none; -moz-appearance: textfield; -webkit-appearance: none;">
+                            <input type="number" id="qty-value" class="qty-input-compact" value="1" min="1" max="20" style="width: 28px; background: transparent; border: none; color: white; font-size: 12px; font-weight: 700; text-align: center; outline: none; -moz-appearance: textfield; -webkit-appearance: none;">
                             <button id="qty-plus" class="qty-btn-compact" style="width: 24px; height: 24px; border-radius: 4px; background: rgba(255,255,255,0.05); color: white; font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center;" aria-label="Increase quantity">+</button>
                         </div>
                     </div>
@@ -613,7 +824,7 @@
                     
                     <!-- Discount row -->
                     <div id="discount-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="text-xs font-bold" style="color: rgba(255,255,255,0.5);">Reseller Discount (24%):</span>
+                        <span class="text-xs font-bold" style="color: rgba(255,255,255,0.5);">Reseller Bulk Discount:</span>
                         <span id="discount-price" class="text-xs font-bold">€0.00</span>
                     </div>
                     
