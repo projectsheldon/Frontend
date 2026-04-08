@@ -3,6 +3,8 @@ import PaypalManager from "../../payment/paypal/manager.js";
 import { CreatePaypalButtons } from "../../payment/paypal/paypal.js";
 import Api from "../../util/backend.js";
 
+window.Api = Api;
+
 const urlParams = new URLSearchParams(window.location.search);
 const productKey = urlParams.get('product') || 'lifetime';
 window.productKey = productKey;

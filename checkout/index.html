@@ -43,7 +43,7 @@
             }
             
             try {
-                const apiUrl = 'http://localhost:3350';
+                const apiUrl = await Api.GetApiUrl();
                 const headers = { 'Content-Type': 'application/json' };
                 const sessionToken = window.DiscordAuth?.GetSessionToken?.();
                 if (sessionToken) {
@@ -827,6 +827,7 @@ if (discountEl) {
         </div>
     </footer>
 
+    <script type="module" src="../js/util/backend.js"></script>
     <script type="module" src="../js/discord/topbar_buttons.js"></script>
     <script type="module" src="../js/html/checkout/index.js"></script>
     <script src="../js/html/checkout/quantity.js"></script>

@@ -897,12 +897,7 @@
         const SESSION_KEY = 'reseller_ok';
 
         async function getApiUrl() {
-            let url = await Api.GetApiUrl();
-            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (isLocalhost) {
-                url = 'http://localhost:3350';
-            }
-            return url;
+            return await Api.GetApiUrl();
         }
 
         function getStateElements() {

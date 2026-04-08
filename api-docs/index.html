@@ -750,19 +750,20 @@ print(response.json())</code></pre>
         </div>
     </main>
 
+    <script type="module" src="../js/util/backend.js"></script>
+    <script type="module">
+        import Api from "../js/util/backend.js";
+        window.Api = Api;
+    </script>
     <script type="module" src="../js/discord/topbar_buttons.js"></script>
     <script type="module" src="../js/util/redirect.js"></script>
     <script>
-        function getBaseUrl() {
-            const hostname = window.location.hostname;
-            if (hostname === 'localhost' || hostname === '127.0.0.1') {
-                return 'http://localhost:3350';
-            }
-            return window.location.origin;
+        async function getBaseUrl() {
+            return await Api.GetApiUrl();
         }
 
-        function initBaseUrl() {
-            const baseUrl = getBaseUrl();
+        async function initBaseUrl() {
+            const baseUrl = await getBaseUrl();
             
             document.querySelectorAll('code').forEach(code => {
                 code.innerHTML = code.innerHTML.replace(/__BASE_URL__/g, baseUrl);
@@ -792,8 +793,8 @@ print(response.json())</code></pre>
         }
 
         // Highlight active sidebar link based on scroll
-        document.addEventListener('DOMContentLoaded', function() {
-            initBaseUrl();
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initBaseUrl();
             hljs.highlightAll();
             
             // Smooth scroll to section when clicking sidebar
