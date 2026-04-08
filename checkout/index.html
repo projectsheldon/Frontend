@@ -17,9 +17,25 @@
         window.quantity = 1;
         window.basePrice = 0;
         window.isReseller = false;
-        window.personalUse = true;
+        window.personalUse = false;
         window.productKey = new URLSearchParams(window.location.search).get('product') || 'lifetime';
         window.currentPricing = null;
+
+        window.getCurrentTier = function() {
+            return window.currentPricing?.tier || { minQty: 1, discount: 0, discountPercent: 0 };
+        };
+
+        window.calculateDiscount = function() {
+            return window.currentPricing?.discountAmount || 0;
+        };
+
+        window.getFinalTotal = function() {
+            return window.currentPricing?.total || window.basePrice * window.quantity || 0;
+        };
+
+        window.getTotalProfit = function() {
+            return window.currentPricing?.totalProfit || 0;
+        };
 
         window.fetchPriceFromApi = async function() {
             if (!window.basePrice || !window.productKey) {
@@ -28,9 +44,15 @@
             
             try {
                 const apiUrl = 'http://localhost:3350';
-                const response = await fetch(`${apiUrl}/resellers/calculate-price`, {
+                const headers = { 'Content-Type': 'application/json' };
+                const sessionToken = window.DiscordAuth?.GetSessionToken?.();
+                if (sessionToken) {
+                    headers['Authorization'] = `Bearer ${sessionToken}`;
+                }
+                
+                const response = await fetch(`${apiUrl}/products/calculate-price`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify({
                         product_key: window.productKey,
                         quantity: window.quantity,
@@ -42,6 +64,7 @@
                 
                 if (data.ok && data.pricing) {
                     window.currentPricing = data.pricing;
+                    window.isReseller = data.pricing.isReseller || false;
                 }
             } catch (e) {
                 console.error('Price fetch failed:', e);
@@ -65,6 +88,7 @@
             let discount = window.calculateDiscount();
             let finalTotal = window.getFinalTotal();
             let totalProfit = window.getTotalProfit();
+            let retailSubtotal = window.basePrice * window.quantity;
             const amountEl = document.getElementById('amount-count');
             const subtotalEl = document.getElementById('subtotal-price');
             const discountEl = document.getElementById('discount-price');
@@ -72,14 +96,14 @@
             const profitEl = document.getElementById('total-profit');
             
             if (window.currentPricing) {
-                discount = window.currentPricing.discount || 0;
-                finalTotal = window.currentPricing.total || finalTotal;
-                totalProfit = window.currentPricing.profit || 0;
+                discount = window.currentPricing.discountAmount || 0;
+                finalTotal = window.currentPricing.total || (window.basePrice * window.quantity);
+                totalProfit = window.currentPricing.totalProfit || 0;
+                retailSubtotal = window.currentPricing.subtotal || window.basePrice * window.quantity;
             }
             
             if (amountEl) amountEl.textContent = window.quantity;
             
-            const retailSubtotal = window.basePrice * window.quantity;
             fadeUpdate(subtotalEl, '€' + retailSubtotal.toFixed(2));
             
 // Hide discount row when not a reseller or personal use is on
@@ -89,9 +113,9 @@ if (discountRow) {
 }
 
 if (discountEl) {
-    const pct = window.currentPricing && window.currentPricing.discountPercent 
-        ? window.currentPricing.discountPercent.toFixed(0)
-        : (tier.discount * 100).toFixed(0);
+    const pct = tier.discountPercent 
+        ? tier.discountPercent
+        : '0';
     fadeUpdate(discountEl, `-€${discount.toFixed(2)} (${pct}%)`);
 }
             
@@ -705,24 +729,24 @@ if (discountEl) {
                     
                     <!-- Amount + Quantity row -->
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                        <span class="text-xs font-bold" style="color: rgba(255,255,255,0.5);">Amount:</span>
+                        <span class="text-xs font" style="color: rgba(255,255,255,0.5);">Amount:</span>
                         <div style="display: flex; align-items: center; gap: 4px;">
                             <button id="qty-minus" class="qty-btn-compact" style="width: 24px; height: 24px; border-radius: 4px; background: rgba(255,255,255,0.05); color: white; font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center;" aria-label="Decrease quantity">−</button>
-                            <input type="number" id="qty-value" class="qty-input-compact" value="1" min="1" max="20" style="width: 28px; background: transparent; border: none; color: white; font-size: 12px; font-weight: 700; text-align: center; outline: none; -moz-appearance: textfield; -webkit-appearance: none;">
+                            <input type="number" id="qty-value" class="qty-input-compact" value="1" min="1" max="20" style="width: 28px; background: transparent; border: none; color: white; font-size: 12px; font-weight: 400; text-align: center; outline: none; -moz-appearance: textfield; -webkit-appearance: none;">
                             <button id="qty-plus" class="qty-btn-compact" style="width: 24px; height: 24px; border-radius: 4px; background: rgba(255,255,255,0.05); color: white; font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center;" aria-label="Increase quantity">+</button>
                         </div>
                     </div>
                     
                     <!-- Subtotal row -->
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="text-xs font-bold" style="color: rgba(255,255,255,0.5);">Subtotal:</span>
-                        <span id="subtotal-price" class="text-sm font-bold">€0.00</span>
+                        <span class="text-xs font" style="color: rgba(255,255,255,0.5);">Subtotal:</span>
+                        <span id="subtotal-price" class="text-sm font">€0.00</span>
                     </div>
                     
                     <!-- Discount row -->
                     <div id="discount-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="text-xs font-bold" style="color: rgba(255,255,255,0.5);">Reseller Bulk Discount:</span>
-                        <span id="discount-price" class="text-xs font-bold">€0.00</span>
+                        <span class="text-xs font" style="color: rgba(255,255,255,0.5);">Reseller Bulk Discount:</span>
+                        <span id="discount-price" class="text-xs font">€0.00</span>
                     </div>
                     
                     <!-- Total row -->

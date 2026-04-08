@@ -23,10 +23,14 @@ export function CreatePaypalButtons()
             const discordId = user.id;
             const product = new URLSearchParams(window.location.search).get('product');
             const personalUse = document.getElementById('personal-use-checkbox')?.checked || false;
+            const sessionToken = DiscordAuth.GetSessionToken();
 
             const req = await fetch(`${await Api.GetApiUrl()}/paypal/create`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${sessionToken}`
+                },
                 body: JSON.stringify({
                     discordId: discordId,
                     product: product,
