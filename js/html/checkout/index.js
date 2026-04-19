@@ -1,3 +1,4 @@
+import StripeManager from "../../../../Api/src/managers/payment/stripe/manager.js";
 import { CheckAuthStatus, DiscordAuth } from "../../discord/auth.js";
 import PaypalManager from "../../payment/paypal/manager.js";
 import { CreatePaypalButtons } from "../../payment/paypal/paypal.js";
@@ -32,18 +33,27 @@ document.addEventListener("DOMContentLoaded", async function()
     }
 
     // Payment Buttons
-    {
-        const payCrypto = document.getElementById('connect-wallet');
-        if(payCrypto)
-        {
-            payCrypto.addEventListener('click', async () =>
-            {
-            });
-        }
+    // {
+    //     await PaypalManager.LoadSDK();
+    //     const paypalButtons = CreatePaypalButtons();
+    //     await paypalButtons.render('#paypal-button-container');
+    // }
 
-        await PaypalManager.LoadSDK();
-        const paypalButtons = CreatePaypalButtons();
-        await paypalButtons.render('#paypal-button-container');
+    // Stripe
+    {
+        const key = await StripeManager.GetPublicKey();
+
+        let elements;
+        let clientSecret;
+
+        const res = await fetch("https://your-backend.com/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            product_key: window.productKey,
+            quantity: window.quantity
+        })
+    });
     }
 });
 
