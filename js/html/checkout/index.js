@@ -30,7 +30,7 @@ async function ShowCheckout()
     TogglePaymentForm(true);
     await LoadProductInfo();
     await CheckResellerStatus();
-    await initStripe();
+    // await initStripe();
 }
 
 async function CheckResellerStatus() {
