@@ -3,20 +3,21 @@ import Api from "../util/backend.js";
 export async function CheckAuthStatus()
 {
     const token = DiscordAuth.GetSessionToken();
-
-    if(!token)
-    {
-        UpdateUI();
-        return false;
-    }
-
     const apiUrl = await Api.GetApiUrl();
 
     try
     {
-        const response = await fetch(`${apiUrl}/discord/me?token=${encodeURIComponent(token)}`, {
+        const endpoint = token
+            ? `${apiUrl}/discord/me?token=${encodeURIComponent(token)}`
+            : `${apiUrl}/discord/me`;
+
+        const response = await fetch(endpoint, {
             method: 'GET',
-            mode: 'cors'
+            mode: 'cors',
+            credentials: 'include',
+            headers: token
+                ? { Authorization: `Bearer ${token}` }
+                : undefined
         });
 
         const data = await response.json();
@@ -29,7 +30,10 @@ export async function CheckAuthStatus()
         } else
         {
             DiscordAuth.currentUser = null;
-            DiscordAuth.DeleteSessionToken();
+            if(token)
+            {
+                DiscordAuth.DeleteSessionToken();
+            }
             UpdateUI();
             return false;
         }

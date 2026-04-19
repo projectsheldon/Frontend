@@ -1,7 +1,5 @@
-import StripeManager from "../../../../Api/src/managers/payment/stripe/manager.js";
 import { CheckAuthStatus, DiscordAuth } from "../../discord/auth.js";
-import PaypalManager from "../../payment/paypal/manager.js";
-import { CreatePaypalButtons } from "../../payment/paypal/paypal.js";
+import { initStripe } from "../../payment/stripe/stripe.js";
 import Api from "../../util/backend.js";
 
 window.Api = Api;
@@ -16,46 +14,24 @@ const personalUseSection = document.getElementById('personal-use-section');
 
 document.addEventListener("DOMContentLoaded", async function()
 {
-    // Auth & Status
-    {
-        const isLoggedIn = await CheckAuthStatus();
+    const isLoggedIn = await CheckAuthStatus();
 
-        if(isLoggedIn)
-        {
-            TogglePaymentForm(true);
-            LoadProductInfo();
-            CheckResellerStatus();
-        }
-        else
-        {
-            ShowLoginForm();
-        }
+    if(isLoggedIn)
+    {
+        await ShowCheckout();
+        return;
     }
 
-    // Payment Buttons
-    // {
-    //     await PaypalManager.LoadSDK();
-    //     const paypalButtons = CreatePaypalButtons();
-    //     await paypalButtons.render('#paypal-button-container');
-    // }
-
-    // Stripe
-    {
-        const key = await StripeManager.GetPublicKey();
-
-        let elements;
-        let clientSecret;
-
-        const res = await fetch("https://your-backend.com/create-payment-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            product_key: window.productKey,
-            quantity: window.quantity
-        })
-    });
-    }
+    ShowLoginForm();
 });
+
+async function ShowCheckout()
+{
+    TogglePaymentForm(true);
+    await LoadProductInfo();
+    await CheckResellerStatus();
+    await initStripe();
+}
 
 async function CheckResellerStatus() {
     const token = DiscordAuth.GetSessionToken();
@@ -76,7 +52,7 @@ async function CheckResellerStatus() {
                     checkbox.checked = window.personalUse;
                 }
             }
-            window.fetchPriceFromApi();
+            await window.fetchPriceFromApi();
         }
     } catch (error) {
     }
@@ -86,7 +62,7 @@ function ShowLoginForm()
 {
     TogglePaymentForm(false);
 
-    const loginBtn = document.querySelector('.discord-login-btn');
+    const loginBtn = loginRequiredEl?.querySelector('.discord-login-btn');
     if(loginBtn)
     {
         loginBtn.addEventListener('click', () =>
@@ -105,8 +81,7 @@ function ShowLoginForm()
             if(isLoggedIn)
             {
                 window.removeEventListener('message', handleLogin);
-                TogglePaymentForm(true);
-                LoadProductInfo();
+                await ShowCheckout();
             }
         }
     });
@@ -138,7 +113,7 @@ async function LoadProductInfo()
             if(nameEl) nameEl.textContent = product.name;
             if(priceEl) priceEl.textContent = '€' + parseFloat(product.price).toFixed(2);
             window.basePrice = parseFloat(product.price) || 0;
-            window.fetchPriceFromApi();
+            await window.fetchPriceFromApi();
         }
     } catch(error)
     {

@@ -25,4 +25,6 @@ const StripeManager =
         const info = await this.GetRemoteInfo();
         return info.sandbox || false;
     },
-}
+};
+
+export default StripeManager;
