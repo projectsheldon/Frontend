@@ -9,22 +9,15 @@ const checkIcon = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBo
 window.escapeHtml = function(str)
 {
     if(typeof str !== "string") return "";
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-window.isValidLicenseKey = function(key)
-{
-    if(typeof key !== "string") return false;
-    return /^ps-[A-Z0-9]{4}-[A-Z0-9]{7}-[A-Z0-9]{3}$/i.test(key);
-}
-
-window.isValidProductName = function(name)
-{
-    if(typeof name !== "string") return false;
-    if(name.length > 50) return false;
-    return /^[a-zA-Z0-9\s\-]+$/.test(name);
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        '/': '&#x2F;'
+    };
+    return str.replace(/[&<>"'\/]/g, c => map[c]);
 }
 
 window.copyKey = function(btn, val)
@@ -76,23 +69,28 @@ async function loadLicenses()
     const showKeys = urlParams.get('showKeys');
     if(showKeys)
     {
-        const keyList = showKeys.split(',').map(k => k.trim()).filter(k => k);
-        keys = keyList.map(item =>
+        try
         {
-            const parts = item.split(':');
-            const key = parts[ 0 ];
-            const tierRaw = parts[ 1 ] ? decodeURIComponent(parts[ 1 ]) : '';
-            
-            if(!window.isValidLicenseKey(key)) return null;
-            if(tierRaw && !window.isValidProductName(tierRaw)) return null;
-            
-            return { key: key, tier: tierRaw };
-        }).filter(k => k !== null);
-        
-        if(keys.length === 0)
+            const keyList = showKeys.split(',');
+            keys = keyList.map(entry =>
+            {
+                const colonIdx = entry.indexOf(':');
+                if(colonIdx === -1)
+                {
+                    const key = entry.trim();
+                    return { key: key, tier: 'License' };
+                }
+                
+                const key = entry.substring(0, colonIdx).trim();
+                const tier = entry.substring(colonIdx + 1).trim();
+                
+                return { key: key, tier: tier || 'License' };
+            })
+            .filter(item => item.key.length > 0 && item.key.length <= 128);
+        }
+        catch(e)
         {
-            list.innerHTML = '<p class="text-neutral-500">Invalid license key format.</p>';
-            return;
+            keys = [];
         }
         
         render();
