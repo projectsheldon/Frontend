@@ -6,6 +6,27 @@ let keys = [];
 const copyIcon = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>`;
 const checkIcon = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
 
+window.escapeHtml = function(str)
+{
+    if(typeof str !== "string") return "";
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+window.isValidLicenseKey = function(key)
+{
+    if(typeof key !== "string") return false;
+    return /^ps-[A-Z0-9]{4}-[A-Z0-9]{7}-[A-Z0-9]{3}$/i.test(key);
+}
+
+window.isValidProductName = function(name)
+{
+    if(typeof name !== "string") return false;
+    if(name.length > 50) return false;
+    return /^[a-zA-Z0-9\s\-]+$/.test(name);
+}
+
 window.copyKey = function(btn, val)
 {
     const el = document.createElement('textarea');
@@ -38,10 +59,10 @@ function render()
     list.innerHTML = keys.map(item => `
         <div class="license-item">
             <div style="min-width: 0;">
-                <div class="key-text truncate">${item.key}</div>
-                <span class="tier-label">${item.tier || item.product || 'License'}</span>
+                <div class="key-text truncate">${window.escapeHtml(item.key)}</div>
+                <span class="tier-label">${window.escapeHtml(item.tier || item.product || 'License')}</span>
             </div>
-            <div class="copy-btn" title="Copy Key" onclick="copyKey(this, '${item.key}')">
+            <div class="copy-btn" title="Copy Key" onclick="copyKey(this, '${window.escapeHtml(item.key)}')">
                 ${copyIcon}
             </div>
         </div>
@@ -60,9 +81,20 @@ async function loadLicenses()
         {
             const parts = item.split(':');
             const key = parts[ 0 ];
-            const tier = parts[ 1 ] ? decodeURIComponent(parts[ 1 ]) : 'License';
-            return { key: key, tier: tier };
-        });
+            const tierRaw = parts[ 1 ] ? decodeURIComponent(parts[ 1 ]) : '';
+            
+            if(!window.isValidLicenseKey(key)) return null;
+            if(tierRaw && !window.isValidProductName(tierRaw)) return null;
+            
+            return { key: key, tier: tierRaw };
+        }).filter(k => k !== null);
+        
+        if(keys.length === 0)
+        {
+            list.innerHTML = '<p class="text-neutral-500">Invalid license key format.</p>';
+            return;
+        }
+        
         render();
         return;
     }
@@ -154,7 +186,7 @@ const originalRender = render;
 render = function() {
   originalRender.apply(this, arguments);
   if (keys.length > 0) {
-    setTimeout(triggerConfetti, 500); // Short delay for visual effect
+    setTimeout(triggerConfetti, 500);
   }
 };
 
