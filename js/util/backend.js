@@ -1,5 +1,18 @@
 const TEN_MINUTES = 10 * 60 * 1000;
 
+(function migrateOldCache() {
+    try {
+        const old = localStorage.getItem('cache_backend_url');
+        if (old) {
+            const parsed = JSON.parse(old);
+            if (typeof parsed.data === 'string' && parsed.data.endsWith('/')) {
+                parsed.data = parsed.data.replace(/\/+$/, '');
+                localStorage.setItem('cache_backend_url', JSON.stringify(parsed));
+            }
+        }
+    } catch (e) {}
+})();
+
 function stripTrailingSlash(url) {
     return url.replace(/\/+$/, '');
 }
@@ -33,8 +46,8 @@ const Api = {
     {
         const cached = Cache.get('backend_url');
         if (cached) {
-            this._backendUrl = cached;
-            return cached;
+            this._backendUrl = stripTrailingSlash(cached);
+            return this._backendUrl;
         }
 
         const remoteServer = stripTrailingSlash('https://sheldon-backend.amaskeddev.workers.dev');
@@ -70,6 +83,7 @@ const Api = {
         {
             await this._fetchBackendUrl();
         }
+        this._backendUrl = stripTrailingSlash(this._backendUrl);
         return this._backendUrl;
     },
 

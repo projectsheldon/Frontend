@@ -252,7 +252,7 @@ const DiscordAuth = {
         const apiUrl = await Api.GetApiUrl();
 
         const clientId = await this.GetClientId();
-        const redirectUri = encodeURIComponent(`${apiUrl}/discord/callback`);
+        const redirectUri = encodeURIComponent(`${apiUrl.replace(/\/+$/, '')}/discord/callback`);
         const scope = "identify";
 
         const oauthUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
