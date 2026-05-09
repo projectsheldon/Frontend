@@ -1,12 +1,40 @@
+const TEN_MINUTES = 10 * 60 * 1000;
+
+const Cache = {
+    get(key, maxAge = TEN_MINUTES) {
+        try {
+            const raw = localStorage.getItem(`cache_${key}`);
+            if (!raw) return null;
+            const item = JSON.parse(raw);
+            if (Date.now() - item.timestamp < maxAge) return item.data;
+            localStorage.removeItem(`cache_${key}`);
+        } catch (e) {}
+        return null;
+    },
+    set(key, data) {
+        try {
+            localStorage.setItem(`cache_${key}`, JSON.stringify({ data, timestamp: Date.now() }));
+        } catch (e) {}
+    },
+    remove(key) {
+        try { localStorage.removeItem(`cache_${key}`); } catch (e) {}
+    }
+};
+
 const Api = {
     _backendUrl: null,
+    _discordConfig: null,
 
     async _fetchBackendUrl()
     {
+        const cached = Cache.get('backend_url');
+        if (cached) {
+            this._backendUrl = cached;
+            return cached;
+        }
+
         const remoteServer = 'https://sheldon-backend.amaskeddev.workers.dev/';
         const localServer = 'http://localhost:3350';
-
-        if(this._backendUrl) return this._backendUrl;
 
         try
         {
@@ -28,6 +56,7 @@ const Api = {
             this._backendUrl = isLocalhost ? localServer : remoteServer;
         }
 
+        Cache.set('backend_url', this._backendUrl);
         return this._backendUrl;
     },
 
@@ -40,15 +69,58 @@ const Api = {
         return this._backendUrl;
     },
 
+    async GetDiscordConfig()
+    {
+        const cached = Cache.get('discord_config');
+        if (cached) {
+            this._discordConfig = cached;
+            return cached;
+        }
+
+        const apiUrl = await this.GetApiUrl();
+        const response = await fetch(`${apiUrl}/config/discord`);
+        const data = await response.json();
+
+        this._discordConfig = data;
+        Cache.set('discord_config', data);
+        return data;
+    },
+
+    async GetApiKey()
+    {
+        return localStorage.getItem('admin_api_key') || '';
+    },
+
     async GetLink(platform)
     {
+        const cached = Cache.get(`link_${platform}`, 600000);
+        if (cached) return cached;
+
         const apiUrl = await Api.GetApiUrl();
         const endpoint = `${apiUrl}/links/${platform}`;
 
         const response = await fetch(endpoint);
         const data = await response.json();
 
+        if (data.link) Cache.set(`link_${platform}`, data.link);
         return data.link;
+    },
+
+    async BulkUserInfo(discordId, sessionToken)
+    {
+        const apiUrl = await this.GetApiUrl();
+        const response = await fetch(`${apiUrl}/auth/bulk-info`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ discordId, sessionToken })
+        });
+        const data = await response.json();
+        if (data.ok) {
+            if (data.user) Cache.set('discord_user', data.user);
+            if (data.licenses) Cache.set('licenses', data.licenses);
+            Cache.set('bulk_info_timestamp', Date.now());
+        }
+        return data;
     }
 };
 export default Api;

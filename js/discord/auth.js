@@ -1,5 +1,24 @@
 import Api from "../util/backend.js";
 
+const TEN_MINUTES = 10 * 60 * 1000;
+
+function getCachedUser() {
+    try {
+        const raw = localStorage.getItem('cache_discord_user');
+        if (!raw) return null;
+        const item = JSON.parse(raw);
+        if (Date.now() - item.timestamp < TEN_MINUTES) return item.data;
+        localStorage.removeItem('cache_discord_user');
+    } catch (e) {}
+    return null;
+}
+
+function setCachedUser(user) {
+    try {
+        localStorage.setItem('cache_discord_user', JSON.stringify({ data: user, timestamp: Date.now() }));
+    } catch (e) {}
+}
+
 export async function CheckAuthStatus()
 {
     const token = DiscordAuth.GetSessionToken();
@@ -7,6 +26,13 @@ export async function CheckAuthStatus()
 
     try
     {
+        const cached = getCachedUser();
+        if (cached && token) {
+            DiscordAuth.currentUser = cached;
+            UpdateUI(true, cached);
+            return true;
+        }
+
         const endpoint = token
             ? `${apiUrl}/discord/me?token=${encodeURIComponent(token)}`
             : `${apiUrl}/discord/me`;
@@ -25,6 +51,7 @@ export async function CheckAuthStatus()
         if(data.success && data.loggedIn)
         {
             DiscordAuth.currentUser = data.user;
+            setCachedUser(data.user);
             UpdateUI(true, data.user);
             return true;
         } else
@@ -70,6 +97,23 @@ function UpdateUI(loggedIn, user = null)
                 avatarEl.classList.remove('hidden');
                 if(defaultAvatarEl) defaultAvatarEl.classList.add('hidden');
             }
+
+            // Show balance next to username
+            const balanceEl = userProfileTrigger.querySelector('.user-balance');
+            if(balanceEl)
+            {
+                const balance = user.balance !== undefined ? user.balance : 0;
+                balanceEl.textContent = `Balance: ${Number(balance).toFixed(1)}`;
+                balanceEl.classList.remove('hidden');
+            }
+            else
+            {
+                const balanceSpan = document.createElement('span');
+                balanceSpan.className = 'user-balance text-[0.6rem] font-bold text-[#c7b18f] tracking-wider';
+                balanceSpan.textContent = `Balance: ${Number(user.balance || 0).toFixed(1)}`;
+                const textRight = userProfileTrigger.querySelector('.text-right');
+                if(textRight) textRight.appendChild(balanceSpan);
+            }
         }
 
         if(discordBtn)
@@ -100,6 +144,8 @@ function UpdateUI(loggedIn, user = null)
         if(userProfileTrigger)
         {
             userProfileTrigger.classList.add('hidden');
+            const balanceEl = userProfileTrigger.querySelector('.user-balance');
+            if(balanceEl) balanceEl.classList.add('hidden');
         }
         if(discordBtn)
         {
@@ -151,6 +197,11 @@ const DiscordAuth = {
     },
     async GetUser()
     {
+        const cached = getCachedUser();
+        if (cached) {
+            return new DiscordUser(cached.id, cached.username, cached.global_name || cached.globalName, cached.avatar);
+        }
+
         const apiUrl = await Api.GetApiUrl();
         const token = this.GetSessionToken();
         
@@ -163,16 +214,14 @@ const DiscordAuth = {
         }
 
         const u = data.user;
-        return new DiscordUser(u.id, u.username, u.global_name, u.avatar);
+        setCachedUser(u);
+        return new DiscordUser(u.id, u.username, u.global_name || u.globalName, u.avatar);
     },
 
     // bot
     async GetClientId()
     {
-        const apiUrl = await Api.GetApiUrl();
-        const response = await fetch(`${apiUrl}/config/discord`);
-        const data = await response.json();
-
+        const data = await Api.GetDiscordConfig();
         return data.clientId;
     },
 
@@ -188,6 +237,8 @@ const DiscordAuth = {
     DeleteSessionToken()
     {
         localStorage.removeItem('discord_session');
+        localStorage.removeItem('cache_discord_user');
+        localStorage.removeItem('cache_bulk_info_timestamp');
     },
 
     // window

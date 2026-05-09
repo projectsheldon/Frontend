@@ -1,5 +1,6 @@
 // License page script
 import Api from "../../util/backend.js";
+import { DiscordAuth } from "../../discord/auth.js";
 
 let keys = [];
 
@@ -116,12 +117,10 @@ async function loadLicenses()
                 const sessionToken = localStorage.getItem('discord_session');
                 if(sessionToken)
                 {
-                    const apiUrl = await Api.GetApiUrl();
-                    const userRes = await fetch(`${apiUrl}/discord/me?token=` + encodeURIComponent(sessionToken));
-                    const userData = await userRes.json();
-                    if(userData.success && userData.user)
+                    const user = window.DiscordAuth?.currentUser || await DiscordAuth.GetUser();
+                    if(user)
                     {
-                        discordId = userData.user.id;
+                        discordId = user.id;
                     }
                 }
             }

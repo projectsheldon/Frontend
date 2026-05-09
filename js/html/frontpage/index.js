@@ -130,17 +130,41 @@ async function HandleDownload()
 const downloadButton = document.getElementById('download-btn');
 downloadButton.addEventListener('click', HandleDownload);
 
+function getCachedServerCount() {
+    try {
+        const raw = localStorage.getItem('cache_server_count');
+        if (!raw) return null;
+        const item = JSON.parse(raw);
+        if (Date.now() - item.timestamp < 600000) return item.data;
+        localStorage.removeItem('cache_server_count');
+    } catch (e) {}
+    return null;
+}
+
+function setCachedServerCount(count) {
+    try {
+        localStorage.setItem('cache_server_count', JSON.stringify({ data: count, timestamp: Date.now() }));
+    } catch (e) {}
+}
+
 async function updateMemberCount()
 {
     try
     {
+        const cached = getCachedServerCount();
+        const el = document.getElementById('discord-count');
+        if (cached) {
+            if (el) el.textContent = cached.toLocaleString();
+            return;
+        }
+
         const apiUrl = await Api.GetApiUrl();
         const res = await fetch(`${apiUrl}/discord/servercount`);
         const data = await res.json();
-        const el = document.getElementById('discord-count');
         if(el && data.count !== undefined)
         {
             el.textContent = data.count.toLocaleString();
+            setCachedServerCount(data.count);
         }
     } catch(e)
     {
@@ -148,4 +172,4 @@ async function updateMemberCount()
 }
 
 updateMemberCount();
-setInterval(updateMemberCount, 30000);
+setInterval(updateMemberCount, 600000);
