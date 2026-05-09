@@ -3,7 +3,7 @@ const Api = {
 
     async _fetchBackendUrl()
     {
-        const remoteServer = 'http://e0wcwoocg4w0w0gc404wgswg.82.153.202.158.sslip.io';
+        const remoteServer = 'https://sheldon-backend.amaskeddev.workers.dev/';
         const localServer = 'http://localhost:3350';
 
         if(this._backendUrl) return this._backendUrl;
