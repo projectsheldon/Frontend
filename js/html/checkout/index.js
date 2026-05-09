@@ -137,27 +137,26 @@ async function LoadProductInfo()
 {
     if(productKey === "free")
     {
-        // Free product: use balance system
-        const nameEl = document.getElementById('product-name');
-        if(nameEl) nameEl.textContent = '4.5H Free Key (Balance)';
+        window.location.href = await Api.GetLink("workink");
+
+        // const nameEl = document.getElementById('product-name');
+        // if(nameEl) nameEl.textContent = '4.5H Free Key (Balance)';
         
-        // Hide quantity controls for free product
-        const qtyRow = document.getElementById('qty-row') || document.querySelector('[style*="Amount"]')?.parentElement?.parentElement;
-        // Hide pricing sidebar info
-        const sidebar = document.querySelector('.sidebar');
-        if(sidebar)
-        {
-            const subtotalEl = document.getElementById('subtotal-price');
-            const discountRow = document.getElementById('discount-row');
-            const finalTotalEl = document.getElementById('final-total-price');
-            if(subtotalEl) subtotalEl.parentElement.style.display = 'none';
-            if(discountRow) discountRow.style.display = 'none';
-            if(finalTotalEl) finalTotalEl.parentElement.style.display = 'none';
-        }
+        // const qtyRow = document.getElementById('qty-row') || document.querySelector('[style*="Amount"]')?.parentElement?.parentElement;
+        // const sidebar = document.querySelector('.sidebar');
+        // if(sidebar)
+        // {
+        //     const subtotalEl = document.getElementById('subtotal-price');
+        //     const discountRow = document.getElementById('discount-row');
+        //     const finalTotalEl = document.getElementById('final-total-price');
+        //     if(subtotalEl) subtotalEl.parentElement.style.display = 'none';
+        //     if(discountRow) discountRow.style.display = 'none';
+        //     if(finalTotalEl) finalTotalEl.parentElement.style.display = 'none';
+        // }
         
-        // Show balance-based UI
-        await ShowBalanceCheckout();
-        return;
+        // // Show balance-based UI
+        // await ShowBalanceCheckout();
+        // return;
     }
 
     const nameEl = document.getElementById('product-name');
