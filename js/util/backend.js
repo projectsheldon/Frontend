@@ -1,5 +1,9 @@
 const TEN_MINUTES = 10 * 60 * 1000;
 
+function stripTrailingSlash(url) {
+    return url.replace(/\/+$/, '');
+}
+
 const Cache = {
     get(key, maxAge = TEN_MINUTES) {
         try {
@@ -33,8 +37,8 @@ const Api = {
             return cached;
         }
 
-        const remoteServer = 'https://sheldon-backend.amaskeddev.workers.dev/';
-        const localServer = 'http://localhost:3350';
+        const remoteServer = stripTrailingSlash('https://sheldon-backend.amaskeddev.workers.dev');
+        const localServer = stripTrailingSlash('http://localhost:3350');
 
         try
         {
@@ -45,7 +49,7 @@ const Api = {
             if(response.ok)
             {
                 const data = await response.json();
-                this._backendUrl = isLocalhost ? data.localhost : data.server;
+                this._backendUrl = stripTrailingSlash(isLocalhost ? data.localhost : data.server);
             } else
             {
                 this._backendUrl = fallbackUrl;
