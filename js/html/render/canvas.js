@@ -1,11 +1,11 @@
 const canvas = document.getElementById('particle-canvas');
-let ctx = null;
+if (!canvas) return;
+const ctx = canvas.getContext('2d');
 let particles = [];
 const particleCount = 150;
 
 function resize()
 {
-    if (!canvas) return;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
@@ -41,15 +41,12 @@ class Particle
 
 function initParticles()
 {
-    if (!canvas) return;
-    ctx = canvas.getContext('2d');
     for (let i = 0; i < particleCount; i++) particles.push(new Particle());
     animate();
 }
 
 function animate()
 {
-    if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles.forEach(p => {p.update(); p.draw();});
     requestAnimationFrame(animate);

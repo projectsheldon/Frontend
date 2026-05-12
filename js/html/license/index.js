@@ -67,24 +67,6 @@ async function loadLicenses()
 {
     const urlParams = new URLSearchParams(window.location.search);
 
-    const singleKey = urlParams.get('key');
-    if(singleKey)
-    {
-        const colonIdx = singleKey.indexOf(':');
-        if(colonIdx !== -1)
-        {
-            const key = singleKey.substring(0, colonIdx).trim();
-            const tier = singleKey.substring(colonIdx + 1).trim();
-            keys = [{ key, tier: tier || 'License' }];
-        }
-        else
-        {
-            keys = [{ key: singleKey.trim(), tier: 'License' }];
-        }
-        render();
-        return;
-    }
-
     const showKeys = urlParams.get('showKeys');
     if(showKeys)
     {

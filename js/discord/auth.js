@@ -1,5 +1,24 @@
 import Api from "../util/backend.js";
 
+const TEN_MINUTES = 10 * 60 * 1000;
+
+function getCachedUser() {
+    try {
+        const raw = localStorage.getItem('cache_discord_user');
+        if (!raw) return null;
+        const item = JSON.parse(raw);
+        if (Date.now() - item.timestamp < TEN_MINUTES) return item.data;
+        localStorage.removeItem('cache_discord_user');
+    } catch (e) {}
+    return null;
+}
+
+function setCachedUser(user) {
+    try {
+        localStorage.setItem('cache_discord_user', JSON.stringify({ data: user, timestamp: Date.now() }));
+    } catch (e) {}
+}
+
 export async function CheckAuthStatus()
 {
     const token = DiscordAuth.GetSessionToken();
@@ -7,8 +26,15 @@ export async function CheckAuthStatus()
 
     try
     {
+        const cached = getCachedUser();
+        if (cached && token) {
+            DiscordAuth.currentUser = cached;
+            UpdateUI(true, cached);
+            return true;
+        }
+
         const endpoint = token
-            ? `${apiUrl}/discord/me`
+            ? `${apiUrl}/discord/me?token=${encodeURIComponent(token)}`
             : `${apiUrl}/discord/me`;
 
         const response = await fetch(endpoint, {
@@ -25,6 +51,7 @@ export async function CheckAuthStatus()
         if(data.success && data.loggedIn)
         {
             DiscordAuth.currentUser = data.user;
+            setCachedUser(data.user);
             UpdateUI(true, data.user);
             return true;
         } else
@@ -82,8 +109,7 @@ function UpdateUI(loggedIn, user = null)
             else
             {
                 const balanceSpan = document.createElement('span');
-                balanceSpan.className = 'user-balance text-[0.6rem] font-bold text-[#c7b18f] tracking-wider leading-none';
-                balanceSpan.style.marginTop = '1px';
+                balanceSpan.className = 'user-balance text-[0.6rem] font-bold text-[#c7b18f] tracking-wider';
                 balanceSpan.textContent = `Balance: ${Number(user.balance || 0).toFixed(1)}`;
                 const textRight = userProfileTrigger.querySelector('.text-right');
                 if(textRight) textRight.appendChild(balanceSpan);
@@ -171,13 +197,16 @@ const DiscordAuth = {
     },
     async GetUser()
     {
+        const cached = getCachedUser();
+        if (cached) {
+            return new DiscordUser(cached.id, cached.username, cached.global_name || cached.globalName, cached.avatar);
+        }
+
         const apiUrl = await Api.GetApiUrl();
         const token = this.GetSessionToken();
-
-        const headers = {};
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        const response = await fetch(`${apiUrl}/discord/me`, { headers });
+        
+        const url = token ? `${apiUrl}/discord/me?token=${encodeURIComponent(token)}` : `${apiUrl}/discord/me`;
+        const response = await fetch(url);
         const data = await response.json();
 
         if (!data.success || !data.user) {
@@ -185,6 +214,7 @@ const DiscordAuth = {
         }
 
         const u = data.user;
+        setCachedUser(u);
         return new DiscordUser(u.id, u.username, u.global_name || u.globalName, u.avatar);
     },
 
