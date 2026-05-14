@@ -153,6 +153,14 @@ async function loadLicenses()
             if(data.ok && data.license)
             {
                 keys = [ { key: data.license.key, tier: data.license.product } ];
+            } else if(data.ok && data.new_balance !== undefined)
+            {
+                const added = (typeof data.added === 'number' && !isNaN(data.added)) ? data.added : 0;
+                const oldBalance = data.new_balance - added;
+                sessionStorage.setItem('balance_added', String(added));
+                sessionStorage.setItem('balance_old', String(Math.max(0, oldBalance)));
+                window.location.href = '/?balance=' + added;
+                return;
             } else
             {
                 keys = [];

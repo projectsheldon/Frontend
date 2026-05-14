@@ -900,6 +900,258 @@
         });
     </script>
     <script src="./js/util/notify.js"></script>
+
+<!-- ============================================================
+     BALANCE GAIN ANIMATION — drop-in replacement for the two
+     blocks at the bottom of your HTML (style + script).
+     ============================================================ -->
+
+<!-- Balance gain animation styles -->
+<style>
+    @keyframes balancePulse {
+        0%, 100% { text-shadow: 0 0 30px rgba(34,197,94,0.4); }
+        50%       { text-shadow: 0 0 70px rgba(34,197,94,0.8), 0 0 120px rgba(34,197,94,0.3); }
+    }
+    @keyframes labelFadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes gainDropIn {
+        /* gain tag pops in just above the number, ready to drop */
+        from { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.85); }
+        to   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1); }
+    }
+</style>
+
+<!-- Balance gain animation logic -->
+<script>
+try {
+(function () {
+    const params = new URLSearchParams(window.location.search);
+    let raw = sessionStorage.getItem('balance_added');
+    let rawOld = sessionStorage.getItem('balance_old');
+    sessionStorage.removeItem('balance_added');
+    sessionStorage.removeItem('balance_old');
+
+    if (raw === null || isNaN(parseFloat(raw)) || parseFloat(raw) <= 0)
+        raw = params.get('balance') || params.get('added');
+
+    if (params.has('balance') || params.has('added'))
+        window.history.replaceState({}, '', window.location.pathname);
+
+    if (raw === null) return;
+    const addedAmount = parseFloat(raw);
+    if (isNaN(addedAmount) || addedAmount <= 0) return;
+    const oldBalance = rawOld !== null ? parseFloat(rawOld) : null;
+
+    const poll = setInterval(() => {
+        const el = document.querySelector('.user-balance');
+        if (el && el.offsetParent !== null) {
+            clearInterval(poll);
+            setTimeout(() => animateBalanceGain(addedAmount, oldBalance), 600);
+        }
+    }, 100);
+    setTimeout(() => clearInterval(poll), 10_000);
+})();
+} catch(e) {}
+
+/* ─── Main animation function ────────────────────────────────────── */
+function animateBalanceGain(addedAmount, oldBalance) {
+    const balanceEl = document.querySelector('.user-balance');
+    if (!balanceEl) return;
+
+    const rawText    = balanceEl.textContent.trim();
+    const prefix     = (rawText.match(/^([^\d.]+)/) || [,''])[1];
+    const fmt        = v => prefix + v.toFixed(1);
+    const currentVal = (oldBalance !== null && !isNaN(oldBalance)) ? oldBalance : (parseFloat(rawText.match(/[\d.]+/)?.[0]) || 0);
+    const newVal     = currentVal + addedAmount;
+    const displayText = fmt(currentVal);
+
+    /* ── Positions ── */
+    const rect = balanceEl.getBoundingClientRect();
+    const sx   = rect.left + rect.width  / 2;
+    const sy   = rect.top  + rect.height / 2;
+    const cx   = window.innerWidth  / 2;
+    const cy   = window.innerHeight / 2;
+
+    /* ── 1. Dim backdrop ── */
+    const backdrop = document.createElement('div');
+    Object.assign(backdrop.style, {
+        position: 'fixed', inset: '0', zIndex: '9998',
+        background: 'rgba(0,0,0,0)',
+        backdropFilter: 'blur(0px)',
+        transition: 'background 0.45s ease, backdrop-filter 0.45s ease',
+        pointerEvents: 'none',
+    });
+    document.body.appendChild(backdrop);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        backdrop.style.background     = 'rgba(0,0,0,0.75)';
+        backdrop.style.backdropFilter = 'blur(4px)';
+    }));
+
+    /* ── 2. Flying balance clone (topbar → center) ── */
+        const flyer = document.createElement('div');
+        Object.assign(flyer.style, {
+            position: 'fixed',
+            left: sx + 'px', top: sy + 'px',
+            transform: 'translate(-50%,-50%)',
+            zIndex: '10000', pointerEvents: 'none',
+            fontFamily: "'Inter', sans-serif", fontWeight: '900',
+            fontSize: rect.height + 'px', color: '#c7b18f',
+            whiteSpace: 'nowrap', letterSpacing: '-0.03em',
+            transition: 'none',
+        });
+    flyer.textContent = displayText;
+    document.body.appendChild(flyer);
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        flyer.style.transition = [
+            'left      0.55s cubic-bezier(0.22,1,0.36,1)',
+            'top       0.55s cubic-bezier(0.22,1,0.36,1)',
+            'font-size 0.55s cubic-bezier(0.22,1,0.36,1)',
+            'color     0.45s ease',
+        ].join(',');
+        flyer.style.left     = cx + 'px';
+        flyer.style.top      = cy + 'px';
+        flyer.style.fontSize = '52px';
+        flyer.style.color    = '#ffffff';
+    }));
+
+    /* ── 3. After flyer arrives, swap in the center display ── */
+    setTimeout(() => {
+        flyer.remove();
+
+        /*
+         *  Layout (flex column, centered):
+         *
+         *   ┌─────────────────────┐
+         *   │   Balance: 2.0      │  ← num
+         *   │   +0.5              │  ← gain (below num)
+         *   └─────────────────────┘
+         *
+         *  On merge: gain slides up into num, both blur,
+         *  num updates to new total and unblurs white.
+         */
+
+        /* outer wrapper — centered, adjusted so NUM (not stage) is at center */
+        const wrap = document.createElement('div');
+        Object.assign(wrap.style, {
+            position: 'fixed', left: cx + 'px', top: (cy - 22) + 'px',
+            transform: 'translate(-50%,-50%)',
+            zIndex: '10000', pointerEvents: 'none',
+            textAlign: 'center',
+        });
+        document.body.appendChild(wrap);
+
+        /*
+         * stage: holds gain (absolute, above) + num (in-flow)
+         * The gain tag's `top` value is measured in px from the
+         * top of the stage. We position it just above num, then
+         * animate it downward to overlap num for the merge.
+         */
+        const stage = document.createElement('div');
+        Object.assign(stage.style, {
+            position: 'relative',
+            display: 'inline-block',
+            paddingTop: '44px',
+        });
+
+        /* gain tag — absolutely placed above num */
+        const gain = document.createElement('div');
+        Object.assign(gain.style, {
+            position: 'absolute',
+            top: '0',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontFamily: "'Inter', sans-serif", fontWeight: '800',
+            fontSize: '22px', color: '#22c55e',
+            whiteSpace: 'nowrap', letterSpacing: '-0.01em',
+            opacity: '0',
+            transition: [
+                'top         0.5s cubic-bezier(0.4,0,0.2,1)',
+                'opacity     0.35s ease',
+                'filter      0.35s ease',
+                'font-size   0.4s ease',
+            ].join(','),
+        });
+        gain.textContent = '+' + addedAmount.toFixed(1);
+
+        /* big balance number */
+        const num = document.createElement('div');
+        Object.assign(num.style, {
+            fontFamily: "'Inter', sans-serif", fontWeight: '900',
+            fontSize: '52px', lineHeight: '1',
+            color: '#ffffff', letterSpacing: '-0.03em',
+            transition: [
+                'filter      0.4s ease',
+                'opacity     0.4s ease',
+                'color       0.4s ease',
+                'text-shadow 0.4s ease',
+            ].join(','),
+        });
+        num.textContent = displayText;
+
+        stage.append(gain, num);
+        wrap.append(stage);
+
+        /* ── Phase A: show gain tag dropping in above number (300 ms after mount) ── */
+        setTimeout(() => {
+            gain.style.animation = 'gainDropIn 0.35s cubic-bezier(0.22,1,0.36,1) forwards';
+            gain.style.opacity   = '1';
+        }, 300);
+
+        /* ── Phase B: merge — gain slides down into num, both blur ── */
+        setTimeout(() => {
+            /* gain slides down: 'top: 0' → roughly center of num
+             * num is 52px tall, stage paddingTop is 44px,
+             * so num center ≈ 44 + 26 = ~70px from stage top
+             * gain height ~28px, so gain center target ≈ 70 - 14 = 56px */
+            gain.style.top      = '56px';
+            gain.style.fontSize = '38px';
+
+            /* num blurs just before gain arrives */
+            setTimeout(() => {
+                num.style.filter  = 'blur(14px)';
+                num.style.opacity = '0.2';
+                gain.style.filter = 'blur(8px)';
+            }, 250);
+
+            /* unblur: reveal new total, gain fades */
+            setTimeout(() => {
+                num.textContent     = fmt(newVal);
+                num.style.color     = '#ffffff';
+                num.style.filter    = 'none';
+                num.style.opacity   = '1';
+                num.style.textShadow = '0 0 50px rgba(255,255,255,0.45)';
+                num.style.animation = 'balancePulse 1.4s ease-in-out 2';
+                gain.style.animation = 'none';
+                gain.style.opacity  = '0';
+                gain.style.filter   = 'none';
+            }, 460);
+
+        }, 900);   /* hold to let user read current balance first */
+
+        /* ── Phase C: fade out, update topbar to new green balance ── */
+        setTimeout(() => {
+            wrap.style.transition     = 'opacity 0.45s ease, transform 0.45s ease';
+            backdrop.style.transition = 'background 0.45s ease, backdrop-filter 0.45s ease';
+
+            wrap.style.opacity        = '0';
+            wrap.style.transform      = 'translate(-50%,-50%) scale(0.94)';
+            backdrop.style.background     = 'rgba(0,0,0,0)';
+            backdrop.style.backdropFilter = 'blur(0px)';
+
+            /* update topbar to new balance, return to gold */
+            balanceEl.textContent   = fmt(newVal);
+            balanceEl.style.color   = '#c7b18f';
+            balanceEl.style.textShadow = 'none';
+
+            setTimeout(() => { wrap.remove(); backdrop.remove(); }, 460);
+        }, 2_700);
+
+    }, 670);   /* matches flyer travel time */
+}
+</script>
 </body>
 
 </html>
