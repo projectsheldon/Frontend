@@ -50,7 +50,7 @@ const Api = {
             return this._backendUrl;
         }
 
-        const remoteServer = stripTrailingSlash('https://sheldon-backend.amaskeddev.workers.dev');
+        const remoteServer = stripTrailingSlash('https://backend.projectsheldon.me');
         const localServer = stripTrailingSlash('http://localhost:3350');
 
         try
