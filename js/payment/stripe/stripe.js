@@ -122,7 +122,8 @@ async function createPaymentIntentRequest()
         body: JSON.stringify({
             product_key: window.productKey,
             quantity: Number(window.quantity) || 1,
-            is_personal_use: !!window.personalUse
+            is_personal_use: !!window.personalUse,
+            coupon_code: window.couponCode || undefined
         })
     });
 

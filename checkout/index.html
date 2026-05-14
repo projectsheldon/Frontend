@@ -21,6 +21,8 @@
         window.personalUse = false;
         window.productKey = new URLSearchParams(window.location.search).get('product') || 'lifetime';
         window.currentPricing = null;
+        window.couponCode = '';
+        window.couponApplied = false;
 
         window.getCurrentTier = function() {
             return window.currentPricing?.tier || { minQty: 1, discount: 0, discountPercent: 0 };
@@ -57,7 +59,8 @@
                     body: JSON.stringify({
                         product_key: window.productKey,
                         quantity: window.quantity,
-                        is_personal_use: window.personalUse
+                        is_personal_use: window.personalUse,
+                        coupon_code: window.couponCode || undefined
                     })
                 });
                 
@@ -66,6 +69,9 @@
                 if (data.ok && data.pricing) {
                     window.currentPricing = data.pricing;
                     window.isReseller = data.pricing.isReseller || false;
+                    if (data.pricing.couponApplied !== false) {
+                        window.couponApplied = !!data.pricing.couponCode;
+                    }
                 }
             } catch (e) {
                 console.error('Price fetch failed:', e);
@@ -95,6 +101,8 @@
             const discountEl = document.getElementById('discount-price');
             const finalTotalEl = document.getElementById('final-total-price');
             const profitEl = document.getElementById('total-profit');
+            const couponRow = document.getElementById('coupon-row');
+            const couponDiscountEl = document.getElementById('coupon-discount-price');
             
             if (window.currentPricing) {
                 discount = window.currentPricing.discountAmount || 0;
@@ -118,6 +126,40 @@ if (discountEl) {
         ? tier.discountPercent
         : '0';
     fadeUpdate(discountEl, `-€${discount.toFixed(2)} (${pct}%)`);
+}
+
+// Coupon discount row
+const couponDiscount = window.currentPricing?.couponDiscount || 0;
+if (couponRow) {
+    couponRow.style.display = couponDiscount > 0 ? 'flex' : 'none';
+}
+if (couponDiscountEl) {
+    const label = window.currentPricing?.couponType === 'percentage'
+        ? `-€${couponDiscount.toFixed(2)} (${window.currentPricing.couponValue}%)`
+        : `-€${couponDiscount.toFixed(2)}`;
+    fadeUpdate(couponDiscountEl, label);
+}
+
+// Coupon status
+const couponStatus = document.getElementById('coupon-status');
+const removeCouponBtn = document.getElementById('remove-coupon-btn');
+if (window.couponCode && window.currentPricing) {
+    if (couponDiscount > 0) {
+        if (couponStatus) {
+            couponStatus.textContent = `Coupon "${window.currentPricing.couponCode}" applied!`;
+            couponStatus.style.color = '#22c55e';
+        }
+        if (removeCouponBtn) removeCouponBtn.style.display = 'inline-block';
+    } else if (!couponDiscount && window.couponCode) {
+        if (couponStatus) {
+            couponStatus.textContent = 'Invalid or expired coupon code';
+            couponStatus.style.color = '#ef4444';
+        }
+        if (removeCouponBtn) removeCouponBtn.style.display = 'inline-block';
+    }
+} else {
+    if (couponStatus) couponStatus.textContent = '';
+    if (removeCouponBtn) removeCouponBtn.style.display = 'none';
 }
             
             fadeUpdate(finalTotalEl, '€' + finalTotal.toFixed(2));
@@ -145,6 +187,37 @@ if (discountEl) {
             // Show/hide reseller tools
             const resellerTools = document.getElementById('reseller-tools');
             if (resellerTools) resellerTools.classList.toggle('hidden', !window.isReseller || window.personalUse);
+        }
+
+        window.applyCoupon = function() {
+            const input = document.getElementById('coupon-input');
+            const status = document.getElementById('coupon-status');
+            if (!input) return;
+
+            const code = input.value.trim();
+            if (!code) {
+                status.textContent = 'Enter a coupon code';
+                status.style.color = '#ef4444';
+                return;
+            }
+
+            window.couponCode = code;
+            window.couponApplied = false;
+            if (status) {
+                status.textContent = 'Applying...';
+                status.style.color = '#c7b18f';
+            }
+            window.fetchPriceFromApi();
+        }
+
+        window.removeCoupon = function() {
+            window.couponCode = '';
+            window.couponApplied = false;
+            const input = document.getElementById('coupon-input');
+            const status = document.getElementById('coupon-status');
+            if (input) input.value = '';
+            if (status) status.textContent = '';
+            window.fetchPriceFromApi();
         }
         
         // Personal Use Tooltip
@@ -363,6 +436,7 @@ if (discountEl) {
             flex-direction: column;
             min-height: 400px;
             align-items: center;
+            justify-content: center;
         }
 
         .payment-tabs {
@@ -658,11 +732,11 @@ if (discountEl) {
 
             <div class="flex items-center gap-5 z-10 shrink-0">
                 <div id="user-profile-trigger" class="hidden flex items-center gap-2 cursor-pointer group" style="position: relative;">
-                    <div class="text-right">
+                    <div class="flex flex-col leading-none text-right gap-0.5">
                         <div
                             class="user-name text-[0.7rem] font-bold text-neutral-400 group-hover:text-white transition-colors">
                             Username</div>
-                        <div class="user-balance text-[0.6rem] font-bold text-[#c7b18f] tracking-wider hidden"></div>
+                        <div class="user-balance text-[0.6rem] font-bold text-[#c7b18f] tracking-wider hidden leading-none" style="margin-top: 1px"></div>
                     </div>
                     <div
                         class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group-hover:bg-white/10 transition-all">
@@ -750,6 +824,22 @@ if (discountEl) {
                         <span class="text-xs font" style="color: rgba(255,255,255,0.5);">Reseller Bulk Discount:</span>
                         <span id="discount-price" class="text-xs font">€0.00</span>
                     </div>
+
+                    <!-- Coupon row -->
+                    <div id="coupon-row" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="text-xs font" style="color: rgba(255,255,255,0.5);">Coupon Discount:</span>
+                        <span id="coupon-discount-price" class="text-xs font" style="color: #22c55e;">€0.00</span>
+                    </div>
+
+                    <!-- Coupon input -->
+                    <div id="coupon-section">
+                    <div style="display: flex; align-items: center; gap: 6px; margin-top: 10px; margin-bottom: 12px;">
+                        <input type="text" id="coupon-input" placeholder="Coupon code" style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 10px; color: white; font-size: 11px; outline: none;">
+                        <button onclick="applyCoupon()" style="background: rgba(199,177,143,0.15); color: #c7b18f; border: 1px solid rgba(199,177,143,0.3); border-radius: 6px; padding: 6px 12px; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s; white-space: nowrap;">Apply</button>
+                        <button onclick="removeCoupon()" id="remove-coupon-btn" style="display: none; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); border-radius: 6px; padding: 6px 10px; font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap;">X</button>
+                    </div>
+                    <div id="coupon-status" style="font-size: 10px; margin-top: -6px; margin-bottom: 10px; min-height: 14px;"></div>
+                    </div>
                     
                     <!-- Total row -->
                     <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -781,7 +871,18 @@ if (discountEl) {
                         <div id="payment-element" style="margin-bottom: 16px;"></div>
 <button id="pay-btn" class="btn-action">Pay Now</button>
                     </div> -->
-                    <h1 id="ticket-text" style="display: none;">In the discord server use /createticket and specify your quantity and product type. After you pay the price with paypal <i>(uh not in a bad way cuz that sounds threatening)</i> and the admin confirms you will be given your license(s) or reselling purposed ones</a></h1>
+                    <div id="ticket-section" style="display: none; width: 100%; max-width: 500px; margin-top: -16px;">
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 24px 28px 20px; text-align: center;">
+                            <h3 style="font-size: 15px; font-weight: 800; color: white; margin-bottom: 8px;">Create Purchase Ticket</h3>
+                            <p style="font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.6; margin-bottom: 20px;">
+                                Our team will process your order and deliver your license(s) once payment is confirmed.
+                            </p>
+                            <button id="create-ticket-btn" style="background: #c7b18f; color: black; font-weight: 800; width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s;">
+                                Create Purchase Ticket
+                            </button>
+                            <div id="ticket-status" style="display: none; margin-top: 10px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700;"></div>
+                        </div>
+                    </div>
                 </div>
 
                 </div>
