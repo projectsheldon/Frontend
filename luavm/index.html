@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lua VM API - Project Sheldon</title>
+    <script src="https://cdn.tailwindcss.com?warn=false"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="../favicon/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/lua.min.js"></script>
+    <script>
+        window.addEventListener('error', function (e) {
+            if (e.message && (e.message.includes('youtube.com') || e.message.includes('ERR_BLOCKED_BY_CLIENT') || e.filename.includes('youtube.com'))) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bg-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 1) 0%, rgba(5, 5, 5, 1) 100%);
+            z-index: -2;
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: -20%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.04) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .logo-box {
+            transition: transform 0.3s ease;
+        }
+
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .mobile-menu-btn { display: none; }
+        .mobile-menu { display: none; }
+
+        @media (max-width: 768px) {
+            .nav-tabs-desktop { display: none; }
+            .mobile-menu-btn { display: block; background: none; border: none; color: white; cursor: pointer; padding: 8px; }
+            .mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(5,5,5,0.98); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 1rem; z-index: 999; flex-direction: column; gap: 0.5rem; }
+            .mobile-menu.show { display: flex; }
+            .mobile-menu .nav-tab { text-align: center; padding: 1rem; }
+            .mobile-menu .nav-tab.active { background: rgba(199,177,143,0.1); color: #c7b18f; }
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 1rem; }
+
+            nav {
+                padding: 0.5rem !important;
+            }
+
+            nav > div {
+                height: 3rem !important;
+                padding: 0 0.75rem !important;
+                border-radius: 0.75rem !important;
+            }
+
+            .logo-box {
+                width: 2rem !important;
+                height: 2rem !important;
+            }
+
+            .logo-box img {
+                width: 1.5rem !important;
+                height: 1.5rem !important;
+            }
+
+            #discord-login-btn {
+                padding: 0.5rem 0.75rem !important;
+            }
+        }
+
+        .nav-tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: #c7b18f;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-tab:hover, .nav-tab.active {
+            color: white;
+        }
+
+        .nav-tab.active::after,
+        .nav-tab:hover::after {
+            width: 60%;
+        }
+
+        .btn-discord {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #5865F2;
+            color: white;
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-discord:hover {
+            background: #4752c4;
+            transform: translateY(-1px);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            height: calc(100vh - 64px);
+            position: fixed;
+            top: 64px;
+            left: 0;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+        .sidebar-section {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-title {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border-left: 2px solid transparent;
+        }
+
+        .sidebar-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+            border-left-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .sidebar-link.active {
+            color: #c7b18f;
+            background: rgba(199, 177, 143, 0.1);
+            border-left-color: #c7b18f;
+            border-right: none;
+        }
+
+        .sidebar-link .method {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .sidebar-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .dot-cyan { background: #22d3ee; }
+        .dot-green { background: #4ade80; }
+        .dot-amber { background: #fbbf24; }
+        .dot-purple { background: #a78bfa; }
+        .dot-blue { background: #60a5fa; }
+        .dot-rose { background: #fb7185; }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            min-height: calc(100vh - 64px);
+        }
+
+        .hero-section {
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: -1.5rem;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #ffffff 0%, #94a3b8 50%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border: 1px solid rgba(34, 211, 238, 0.25);
+            background: rgba(34, 211, 238, 0.08);
+            color: #22d3ee;
+        }
+
+        .endpoint-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .endpoint-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            border-radius: 12px 12px 0 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+
+
+        .card-accent-core::before { background: linear-gradient(90deg, #60a5fa, #3b82f6); }
+        .card-accent-library::before { background: linear-gradient(90deg, #4ade80, #22c55e); }
+        .card-accent-property::before { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+        .card-accent-example::before { background: linear-gradient(90deg, #a78bfa, #8b5cf6); }
+        .card-accent-overview::before { background: linear-gradient(90deg, #22d3ee, #06b6d4); }
+        .card-accent-global::before { background: linear-gradient(90deg, #fb7185, #f43f5e); }
+
+        .lib-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .lib-badge-opt {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .lib-badge-req {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fb7185;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .lib-badge-core {
+            background: rgba(34, 211, 238, 0.1);
+            color: #22d3ee;
+            border: 1px solid rgba(34, 211, 238, 0.15);
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: Consolas, 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            display: block;
+        }
+        pre:has(.code-block) {
+            overflow-x: auto;
+            border-radius: 8px;
+        }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .param-table th {
+            text-align: left;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+        }
+
+        .param-table td {
+            padding: 10px 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .param-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .param-name {
+            font-family: 'JetBrains Mono', monospace;
+            color: #c7b18f;
+        }
+
+        .param-type {
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 11px;
+        }
+
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 2.5rem 0 1.5rem;
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
+        }
+
+        .inline-tag {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tag-lua { background: rgba(0, 0, 0, 0.3); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.15); }
+
+        .prop-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .prop-header:hover { background: rgba(255,255,255,0.02); }
+        .prop-chevron {
+            width: 20px;
+            height: 20px;
+            color: rgba(255,255,255,0.25);
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+        }
+        .prop-chevron.collapsed { transform: rotate(-90deg); }
+        .prop-content { transition: opacity 0.2s ease; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .hero-title {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+    <div class="bg-mesh"></div>
+    <div class="bg-glow"></div>
+
+    <nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center" style="height: 64px;">
+        <div class="w-full max-w-[1100px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">
+            <a href="../" class="flex items-center gap-3 z-10 shrink-0">
+                <div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">
+                    <img src="../favicon/favicon.ico" alt="Logo" class="w-8 h-8 rounded-lg">
+                </div>
+                <span class="text-xl font-black tracking-tighter text-white hidden sm:block">SHELDON</span>
+            </a>
+
+            <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full nav-tabs-desktop">
+                <a href="../" class="nav-tab">Home</a>
+                <a href="../luavm/" class="nav-tab active">Lua VM</a>
+                <a href="../resellers/" class="nav-tab">Resell</a>
+            </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+
+            <div class="mobile-menu" id="mobileMenu">
+                <a href="../" class="nav-tab">Home</a>
+                <a href="../luavm/" class="nav-tab active">Lua VM</a>
+                <a href="../resellers/" class="nav-tab">Resell</a>
+            </div>
+
+            <div class="flex items-center gap-5 z-10 shrink-0">
+                <div id="user-profile-trigger" class="hidden flex items-center gap-2 cursor-pointer group" style="position: relative;">
+                    <div class="flex flex-col leading-none text-right gap-0.5">
+                        <div class="user-name text-[0.7rem] font-bold text-neutral-400 group-hover:text-white transition-colors">Username</div>
+                        <div class="user-balance text-[0.6rem] font-bold text-[#c7b18f] tracking-wider hidden leading-none" style="margin-top: 1px"></div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group-hover:bg-white/10 transition-all">
+                        <img class="user-avatar w-full h-full object-cover hidden" src="" alt="Avatar">
+                        <svg class="default-avatar w-full h-full text-neutral-400" fill="#ffffff" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <button id="discord-login-btn" class="btn-discord">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 127.14 96.36" fill="#ffffff">
+                        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a.41.41,0,0,0-.43.2,72.48,72.48,0,0,0-3.17,6.52,97.26,97.26,0,0,0-29,0,72.84,72.84,0,0,0-3.19-6.52.4.4,0,0,0-.43-.2A105.09,105.09,0,0,0,19.44,8.07a.44.44,0,0,0-.2.07C2.12,34,1.15,59.39,3.46,84.41a.48.48,0,0,0,.19.34A105.77,105.77,0,0,0,35.77,96.36a.42.42,0,0,0,.46-.22,74.22,74.22,0,0,0,6.42-10.38.4.4,0,0,0-.22-.56,68.7,68.7,0,0,1-10-4.76.41.41,0,0,1,0-.69c.83-.62,1.67-1.28,2.46-1.95a.39.39,0,0,1,.41-.05,73.4,73.4,0,0,0,57.48,0,.39.39,0,0,1,.41.05c.79.67,1.63,1.33,2.46,1.95a.41.41,0,0,1,0,.69,68.61,68.61,0,0,1-10,4.76.41.41,0,0,0-.22.56,74.8,74.8,0,0,0,6.43,10.38.42.42,0,0,0,.46.22,105.48,105.48,0,0,0,32.11-11.61.45.45,0,0,0,.19-.34c2.72-28.53-4.67-53.59-20-76.27A.39.39,0,0,0,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.07,65.69,84.69,65.69Z" />
+                    </svg>
+                    <span id="discord-login-txt" class="hidden sm:inline">Login</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-title">Getting Started</div>
+            <a class="sidebar-link" href="#overview"><span class="sidebar-dot dot-cyan"></span>Overview</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Core Types</div>
+            <a class="sidebar-link" href="#instance"><span class="sidebar-dot dot-blue"></span>Instance</a>
+            <a class="sidebar-link" href="#vector3"><span class="sidebar-dot dot-blue"></span>Vector3</a>
+            <a class="sidebar-link" href="#vector2"><span class="sidebar-dot dot-blue"></span>Vector2</a>
+            <a class="sidebar-link" href="#color3"><span class="sidebar-dot dot-blue"></span>Color3</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Libraries</div>
+            <a class="sidebar-link" href="#lib-task"><span class="sidebar-dot dot-green"></span>task</a>
+            <a class="sidebar-link" href="#lib-io"><span class="sidebar-dot dot-green"></span>io (print/warn/error/hex)</a>
+            <a class="sidebar-link" href="#lib-file"><span class="sidebar-dot dot-green"></span>file</a>
+            <a class="sidebar-link" href="#lib-memory"><span class="sidebar-dot dot-green"></span>memory</a>
+            <a class="sidebar-link" href="#lib-cheat"><span class="sidebar-dot dot-green"></span>cheat</a>
+            <a class="sidebar-link" href="#lib-utility"><span class="sidebar-dot dot-green"></span>utility</a>
+            <a class="sidebar-link" href="#lib-draw"><span class="sidebar-dot dot-green"></span>draw</a>
+            <a class="sidebar-link" href="#lib-imgui"><span class="sidebar-dot dot-green"></span>imgui</a>
+            <a class="sidebar-link" href="#lib-gui"><span class="sidebar-dot dot-green"></span>gui</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Properties</div>
+            <a class="sidebar-link" href="#properties"><span class="sidebar-dot dot-amber"></span>All Properties</a>
+            <a class="sidebar-link" href="#prop-part"><span class="sidebar-dot dot-amber"></span>Part / BasePart</a>
+            <a class="sidebar-link" href="#prop-humanoid"><span class="sidebar-dot dot-amber"></span>Humanoid</a>
+            <a class="sidebar-link" href="#prop-player"><span class="sidebar-dot dot-amber"></span>Player</a>
+            <a class="sidebar-link" href="#prop-players"><span class="sidebar-dot dot-amber"></span>Players</a>
+            <a class="sidebar-link" href="#prop-camera"><span class="sidebar-dot dot-amber"></span>Camera</a>
+            <a class="sidebar-link" href="#prop-workspace"><span class="sidebar-dot dot-amber"></span>Workspace</a>
+            <a class="sidebar-link" href="#prop-lighting"><span class="sidebar-dot dot-amber"></span>Lighting</a>
+            <a class="sidebar-link" href="#prop-values"><span class="sidebar-dot dot-amber"></span>Value Types</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Examples</div>
+            <a class="sidebar-link" href="#examples"><span class="sidebar-dot dot-purple"></span>Scripts & Examples</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="max-w-4xl mx-auto">
+            <div class="hero-section flex items-start gap-4">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="hero-badge">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            Lua 5.4
+                        </span>
+                        <span class="hero-badge" style="border-color: rgba(74, 222, 128, 0.25); background: rgba(74, 222, 128, 0.08); color: #4ade80;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            sol2 Binding
+                        </span>
+                    </div>
+                    <h1 class="hero-title">Lua VM API</h1>
+                    <p class="text-neutral-500 text-sm mt-3 max-w-2xl">Complete reference for the Project Sheldon Lua scripting environment. Scripts can interact with the Roblox game instance, render overlays, manipulate memory, and more.</p>
+                </div>
+            </div>
+
+            <!-- Overview -->
+            <div class="endpoint-card card-accent-overview" id="overview">
+                <div class="flex items-center gap-3 mb-4">
+                    <h2 class="text-xl font-bold text-white">Overview</h2>
+                    <span class="lib-badge lib-badge-core">Lua 5.4 + sol2</span>
+                </div>
+                <p class="text-neutral-400 text-sm mb-4">The Sheldon Lua VM provides a full Lua 5.4 scripting environment powered by sol2. Scripts can interact with the Roblox game instance, render overlays, manipulate memory, and more.</p>
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Detail</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Language</span></td><td class="text-neutral-400">Lua 5.4</td></tr>
+                        <tr><td><span class="param-name">Binding</span></td><td class="text-neutral-400">sol2 (C++ to Lua)</td></tr>
+                        <tr><td><span class="param-name">Loaded std libs</span></td><td class="text-neutral-400">base, math, table, string</td></tr>
+                        <tr><td><span class="param-name">Compound assignments</span></td><td class="text-neutral-400">x += 1, x -= 1, etc. (preprocessed to vanilla Lua)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-divider">Core Types</div>
+
+            <!-- Instance -->
+            <div class="endpoint-card card-accent-core" id="instance">
+                <h2 class="text-xl font-bold text-white mb-4">Instance <span class="lib-badge lib-badge-core">core type</span></h2>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-2">Properties</h3>
+                <table class="param-table mb-4">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Name</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Instance name</td></tr>
+                        <tr><td><span class="param-name">ClassName</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Roblox class name (e.g. "Part", "Player")</td></tr>
+                        <tr><td><span class="param-name">Parent</span></td><td><span class="param-type">Instance | nil</span></td><td class="text-neutral-400">Parent instance</td></tr>
+                        <tr><td><span class="param-name">Address</span></td><td><span class="param-type">number (uint)</span></td><td class="text-neutral-400">Raw memory address</td></tr>
+                        <tr><td><span class="param-name">FullName</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Full hierarchical path</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 class="text-sm font-bold text-white mb-2">Methods</h3>
+                <pre><code class="language-lua code-block">instance:FindFirstChild(name)                        -> Instance | nil
+instance:WaitForChild(name, timeout?)                -> Instance | nil
+instance:FindFirstChildOfClass(className)            -> Instance | nil
+instance:GetChildren()                               -> { Instance, ... }
+instance:Descendants()                               -> { Instance, ... }
+instance:Ancestors()                                 -> { Instance, ... }
+instance:IsDescendantOf(ancestor)                    -> bool
+instance:IsAncestorOf(descendant)                    -> bool
+instance:GetAttributes()                             -> { [string]: string }
+instance:GetAttribute(name)                          -> string | nil
+instance:GetTags()                                   -> { string, ... }
+instance:HasTag(tag)                                 -> bool
+instance:RenameTag(oldTag, newTag)</code></pre>
+            </div>
+
+            <!-- Vector3 -->
+            <div class="endpoint-card card-accent-core" id="vector3">
+                <h2 class="text-xl font-bold text-white mb-4">Vector3</h2>
+                <p class="text-neutral-400 text-sm mb-4">Members: <code class="text-[#c7b18f]">x</code>, <code class="text-[#c7b18f]">y</code>, <code class="text-[#c7b18f]">z</code> (floats)</p>
+
+                <h3 class="text-sm font-bold text-white mb-2">Constructors</h3>
+                <pre><code class="language-lua code-block">Vector3.new()          -> (0, 0, 0)
+Vector3.new(x, y, z)
+Vector3.new(n)         -> (n, n, n)</code></pre>
+
+                <p class="text-neutral-400 text-sm mt-4"><span class="font-bold text-white">Operators:</span> <code class="text-[#c7b18f]">+</code>, <code class="text-[#c7b18f]">-</code>, <code class="text-[#c7b18f]">*</code>, <code class="text-[#c7b18f]">/</code>, unary <code class="text-[#c7b18f]">-</code></p>
+                <p class="text-neutral-400 text-sm"><span class="font-bold text-white">print:</span> <code class="text-neutral-500">print(Vector3.new()) --> "x: 0.000 y: 0.000 z: 0.000"</code></p>
+            </div>
+
+            <!-- Vector2 -->
+            <div class="endpoint-card card-accent-core" id="vector2">
+                <h2 class="text-xl font-bold text-white mb-4">Vector2</h2>
+                <p class="text-neutral-400 text-sm mb-4">Members: <code class="text-[#c7b18f]">x</code>, <code class="text-[#c7b18f]">y</code> (floats)</p>
+                <p class="text-neutral-400 text-sm"><span class="font-bold text-white">print:</span> <code class="text-neutral-500">print(Vector2.new()) --> "x: 0.000 y: 0.000"</code></p>
+            </div>
+
+            <!-- Color3 -->
+            <div class="endpoint-card card-accent-core" id="color3">
+                <h2 class="text-xl font-bold text-white mb-4">Color3</h2>
+                <p class="text-neutral-400 text-sm mb-4">Members: <code class="text-[#c7b18f]">r</code>, <code class="text-[#c7b18f]">g</code>, <code class="text-[#c7b18f]">b</code> (floats, 0-1 range)</p>
+
+                <h3 class="text-sm font-bold text-white mb-2">Constructors</h3>
+                <pre><code class="language-lua code-block">Color3.new()                    -> black
+Color3.new(r, g, b)             -- auto-detects 0-255 vs 0-1
+Color3.fromRGB(r, g, b)         -- 0-255 range
+Color3.fromHSV(h, s, v)
+Color3.fromHex(hexString)</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Static Constants</h3>
+                <pre><code class="language-lua code-block">Color3.White()   Color3.Red()     Color3.Green()
+Color3.Blue()    Color3.Yellow()  Color3.Black()</code></pre>
+                <p class="text-neutral-400 text-sm mt-4"><span class="font-bold text-white">print:</span> <code class="text-neutral-500">print(Color3.new()) --> "r: 0.000 g: 0.000 b: 0.000"</code></p>
+            </div>
+
+            <div class="section-divider">Libraries</div>
+
+            <!-- task -->
+            <div class="endpoint-card card-accent-library" id="lib-task">
+                <h2 class="text-xl font-bold text-white mb-4">task <span class="lib-badge lib-badge-core">core</span></h2>
+                <pre><code class="language-lua code-block">task.spawn(fn)                       -- Schedule fn for next-tick execution
+task.delay(seconds, fn)              -- Schedule fn after delay
+task.wait(seconds)          -> number -- Block current thread, returns actual elapsed</code></pre>
+            </div>
+
+            <!-- io -->
+            <div class="endpoint-card card-accent-library" id="lib-io">
+                <h2 class="text-xl font-bold text-white mb-4">io <span class="lib-badge lib-badge-core">global</span></h2>
+                <pre><code class="language-lua code-block">print(...)      -- Output to console (white, [print] prefix)
+warn(...)       -- Output to console (yellow, [warn] prefix)
+error(...)      -- Throws Lua error with joined args
+hex(value)      -> string -- Format number as hex ("0xFF")</code></pre>
+            </div>
+
+            <!-- file -->
+            <div class="endpoint-card card-accent-library" id="lib-file">
+                <h2 class="text-xl font-bold text-white mb-4">file <span class="lib-badge lib-badge-req">requires File_Management</span></h2>
+                <p class="text-neutral-500 text-xs mb-4">All paths sandboxed to <code class="text-[#c7b18f]">&lt;workspace&gt;/Scripts/file_mng/</code>. Path traversal (<code class="text-[#c7b18f]">..</code>) rejected.</p>
+                <pre><code class="language-lua code-block">file.write(path, content)             -- Write file (creates dirs)
+file.read(path)           -> string   -- Read file contents
+file.rename(oldPath, newPath)         -- Rename/move file
+file.delete(path)                     -- Delete file
+file.list(path)           -> {string} -- List directory contents
+file.append(path, content)            -- Append to file</code></pre>
+            </div>
+
+            <!-- memory -->
+            <div class="endpoint-card card-accent-library" id="lib-memory">
+                <h2 class="text-xl font-bold text-white mb-4">memory <span class="lib-badge lib-badge-req">requires Memory</span></h2>
+
+                <h3 class="text-sm font-bold text-white mb-2">Read / Write</h3>
+                <pre><code class="language-lua code-block">memory.Read(type, address)        -> any
+memory.Write(type, address, value)
+memory.GetRTTI(address)           -> string   -- RTTI type name
+memory.GetBase()                  -> number   -- Module base address
+memory.Rebase(offset)             -> number   -- base + offset</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Supported Types</h3>
+                <pre><code class="language-lua code-block">"float"    "double"    "int"      "uint"
+"bool"     "byte"      "short"    "ushort"
+"int64"    "uint64"    "pointer"  "ptr"
+"string"   "vector2"   "vector3"  "color3"
+"cframe"   -- reads 12 floats, returns {Position={x,y,z}, Rotation={{...},{...},{...}}}</code></pre>
+            </div>
+
+            <!-- cheat -->
+            <div class="endpoint-card card-accent-library" id="lib-cheat">
+                <h2 class="text-xl font-bold text-white mb-4">cheat <span class="lib-badge lib-badge-core">event system</span></h2>
+                <pre><code class="language-lua code-block">cheat.Register(eventType, fn)        -- Register callback for event
+cheat.Unregister(eventType, fn)      -- Unregister callback</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Event Types</h3>
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Event</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">"onUpdate"</span></td><td class="text-neutral-400">Every game frame (fast cache update)</td></tr>
+                        <tr><td><span class="param-name">"onSlowUpdate"</span></td><td class="text-neutral-400">Every ~1-2 seconds (slow cache update)</td></tr>
+                        <tr><td><span class="param-name">"onPaint"</span></td><td class="text-neutral-400">Every overlay frame</td></tr>
+                        <tr><td><span class="param-name">"teleport"</span></td><td class="text-neutral-400">On teleport detected</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- utility -->
+            <div class="endpoint-card card-accent-library" id="lib-utility">
+                <h2 class="text-xl font-bold text-white mb-4">utility <span class="lib-badge lib-badge-core">utility</span></h2>
+                <pre><code class="language-lua code-block">utility.WorldToScreen(worldPos: Vector3) -> Vector2, bool
+  -- Converts 3D world pos to 2D screen pos. Returns (screenPos, validFlag)</code></pre>
+
+                <div class="mt-4 p-3 rounded-lg" style="background: rgba(251, 191, 36, 0.06); border: 1px solid rgba(251, 191, 36, 0.12);">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span class="text-xs font-bold text-[#fbbf24] uppercase tracking-wider">Requires Clipboard Library</span>
+                    </div>
+                    <p class="text-neutral-500 text-xs">Enable <span class="text-[#c7b18f]">Clipboard</span> in <span class="text-[#c7b18f]">Script &gt; Settings</span> to use:</p>
+                    <pre><code class="language-lua code-block" style="margin-top: 8px;">utility.GetClipboard()   -> string
+utility.SetClipboard(text)</code></pre>
+                </div>
+            </div>
+
+            <!-- draw -->
+            <div class="endpoint-card card-accent-library" id="lib-draw">
+                <h2 class="text-xl font-bold text-white mb-4">draw <span class="lib-badge lib-badge-core">2D rendering</span></h2>
+                <p class="text-neutral-400 text-xs mb-4">Color params are Color3 objects. Alpha 0-1.</p>
+
+                <h3 class="text-sm font-bold text-white mb-2">Text</h3>
+                <pre><code class="language-lua code-block">draw.Text(text, x, y, color?, fontName?, alpha?)
+draw.TextOutlined(text, x, y, color?, fontName?, alpha?)
+draw.GetTextSize(text, fontName?)        -> width, height</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Shapes</h3>
+                <pre><code class="language-lua code-block">draw.Line(x1, y1, x2, y2, color?, thickness?, alpha?)
+draw.Rect(x, y, w, h, color?, thickness?, rounding?, alpha?)
+draw.RectFilled(x, y, w, h, color?, rounding?, alpha?)
+draw.Circle(cx, cy, radius, color?, thickness?, segments?, alpha?)
+draw.CircleFilled(cx, cy, radius, color?, segments?, alpha?)
+draw.Triangle(x1,y1, x2,y2, x3,y3, color?, thickness?, alpha?)
+draw.TriangleFilled(x1,y1, x2,y2, x3,y3, color?, alpha?)
+draw.Gradient(x, y, w, h, startColor, endColor, isHorizontal, startAlpha?, endAlpha?)
+draw.Image(textureId, x, y, w, h, r, g, b, a)
+draw.Polyline(points, color, closed, thickness, alpha?)
+draw.ConvexPolyFilled(points, color, alpha?)
+draw.ComputeConvexHull(points)           -> points (convex hull)
+draw.GetPartCorners(part: Instance)      -> {Vector3,...} (8 corners)
+draw.DeltaTime()                         -> number (ImGui frame delta)</code></pre>
+            </div>
+
+            <!-- imgui -->
+            <div class="endpoint-card card-accent-library" id="lib-imgui">
+                <h2 class="text-xl font-bold text-white mb-4">imgui <span class="lib-badge lib-badge-core">Dear ImGui</span></h2>
+                <p class="text-neutral-400 text-xs mb-4">Flags are ImGuiWindowFlags_* int values.</p>
+
+                <h3 class="text-sm font-bold text-white mb-2">Windowing</h3>
+                <pre><code class="language-lua code-block">imgui.Begin(name, flags?)                    -> bool (visible)
+imgui.BeginChild(id, w?, h?, border?, flags?) -> bool
+imgui.End()
+imgui.EndChild()
+imgui.SetNextWindowPos(x, y, cond?, pivot_x?, pivot_y?)
+imgui.SetNextWindowSize(w, h, cond?)
+imgui.SetNextWindowBgAlpha(alpha)
+imgui.SetNextWindowCollapsed(collapsed, cond?)
+imgui.SetNextWindowFocus()
+imgui.GetWindowPos()                         -> x, y
+imgui.GetWindowSize()                        -> w, h
+imgui.GetWindowContentRegionMin()            -> x, y
+imgui.GetWindowContentRegionMax()            -> x, y</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Cursor</h3>
+                <pre><code class="language-lua code-block">imgui.GetCursorPos()                         -> x, y
+imgui.SetCursorPos(x, y)
+imgui.GetCursorScreenPos()                   -> x, y
+imgui.SetCursorScreenPos(x, y)
+imgui.GetCursorStartPos()                    -> x, y
+imgui.GetContentRegionAvail()                -> w, h</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Layout</h3>
+                <pre><code class="language-lua code-block">imgui.SameLine(offset_from_start_x?, spacing?)
+imgui.Spacing()
+imgui.Separator()
+imgui.SeparatorText(label)
+imgui.Dummy(w, h)
+imgui.Indent(indent_w?)
+imgui.Unindent(indent_w?)
+imgui.BeginGroup()
+imgui.EndGroup()
+imgui.GetFrameHeight()                       -> number
+imgui.GetFrameHeightWithSpacing()            -> number</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Item Width / ID</h3>
+                <pre><code class="language-lua code-block">imgui.PushItemWidth(width)
+imgui.PopItemWidth()
+imgui.PushID(id)
+imgui.PopID()</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Text</h3>
+                <pre><code class="language-lua code-block">imgui.Text(text)
+imgui.CalcTextSize(text)                     -> w, h</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Item / Window State</h3>
+                <pre><code class="language-lua code-block">imgui.IsItemHovered(flags?)                  -> bool
+imgui.IsItemActive()                         -> bool
+imgui.IsItemFocused()                        -> bool
+imgui.IsItemClicked(mouse_button?)           -> bool
+imgui.IsAnyItemHovered()                     -> bool
+imgui.IsAnyItemActive()                      -> bool
+imgui.IsAnyItemFocused()                     -> bool
+imgui.IsWindowHovered(flags?)                -> bool
+imgui.IsWindowFocused(flags?)                -> bool
+imgui.GetItemRectMin()                       -> x, y
+imgui.GetItemRectMax()                       -> x, y
+imgui.GetItemRectSize()                      -> w, h</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Columns</h3>
+                <pre><code class="language-lua code-block">imgui.Columns(count?, id?, border?)
+imgui.NextColumn()
+imgui.GetColumnIndex()                       -> int
+imgui.GetColumnWidth(column_index?)          -> number
+imgui.SetColumnWidth(column_index, width)</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Widgets <span class="text-neutral-500 text-xs font-normal">(returns changed, new_value)</span></h3>
+                <pre><code class="language-lua code-block">imgui.Button(text, width?, height?)               -> bool (clicked)
+imgui.TabButton(text, width?, height?, active?)    -> bool (clicked)
+imgui.Checkbox(text, v)                            -> bool, bool
+imgui.Slider(title, v, min, max)                   -> bool, number
+imgui.SliderInt(title, v, min, max)                -> bool, int
+imgui.InputText(title, v, placeholder, width?, flags?)    -> bool, string
+imgui.MultilineInput(title, v, placeholder, width?, flags?) -> bool, string</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Custom Themed Widgets</h3>
+                <pre><code class="language-lua code-block">imgui.WidgetsText(text, color?, alpha?)
+imgui.BeginContent(title, height?, width?)        -> bool (opened)
+imgui.EndContent()
+imgui.GetContentAvail()                           -> w, h
+imgui.BeginIndent()
+imgui.EndIndent()
+imgui.ColorPicker(title, color?, alpha?)           -> bool, Color3
+imgui.ProgressBar(title, value01, width, divisions, align)
+imgui.Note(text)
+imgui.ListBox(label, items, height?, width?, listHeight?) -> bool, string
+imgui.Dropdown(title, items, current?)             -> bool, string
+imgui.Shimmer(w, h)</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Tabs</h3>
+                <pre><code class="language-lua code-block">imgui.BeginTabs(title, enable_anim?)               -> bool (opened)
+imgui.BeginTab(name)                               -> bool (active)
+imgui.EndTab()
+imgui.EndTabs()</code></pre>
+            </div>
+
+            <!-- gui -->
+            <div class="endpoint-card card-accent-library" id="lib-gui">
+                <h2 class="text-xl font-bold text-white mb-4">gui <span class="lib-badge lib-badge-core">overlay / UI</span></h2>
+                <pre><code class="language-lua code-block">gui.AddTab(tabName, func)              -- Add runtime tab with render function
+gui.RemoveTab(tabName)                 -- Remove tab
+gui.IsTab(tabName)           -> bool   -- Check if tab exists
+gui.GetMenuState(checkForeground?) -> bool -- Is menu open
+gui.IsForeground()           -> bool   -- Is Roblox window foreground
+gui.GetWindowSize()          -> Vector2 -- Overlay dimensions</code></pre>
+            </div>
+
+            <div class="section-divider">Properties</div>
+
+            <div id="properties">
+                <div class="prop-header" onclick="toggleProp(this)" style="background:#0d1117; border:1px solid #30363d; border-radius:12px; padding:20px 24px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:border-color 0.3s ease;" onmouseover="this.style.borderColor='#3b4252'" onmouseout="this.style.borderColor='#30363d'">
+                    <h2 class="text-xl font-bold text-white">Properties</h2>
+                    <svg class="prop-chevron collapsed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden" style="margin-top:12px">
+
+            <!-- Part -->
+            <div class="endpoint-card card-accent-property" id="prop-part">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Part / BasePart <span class="text-neutral-500 text-sm font-mono font-normal">(also Head, MeshPart, WedgePart, etc.)</span></h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                    <p class="text-neutral-400 text-xs mb-4 mt-2">Properties accessed directly on Instance objects: <code class="text-[#c7b18f]">part.Transparency = 0.5</code></p>
+                    <table class="param-table">
+                        <thead>
+                            <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><span class="param-name">Transparency</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Part transparency (0 = opaque, 1 = invisible)</td></tr>
+                            <tr><td><span class="param-name">Reflectance</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Surface reflectivity</td></tr>
+                            <tr><td><span class="param-name">Position</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">World position</td></tr>
+                            <tr><td><span class="param-name">Size</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Part dimensions</td></tr>
+                            <tr><td><span class="param-name">Anchored</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Whether part is fixed in place</td></tr>
+                            <tr><td><span class="param-name">CanCollide</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Whether part collides with others</td></tr>
+                            <tr><td><span class="param-name">Color</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Part color</td></tr>
+                            <tr><td><span class="param-name">Rotation</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Euler rotation angles (degrees)</td></tr>
+                            <tr><td><span class="param-name">LinearVelocity</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Linear velocity</td></tr>
+                            <tr><td><span class="param-name">AngularVelocity</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Angular velocity</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Humanoid -->
+            <div class="endpoint-card card-accent-property" id="prop-humanoid">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Humanoid</h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Health</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Current health</td></tr>
+                        <tr><td><span class="param-name">MaxHealth</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Maximum health</td></tr>
+                        <tr><td><span class="param-name">WalkSpeed</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Movement speed</td></tr>
+                        <tr><td><span class="param-name">JumpPower</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Jump power</td></tr>
+                        <tr><td><span class="param-name">JumpHeight</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Jump height</td></tr>
+                        <tr><td><span class="param-name">HipHeight</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Hip height</td></tr>
+                        <tr><td><span class="param-name">MaxSlopeAngle</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Maximum walkable slope angle</td></tr>
+                        <tr><td><span class="param-name">PlatformStand</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Is in platform stand</td></tr>
+                        <tr><td><span class="param-name">AutoRotate</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Auto-rotate toward movement direction</td></tr>
+                        <tr><td><span class="param-name">UseJumpPower</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Use legacy jump power</td></tr>
+                        <tr><td><span class="param-name">Sit</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Is sitting</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- Player -->
+            <div class="endpoint-card card-accent-property" id="prop-player">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Player</h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">UserId</span></td><td><span class="param-type">number</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Unique player ID</td></tr>
+                        <tr><td><span class="param-name">DisplayName</span></td><td><span class="param-type">string</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Display name</td></tr>
+                        <tr><td><span class="param-name">Character</span></td><td><span class="param-type">Instance | nil</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Character model</td></tr>
+                        <tr><td><span class="param-name">CameraMode</span></td><td><span class="param-type">int</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Camera mode enum value</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- Players -->
+            <div class="endpoint-card card-accent-property" id="prop-players">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Players <span class="text-neutral-500 text-sm font-mono font-normal">(service)</span></h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">LocalPlayer</span></td><td><span class="param-type">Instance | nil</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Local player</td></tr>
+                        <tr><td><span class="param-name">GetPlayers</span></td><td><span class="param-type">{Instance,...}</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Array of all Player instances</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- Camera -->
+            <div class="endpoint-card card-accent-property" id="prop-camera">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Camera</h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Fov</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Field of view (degrees)</td></tr>
+                        <tr><td><span class="param-name">Position</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Camera position</td></tr>
+                        <tr><td><span class="param-name">Subject</span></td><td><span class="param-type">Instance | nil</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Camera subject</td></tr>
+                        <tr><td><span class="param-name">CameraType</span></td><td><span class="param-type">int</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Camera type enum value</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- Workspace -->
+            <div class="endpoint-card card-accent-property" id="prop-workspace">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Workspace</h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Gravity</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Workspace gravity</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- Lighting -->
+            <div class="endpoint-card card-accent-property" id="prop-lighting">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Lighting</h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Brightness</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Lighting brightness</td></tr>
+                        <tr><td><span class="param-name">FogStart</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Fog start distance</td></tr>
+                        <tr><td><span class="param-name">FogEnd</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Fog end distance</td></tr>
+                        <tr><td><span class="param-name">ClockTime</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Time of day (0-24)</td></tr>
+                        <tr><td><span class="param-name">Exposure</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Exposure compensation</td></tr>
+                        <tr><td><span class="param-name">Latitude</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Latitude for sun position</td></tr>
+                        <tr><td><span class="param-name">GlobalShadows</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Global shadows enabled</td></tr>
+                        <tr><td><span class="param-name">FogColor</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Fog color</td></tr>
+                        <tr><td><span class="param-name">Ambient</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Ambient light color</td></tr>
+                        <tr><td><span class="param-name">ColorShiftTop</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Top color shift</td></tr>
+                        <tr><td><span class="param-name">ColorShiftBottom</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Bottom color shift</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- Value Types -->
+            <div class="endpoint-card card-accent-property" id="prop-values">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Value Types</h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Class</th><th>Value Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">IntValue</span></td><td><span class="param-type">int</span></td><td class="text-neutral-400">Integer value</td></tr>
+                        <tr><td><span class="param-name">BoolValue</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Boolean value</td></tr>
+                        <tr><td><span class="param-name">StringValue</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">String value</td></tr>
+                        <tr><td><span class="param-name">NumberValue</span></td><td><span class="param-type">number</span></td><td class="text-neutral-400">Double-precision number</td></tr>
+                        <tr><td><span class="param-name">ObjectValue</span></td><td><span class="param-type">Instance|nil</span></td><td class="text-neutral-400">Object reference</td></tr>
+                        <tr><td><span class="param-name">Color3Value</span></td><td><span class="param-type">Color3</span></td><td class="text-neutral-400">Color3 value</td></tr>
+                        <tr><td><span class="param-name">Vector3Value</span></td><td><span class="param-type">Vector3</span></td><td class="text-neutral-400">Vector3 value</td></tr>
+                    </tbody>
+                </table>
+                <p class="text-neutral-500 text-xs mt-4">All expose <code class="text-[#c7b18f]">instance.Value</code> (RW). ObjectValue write accepts Instance or raw memory address (number).</p>
+                </div>
+            </div>
+
+                </div>
+            </div>
+
+            <div class="section-divider">Scripts & Examples</div>
+
+            <div class="endpoint-card card-accent-example" id="examples">
+                <h2 class="text-xl font-bold text-white mb-4">Scripts & Examples</h2>
+
+                <h3 class="text-sm font-bold text-white mb-2">Basic Usage</h3>
+                <pre><code class="language-lua code-block">print("Hello from Sheldon!")
+local player = game:FindFirstChildOfClass("Players").LocalPlayer
+print("Current player:", player.DisplayName)</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Drawing ESP</h3>
+                <pre><code class="language-lua code-block">cheat.Register("onPaint", function()
+  local players = game:FindFirstChildOfClass("Players")
+  for _, player in ipairs(players:GetChildren()) do
+    local char = player.Character
+    if char then
+      local root = char:FindFirstChild("HumanoidRootPart")
+      if root then
+        local screenPos, onScreen = utility.WorldToScreen(root.Position)
+        if onScreen then
+          draw.TextOutlined(player.Name, screenPos.x, screenPos.y, Color3.Red())
+        end
+      end
+    end
+  end
+end)</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Custom UI Tab</h3>
+                <pre><code class="language-lua code-block">gui.AddTab("My Script", function()
+  if imgui.Begin("My Window") then
+    imgui.Text("Hello from Lua!")
+  end
+  imgui.End()
+end)</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Memory Reading</h3>
+                <pre><code class="language-lua code-block">local base = memory.GetBase()
+local someValue = memory.Read("int", base + 0x123456)</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">File Usage</h3>
+                <pre><code class="language-lua code-block">file.write("config.txt", "hello")
+local data = file.read("config.txt")</code></pre>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="../js/util/backend.js"></script>
+    <script type="module">
+        import Api from "../js/util/backend.js";
+        window.Api = Api;
+    </script>
+    <script type="module" src="../js/discord/topbar_buttons.js"></script>
+    <script type="module" src="../js/util/redirect.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            hljs.highlightAll();
+
+            // Copy button for code blocks
+            document.querySelectorAll('.code-block').forEach(function(block) {
+                var wrapper = block.parentElement;
+                wrapper.style.position = 'relative';
+                var btn = document.createElement('button');
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:block"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+                btn.style.cssText = 'position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:rgba(255,255,255,0.3);cursor:pointer;padding:6px;opacity:0;transition:all 0.2s;z-index:1;line-height:0';
+                wrapper.appendChild(btn);
+                wrapper.addEventListener('mouseenter', function() { btn.style.opacity = '1'; });
+                wrapper.addEventListener('mouseleave', function() { btn.style.opacity = '0'; });
+                btn.addEventListener('click', function() {
+                    var text = block.textContent;
+                    navigator.clipboard.writeText(text).then(function() {
+                        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" style="display:block"><polyline points="20 6 9 17 4 12"/></svg>';
+                        setTimeout(function() {
+                            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:block"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+                        }, 2000);
+                    });
+                });
+            });
+
+            // Smooth scroll to section when clicking sidebar
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) {
+                        const offsetTop = targetSection.offsetTop - 80;
+                        window.scrollTo({
+                            top: offsetTop,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            const sections = document.querySelectorAll('.endpoint-card');
+
+            function updateActiveLink() {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (window.scrollY >= sectionTop - 150) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + current) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', updateActiveLink);
+            updateActiveLink();
+        });
+    </script>
+    <script>
+        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('show'); }
+        document.querySelectorAll('#mobileMenu .nav-tab').forEach(link => link.addEventListener('click', () => document.getElementById('mobileMenu').classList.remove('show')));
+        window.addEventListener('resize', () => { if (window.innerWidth > 768) document.getElementById('mobileMenu').classList.remove('show'); });
+        function toggleProp(el) {
+            var chevron = el.querySelector('.prop-chevron');
+            var content = el.parentElement.querySelector('.prop-content');
+            if (content) {
+                content.classList.toggle('hidden');
+                if (chevron) chevron.classList.toggle('collapsed');
+            }
+        }
+    </script>
+</body>
+
+</html>
