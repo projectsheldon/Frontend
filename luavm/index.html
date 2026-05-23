@@ -548,6 +548,9 @@
             <a class="sidebar-link" href="#lib-draw"><span class="sidebar-dot dot-green"></span>draw</a>
             <a class="sidebar-link" href="#lib-imgui"><span class="sidebar-dot dot-green"></span>imgui</a>
             <a class="sidebar-link" href="#lib-gui"><span class="sidebar-dot dot-green"></span>gui</a>
+            <a class="sidebar-link" href="#lib-fflags"><span class="sidebar-dot dot-green"></span>fflags</a>
+            <a class="sidebar-link" href="#lib-entity"><span class="sidebar-dot dot-green"></span>entity</a>
+            <a class="sidebar-link" href="#lib-internet"><span class="sidebar-dot dot-green"></span>internet</a>
         </div>
         <div class="sidebar-section">
             <div class="sidebar-title">Properties</div>
@@ -559,6 +562,12 @@
             <a class="sidebar-link" href="#prop-camera"><span class="sidebar-dot dot-amber"></span>Camera</a>
             <a class="sidebar-link" href="#prop-workspace"><span class="sidebar-dot dot-amber"></span>Workspace</a>
             <a class="sidebar-link" href="#prop-lighting"><span class="sidebar-dot dot-amber"></span>Lighting</a>
+            <a class="sidebar-link" href="#prop-sky"><span class="sidebar-dot dot-amber"></span>Sky</a>
+            <a class="sidebar-link" href="#prop-atmosphere"><span class="sidebar-dot dot-amber"></span>Atmosphere</a>
+            <a class="sidebar-link" href="#prop-sunrays"><span class="sidebar-dot dot-amber"></span>SunRays</a>
+            <a class="sidebar-link" href="#prop-colorcorrection"><span class="sidebar-dot dot-amber"></span>ColorCorrection</a>
+            <a class="sidebar-link" href="#prop-teams"><span class="sidebar-dot dot-amber"></span>Teams</a>
+            <a class="sidebar-link" href="#prop-friendservice"><span class="sidebar-dot dot-amber"></span>FriendService</a>
             <a class="sidebar-link" href="#prop-values"><span class="sidebar-dot dot-amber"></span>Value Types</a>
         </div>
         <div class="sidebar-section">
@@ -628,9 +637,11 @@
                 </table>
 
                 <h3 class="text-sm font-bold text-white mb-2">Methods</h3>
-                <pre><code class="language-lua code-block">instance:FindFirstChild(name)                        -> Instance | nil
+                <pre><code class="language-lua code-block">instance:GetService(className)                       -> Instance | nil (DataModel only)
+instance:FindFirstChild(name)                        -> Instance | nil
 instance:WaitForChild(name, timeout?)                -> Instance | nil
 instance:FindFirstChildOfClass(className)            -> Instance | nil
+instance:IsA(className)                              -> bool
 instance:GetChildren()                               -> { Instance, ... }
 instance:Descendants()                               -> { Instance, ... }
 instance:Ancestors()                                 -> { Instance, ... }
@@ -698,13 +709,14 @@ task.wait(seconds)          -> number -- Block current thread, returns actual el
                 <pre><code class="language-lua code-block">print(...)      -- Output to console (white, [print] prefix)
 warn(...)       -- Output to console (yellow, [warn] prefix)
 error(...)      -- Throws Lua error with joined args
-hex(value)      -> string -- Format number as hex ("0xFF")</code></pre>
+hex(value)      -> string -- Format number as hex ("0xFF")
+loadstring(src, name?) -> fn, err -- Dynamic compile, returns function or nil + error</code></pre>
             </div>
 
             <!-- file -->
             <div class="endpoint-card card-accent-library" id="lib-file">
                 <h2 class="text-xl font-bold text-white mb-4">file <span class="lib-badge lib-badge-req">requires File_Management</span></h2>
-                <p class="text-neutral-500 text-xs mb-4">All paths sandboxed to <code class="text-[#c7b18f]">&lt;workspace&gt;/Scripts/file_mng/</code>. Path traversal (<code class="text-[#c7b18f]">..</code>) rejected.</p>
+                <p class="text-neutral-500 text-xs mb-4">All paths sandboxed to <code class="text-[#c7b18f]">&lt;workspace&gt;/scripts/SandboxEnv/</code>. Path traversal (<code class="text-[#c7b18f]">..</code>) rejected.</p>
                 <pre><code class="language-lua code-block">file.write(path, content)             -- Write file (creates dirs)
 file.read(path)           -> string   -- Read file contents
 file.rename(oldPath, newPath)         -- Rename/move file
@@ -727,9 +739,9 @@ memory.Rebase(offset)             -> number   -- base + offset</code></pre>
                 <h3 class="text-sm font-bold text-white mb-2 mt-4">Supported Types</h3>
                 <pre><code class="language-lua code-block">"float"    "double"    "int"      "uint"
 "bool"     "byte"      "short"    "ushort"
-"int64"    "uint64"    "pointer"  "ptr"
-"string"   "vector2"   "vector3"  "color3"
-"cframe"   -- reads 12 floats, returns {Position={x,y,z}, Rotation={{...},{...},{...}}}</code></pre>
+"int64"    "uint64"    "pointer"* "string"
+"vector2"  "vector3"   "color3"</code></pre>
+                <p class="text-neutral-500 text-xs mt-2"><code class="text-[#c7b18f]">*pointer</code> write-only (not supported for Read).</p>
             </div>
 
             <!-- cheat -->
@@ -746,8 +758,153 @@ cheat.Unregister(eventType, fn)      -- Unregister callback</code></pre>
                     <tbody>
                         <tr><td><span class="param-name">"onUpdate"</span></td><td class="text-neutral-400">Every game frame (fast cache update)</td></tr>
                         <tr><td><span class="param-name">"onSlowUpdate"</span></td><td class="text-neutral-400">Every ~1-2 seconds (slow cache update)</td></tr>
-                        <tr><td><span class="param-name">"onPaint"</span></td><td class="text-neutral-400">Every overlay frame</td></tr>
                         <tr><td><span class="param-name">"teleport"</span></td><td class="text-neutral-400">On teleport detected</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- fflags -->
+            <div class="endpoint-card card-accent-library" id="lib-fflags">
+                <h2 class="text-xl font-bold text-white mb-4">fflags <span class="lib-badge lib-badge-core">Roblox FastFlags</span></h2>
+                <pre><code class="language-lua code-block">fflags.Get(name, type, getOriginal?)                 -> any | nil
+fflags.Set(name, type, value)
+fflags.GetAll()                                       -> { {name, runtime, original}, ... }</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Parameters</h3>
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Parameter</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">getOriginal?</span></td><td class="text-neutral-400">When true, returns the original/static FFlag value instead of the current runtime value</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Supported Types</h3>
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Operation</th><th>Types</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Get</span></td><td class="text-neutral-400"><code class="text-[#c7b18f]">float</code>, <code class="text-[#c7b18f]">double</code>, <code class="text-[#c7b18f]">int</code>, <code class="text-[#c7b18f]">uint</code>, <code class="text-[#c7b18f]">bool</code>, <code class="text-[#c7b18f]">byte</code>, <code class="text-[#c7b18f]">short</code>, <code class="text-[#c7b18f]">ushort</code>, <code class="text-[#c7b18f]">int64</code>, <code class="text-[#c7b18f]">uint64</code>, <code class="text-[#c7b18f]">string</code></td></tr>
+                        <tr><td><span class="param-name">Set</span></td><td class="text-neutral-400">Same as Get + <code class="text-[#c7b18f]">pointer</code> (accepts uintptr_t)</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">GetAll Return Fields</h3>
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">name</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">FFlag name</td></tr>
+                        <tr><td><span class="param-name">runtime</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Current runtime value (as string)</td></tr>
+                        <tr><td><span class="param-name">original</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Original/static value (as string)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- entity -->
+            <div class="endpoint-card card-accent-library" id="lib-entity">
+                <h2 class="text-xl font-bold text-white mb-4">entity <span class="lib-badge lib-badge-core">player tracking</span></h2>
+
+                <h3 class="text-sm font-bold text-white mb-2">AddEntity</h3>
+                <pre><code class="language-lua code-block">entity.AddEntity(key, data)                          -> bool</code></pre>
+                <p class="text-neutral-400 text-xs mb-4">Adds a custom tracked entity. Returns false if key already exists.</p>
+                <p class="text-neutral-500 text-xs mb-2 font-bold">Data table fields:</p>
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Character</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">Yes</td><td class="text-neutral-400">Character model instance</td></tr>
+                        <tr><td><span class="param-name">PrimaryPart</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">Yes</td><td class="text-neutral-400">Root part (HumanoidRootPart)</td></tr>
+                        <tr><td><span class="param-name">Name</span></td><td><span class="param-type">string</span></td><td class="text-red-400 text-xs">Yes</td><td class="text-neutral-400">Entity name displayed in visuals</td></tr>
+                        <tr><td><span class="param-name">DisplayName</span></td><td><span class="param-type">string</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">Display name (defaults to Name)</td></tr>
+                        <tr><td><span class="param-name">Team</span></td><td><span class="param-type">Instance|string</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">Team instance or team name</td></tr>
+                        <tr><td><span class="param-name">TeamColor</span></td><td><span class="param-type">number</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">BrickColor index for team color</td></tr>
+                        <tr><td><span class="param-name">Humanoid</span></td><td><span class="param-type">Instance</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">Humanoid instance (auto-detects rig type)</td></tr>
+                        <tr><td><span class="param-name">MaxHealth</span></td><td><span class="param-type">number</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">Override max health</td></tr>
+                        <tr><td><span class="param-name">Bones</span></td><td><span class="param-type">table</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">Bone name -> Instance map for custom rigs. Keys: Head, Torso, Left/Right Arm, Left/Right Leg (R6); UpperTorso, LowerTorso, LeftUpper/LowerArm, LeftHand, RightUpper/LowerArm, RightHand, LeftUpper/LowerLeg, LeftFoot, RightUpper/LowerLeg, RightFoot (R15)</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">EditEntity / RemoveEntity / ClearEntities</h3>
+                <pre><code class="language-lua code-block">entity.EditEntity(key, data)                         -> bool
+entity.RemoveEntity(key)                             -> bool
+entity.ClearEntities()                               -> bool</code></pre>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">GetEntity</h3>
+                <pre><code class="language-lua code-block">entity.GetEntity(key)                                -> table | nil</code></pre>
+                <p class="text-neutral-400 text-xs mb-4">Returns the data table previously passed to AddEntity.</p>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">GetPlayers</h3>
+                <pre><code class="language-lua code-block">entity.GetPlayers(includeEnemies?, includeEntities?) -> { table, ... }</code></pre>
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Param</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">includeEnemies?</span></td><td><span class="param-type">bool</span></td><td><span class="param-type">true</span></td><td class="text-neutral-400">When false, filters to only same-team players</td></tr>
+                        <tr><td><span class="param-name">includeEntities?</span></td><td><span class="param-type">bool</span></td><td><span class="param-type">false</span></td><td class="text-neutral-400">When true, only returns custom entities (added via AddEntity)</td></tr>
+                    </tbody>
+                </table>
+
+                <p class="text-neutral-500 text-xs mb-2 mt-4 font-bold">Return entry fields:</p>
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Character</span></td><td><span class="param-type">Instance</span></td><td class="text-neutral-400">Character model</td></tr>
+                        <tr><td><span class="param-name">PrimaryPart</span></td><td><span class="param-type">Instance</span></td><td class="text-neutral-400">Root part</td></tr>
+                        <tr><td><span class="param-name">Name</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Player/entity name</td></tr>
+                        <tr><td><span class="param-name">DisplayName</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Display name</td></tr>
+                        <tr><td><span class="param-name">Team</span></td><td><span class="param-type">Instance|string</span></td><td class="text-neutral-400">Team instance or team name</td></tr>
+                        <tr><td><span class="param-name">Humanoid</span></td><td><span class="param-type">Instance</span></td><td class="text-neutral-400">Humanoid instance</td></tr>
+                        <tr><td><span class="param-name">MaxHealth</span></td><td><span class="param-type">number</span></td><td class="text-neutral-400">Maximum health</td></tr>
+                        <tr><td><span class="param-name">Health</span></td><td><span class="param-type">number</span></td><td class="text-neutral-400">Current health</td></tr>
+                        <tr><td><span class="param-name">UserId</span></td><td><span class="param-type">number</span></td><td class="text-neutral-400">User ID (negative for custom entities)</td></tr>
+                        <tr><td><span class="param-name">IsEntity</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">True if custom entity (added via AddEntity)</td></tr>
+                        <tr><td><span class="param-name">IsAlive</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whether player is alive</td></tr>
+                        <tr><td><span class="param-name">IsCameraVisible</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whether on screen</td></tr>
+                        <tr><td><span class="param-name">IsLocal</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whether this is the local player</td></tr>
+                        <tr><td><span class="param-name">IsPreview</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Preview state</td></tr>
+                        <tr><td><span class="param-name">IsTargeted</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whether currently targeted</td></tr>
+                        <tr><td><span class="param-name">IsFriend</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Friend status</td></tr>
+                        <tr><td><span class="param-name">IsWhitelisted</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whitelist status</td></tr>
+                        <tr><td><span class="param-name">IsEnemy</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whether on opposite team</td></tr>
+                        <tr><td><span class="param-name">RigType</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">"R6" or "R15"</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- internet -->
+            <div class="endpoint-card card-accent-library" id="lib-internet">
+                <h2 class="text-xl font-bold text-white mb-4">internet <span class="lib-badge lib-badge-req">requires Internet</span></h2>
+                <pre><code class="language-lua code-block">internet.get(url, timeout?, info?)       -> { text, status_code }
+internet.post(url, body?, timeout?, info?) -> { text, status_code }</code></pre>
+
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Param</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">url</span></td><td><span class="param-type">string</span></td><td class="text-neutral-500">-</td><td class="text-neutral-400">Target URL</td></tr>
+                        <tr><td><span class="param-name">body?</span></td><td><span class="param-type">string</span></td><td class="text-neutral-500">""</td><td class="text-neutral-400">Request body (post only)</td></tr>
+                        <tr><td><span class="param-name">timeout?</span></td><td><span class="param-type">number</span></td><td class="text-neutral-500">5000</td><td class="text-neutral-400">Timeout in milliseconds</td></tr>
+                        <tr><td><span class="param-name">info?</span></td><td><span class="param-type">table</span></td><td class="text-neutral-500">nil</td><td class="text-neutral-400">Optional table with <code class="text-[#c7b18f]">headers</code> sub-table for custom headers</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 class="text-sm font-bold text-white mb-2 mt-4">Return Value</h3>
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">text</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Response body</td></tr>
+                        <tr><td><span class="param-name">status_code</span></td><td><span class="param-type">int</span></td><td class="text-neutral-400">HTTP status code (200, 404, etc.)</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -934,6 +1091,9 @@ gui.GetWindowSize()          -> Vector2 -- Overlay dimensions</code></pre>
                             <tr><td><span class="param-name">Transparency</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Part transparency (0 = opaque, 1 = invisible)</td></tr>
                             <tr><td><span class="param-name">Reflectance</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Surface reflectivity</td></tr>
                             <tr><td><span class="param-name">Position</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">World position</td></tr>
+                            <tr><td><span class="param-name">RightVector</span></td><td><span class="param-type">Vector3</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Right direction vector</td></tr>
+                            <tr><td><span class="param-name">UpVector</span></td><td><span class="param-type">Vector3</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Up direction vector</td></tr>
+                            <tr><td><span class="param-name">ForwardVector</span></td><td><span class="param-type">Vector3</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Look direction vector</td></tr>
                             <tr><td><span class="param-name">Size</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Part dimensions</td></tr>
                             <tr><td><span class="param-name">Anchored</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Whether part is fixed in place</td></tr>
                             <tr><td><span class="param-name">CanCollide</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Whether part collides with others</td></tr>
@@ -1014,6 +1174,43 @@ gui.GetWindowSize()          -> Vector2 -- Overlay dimensions</code></pre>
                 </div>
             </div>
 
+            <!-- Teams -->
+            <div class="endpoint-card card-accent-property" id="prop-teams">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Teams <span class="text-neutral-500 text-sm font-mono font-normal">(service)</span></h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">:GetPlayers(team)</span></td><td><span class="param-type">{Instance,...}</span></td><td class="text-neutral-400">Get players belonging to a specific team</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- FriendService -->
+            <div class="endpoint-card card-accent-property" id="prop-friendservice">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">FriendService</h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property/Method</th><th>Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">FriendsStatus</span></td><td><span class="param-type">table</span> (RO)</td><td class="text-neutral-400">Friend status data</td></tr>
+                        <tr><td><span class="param-name">:GetFriendStatus(userId)</span></td><td><span class="param-type">any</span></td><td class="text-neutral-400">Get friend status for a user</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
             <!-- Camera -->
             <div class="endpoint-card card-accent-property" id="prop-camera">
                 <div class="prop-header" onclick="toggleProp(this)">
@@ -1076,6 +1273,107 @@ gui.GetWindowSize()          -> Vector2 -- Overlay dimensions</code></pre>
                         <tr><td><span class="param-name">Ambient</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Ambient light color</td></tr>
                         <tr><td><span class="param-name">ColorShiftTop</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Top color shift</td></tr>
                         <tr><td><span class="param-name">ColorShiftBottom</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Bottom color shift</td></tr>
+                        <tr><td><span class="param-name">SkyTopAmbient</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sky top ambient color</td></tr>
+                        <tr><td><span class="param-name">SkyBottomAmbient</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sky bottom ambient color</td></tr>
+                        <tr><td><span class="param-name">LightColor</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun light color</td></tr>
+                        <tr><td><span class="param-name">LightDirection</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun light direction</td></tr>
+                        <tr><td><span class="param-name">TrueSunPosition</span></td><td><span class="param-type">Vector3</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Actual sun world position</td></tr>
+                        <tr><td><span class="param-name">TrueMoonPosition</span></td><td><span class="param-type">Vector3</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Actual moon world position</td></tr>
+                        <tr><td><span class="param-name">Sky</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Sky instance</td></tr>
+                        <tr><td><span class="param-name">Atmosphere</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Atmosphere instance</td></tr>
+                        <tr><td><span class="param-name">SunRays</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">SunRays instance</td></tr>
+                        <tr><td><span class="param-name">ColorCorrection</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">ColorCorrection instance</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- Sky -->
+            <div class="endpoint-card card-accent-property" id="prop-sky">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Sky <span class="text-neutral-500 text-sm font-mono font-normal">(lighting.Sky)</span></h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">SkyboxBk</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Back skybox texture ID</td></tr>
+                        <tr><td><span class="param-name">SkyboxDn</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Down skybox texture ID</td></tr>
+                        <tr><td><span class="param-name">SkyboxFt</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Front skybox texture ID</td></tr>
+                        <tr><td><span class="param-name">SkyboxLf</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Left skybox texture ID</td></tr>
+                        <tr><td><span class="param-name">SkyboxRt</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Right skybox texture ID</td></tr>
+                        <tr><td><span class="param-name">SkyboxUp</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Up skybox texture ID</td></tr>
+                        <tr><td><span class="param-name">MoonTextureId</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Moon texture ID</td></tr>
+                        <tr><td><span class="param-name">MoonSize</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Moon angular size</td></tr>
+                        <tr><td><span class="param-name">SunTextureId</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun texture ID</td></tr>
+                        <tr><td><span class="param-name">SunSize</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun angular size</td></tr>
+                        <tr><td><span class="param-name">StarCount</span></td><td><span class="param-type">int</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Number of stars</td></tr>
+                        <tr><td><span class="param-name">SkyboxOrientation</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Skybox orientation</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- Atmosphere -->
+            <div class="endpoint-card card-accent-property" id="prop-atmosphere">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">Atmosphere <span class="text-neutral-500 text-sm font-mono font-normal">(lighting.Atmosphere)</span></h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Color</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Atmosphere color</td></tr>
+                        <tr><td><span class="param-name">Decay</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Atmosphere decay color</td></tr>
+                        <tr><td><span class="param-name">Glare</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Glare amount</td></tr>
+                        <tr><td><span class="param-name">Haze</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Haze amount</td></tr>
+                        <tr><td><span class="param-name">Density</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Atmosphere density</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- SunRays -->
+            <div class="endpoint-card card-accent-property" id="prop-sunrays">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">SunRays <span class="text-neutral-500 text-sm font-mono font-normal">(lighting.SunRays)</span></h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Intensity</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun rays intensity</td></tr>
+                        <tr><td><span class="param-name">Spread</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun rays spread</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- ColorCorrection -->
+            <div class="endpoint-card card-accent-property" id="prop-colorcorrection">
+                <div class="prop-header" onclick="toggleProp(this)">
+                    <h3 class="text-lg font-bold text-white">ColorCorrection <span class="text-neutral-500 text-sm font-mono font-normal">(lighting.ColorCorrection)</span></h3>
+                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="prop-content hidden">
+                <table class="param-table">
+                    <thead>
+                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="param-name">Brightness</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Color correction brightness</td></tr>
+                        <tr><td><span class="param-name">Contrast</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Color correction contrast</td></tr>
+                        <tr><td><span class="param-name">Saturation</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Color correction saturation</td></tr>
+                        <tr><td><span class="param-name">TintColor</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Tint color</td></tr>
                     </tbody>
                 </table>
                 </div>
