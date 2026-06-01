@@ -125,7 +125,7 @@
     background: linear-gradient(135deg, #fff 40%, var(--gold));
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
-  article .intro { margin-top: 0.75rem; font-size: 1.125rem; color: var(--muted); line-height: 1.7; }
+  article .intro { margin-top: 0.75rem; font-size: 1rem; color: var(--muted); line-height: 1.7; }
   article .body { margin-top: 2rem; }
   article h2 {
     font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em;
@@ -381,18 +381,9 @@ function toCodeblock(code) {
 
 const PAGES = {
   "/": {
-    title: "LuaVM Scripting Environment",
-    intro: "A Roblox exploit scripting environment built on top of Sol2/LuaJIT. Exposes a Roblox-like API including instances, services, vectors, colors, signals, and various utility/cheat libraries.",
+    title: "Sheldon's Scripting Environment",
+    intro: "A scripting environment made for letting users have more customizability over their product. (<- not ai)",
     body: `
-      <h2>Overview</h2>
-      <p>The LuaVM is a Roblox exploit scripting environment built on top of <a href="https://github.com/ThePhD/sol2" style="color:var(--primary)">Sol2/LuaJIT</a>. It exposes a Roblox-like API including instances, services, vectors, colors, signals, and various utility/cheat libraries.</p>
-
-      <h2>Standard Libraries</h2>
-      <p>Only <strong>4</strong> standard Lua libraries are loaded: <code>base</code>, <code>math</code>, <code>table</code>, <code>string</code>.</p>
-      <div class="callout">
-        <p><strong>Not available:</strong> <code>debug</code>, <code>io</code>, <code>os</code>, <code>coroutine</code>, <code>package</code>, <code>utf8</code>.</p>
-      </div>
-
       <h2>Table of Contents</h2>
       <ul>
         <li><a href="#/globals" style="color:var(--primary)">Libraries</a></li>
