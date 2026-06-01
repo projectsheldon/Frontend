@@ -1,1543 +1,1400 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lua VM API - Project Sheldon</title>
-    <script src="https://cdn.tailwindcss.com?warn=false"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="icon" href="../favicon/favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/lua.min.js"></script>
-    <script>
-        window.addEventListener('error', function (e) {
-            if (e.message && (e.message.includes('youtube.com') || e.message.includes('ERR_BLOCKED_BY_CLIENT') || e.filename.includes('youtube.com'))) {
-                e.preventDefault();
-                return false;
-            }
-        });
-    </script>
-    <style>
-        body {
-            background-color: #050505;
-            color: white;
-            font-family: 'Inter', sans-serif;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LuaVM — Documentation</title>
+<script src="https://cdn.tailwindcss.com?warn=false"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script type="text/javascript" charset="UTF-8" src="https://unpkg.com/highlightjs-luau/dist/luau.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #050505;
+    --fg: #fafafa;
+    --muted: #a3a3a3;
+    --muted-2: #737373;
+    --border: rgba(255,255,255,0.08);
+    --card: rgba(255,255,255,0.04);
+    --accent: rgba(255,255,255,0.10);
+    --primary: #e8d4b4;
+    --code-bg: rgba(255,255,255,0.04);
+    --callout-bg: rgba(232,212,180,0.05);
+    --gold: #c7b18f;
+    --gold-dim: rgba(199,177,143,0.15);
+  }
+  html, body { background: transparent; color: var(--fg); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  body { position: relative; min-height: 100vh; overflow-x: hidden; }
+  a { color: inherit; text-decoration: none; }
 
-        .bg-mesh {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 1) 0%, rgba(5, 5, 5, 1) 100%);
-            z-index: -2;
-        }
+  .bg-mesh {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 1) 0%, rgba(5, 5, 5, 1) 100%);
+    z-index: -2;
+    pointer-events: none;
+  }
+  #particle-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    opacity: 0.4;
+    pointer-events: none;
+  }
 
-        .bg-glow {
-            position: fixed;
-            top: -20%;
-            right: -10%;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(0, 200, 255, 0.04) 0%, transparent 70%);
-            z-index: -1;
-            pointer-events: none;
-        }
+  .glass-nav {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+  }
+  .glass-nav.scrolled {
+    background: rgba(5, 5, 5, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .nav-tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .nav-tab::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--gold);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+  }
+  .nav-tab.active, .nav-tab:hover { color: white; }
+  .nav-tab.active::after, .nav-tab:hover::after { width: 60%; }
+  .mobile-menu-btn { display: none; background: none; border: none; color: white; cursor: pointer; padding: 8px; }
+  .mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(5,5,5,0.98); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 1rem; z-index: 999; flex-direction: column; gap: 0.5rem; }
+  .mobile-menu.show { display: flex; }
+  .mobile-menu .nav-tab { text-align: center; padding: 1rem; border-radius: 8px; }
+  .mobile-menu .nav-tab.active { background: var(--gold-dim); color: var(--gold); }
+  .logo-box { transition: transform 0.3s ease; }
+  .logo-box:hover { transform: rotate(10deg) scale(1.05); }
+  .btn-discord { background: #5865F2; color: white; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease; }
+  .btn-discord:hover { background: #4752c4; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(88,101,242,0.3); }
 
-        .glass-nav {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
+  .layout { max-width: 80rem; margin: 0 auto; padding: 2.5rem 1.5rem; display: flex; gap: 2rem; }
+  aside { width: 16rem; flex-shrink: 0; position: sticky; top: 5rem; height: calc(100vh - 6rem); overflow-y: auto; }
+  aside::-webkit-scrollbar { width: 4px; }
+  aside::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
+  nav.sidebar { display: flex; flex-direction: column; gap: 1.5rem; font-size: 0.875rem; padding-right: 0.5rem; }
+  .nav-group-heading { padding: 0 0.75rem 0.5rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted-2); display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; transition: color .15s; }
+  .nav-group-heading:hover { color: var(--muted); }
+  .nav-group-heading .chevron { font-size: 1rem; transition: transform .2s; color: var(--muted-2); line-height: 1; display: inline-flex; }
+  .nav-group-heading .chevron.open { transform: rotate(90deg); }
+  .nav-group-items { overflow: hidden; transition: max-height .25s ease; max-height: 0; }
+  .nav-group-items.open { max-height: 500px; }
+  .nav-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .nav-link {
+    position: relative; display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.45rem 0.75rem; border-radius: 0.375rem;
+    color: var(--muted); transition: all .15s; font-size: 0.8125rem;
+  }
+  .nav-link svg { flex-shrink: 0; opacity: 0.5; }
+  .nav-link.active svg { opacity: 1; }
+  .nav-link:hover { background: rgba(255,255,255,0.04); color: #ccc; }
+  .nav-link.active { background: var(--gold-dim); color: var(--gold); font-weight: 600; }
+  .nav-link.active::before {
+    content: ""; position: absolute; left: 0; top: 50%;
+    height: 1.25rem; width: 3px; transform: translateY(-50%);
+    border-radius: 9999px; background: var(--gold);
+  }
 
-        .logo-box {
-            transition: transform 0.3s ease;
-        }
+  main { min-width: 0; flex: 1; }
+  article { max-width: 54rem; }
+  article h1 {
+    font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1;
+    background: linear-gradient(135deg, #fff 40%, var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  article .intro { margin-top: 0.75rem; font-size: 1.125rem; color: var(--muted); line-height: 1.7; }
+  article .body { margin-top: 2rem; }
+  article h2 {
+    font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem; color: var(--fg);
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  article h2::before {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+  article h2:first-child::before { display: none; }
+  article h3 { font-size: 1.2rem; font-weight: 600; margin: 2rem 0 0.75rem; color: var(--gold); }
+  article h4 { font-size: 0.95rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  article p { line-height: 1.8; color: #d4d4d4; margin-bottom: 1rem; font-size: 0.9375rem; }
+  article ul, article ol { margin: 0 0 1.25rem 1.5rem; color: var(--muted); line-height: 1.7; }
+  article ul li, article ol li { margin-bottom: 0.35rem; }
+  article ul li::marker { color: var(--gold); }
+  article code {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    background: rgba(255,255,255,0.06); padding: 0.15rem 0.4rem;
+    border-radius: 0.3rem; font-size: 0.85em; color: var(--gold);
+  }
+  article pre code { background: none; padding: 0; border-radius: 0; color: inherit; }
+  .callout {
+    border-left: 3px solid var(--gold); background: var(--gold-dim);
+    padding: 1.25rem 1.5rem; border-radius: 0.75rem; margin-bottom: 1.25rem;
+  }
+  .callout p { margin-bottom: 0.75rem; color: #e5e5e5; font-size: 0.9rem; }
+  .callout p:last-child { margin-bottom: 0; }
+  .requires-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.15);
+    border-radius: 2rem; padding: 0.35rem 1rem; margin-bottom: 1.5rem;
+    font-size: 0.8rem; color: var(--muted-2); width: fit-content;
+  }
+  .requires-badge code { color: var(--gold); font-size: 0.8rem; }
+  .codeblock {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+    border-radius: 0.75rem; padding: 1.25rem; font-size: 0.85rem;
+    overflow-x: auto; white-space: pre; color: #e5e5e5; margin-bottom: 1.25rem;
+    line-height: 1.6;
+  }
+  .codeblock::-webkit-scrollbar { height: 4px; }
+  .codeblock::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 0.75rem;
+    margin-bottom: 1.25rem;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+  }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
+  thead {}
+  thead th {
+    background: rgba(255,255,255,0.03);
+    color: var(--muted-2);
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  thead th:first-child { border-radius: 0.75rem 0 0 0; }
+  thead th:last-child { border-radius: 0 0.75rem 0 0; }
+  tbody tr { transition: background .15s; }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  tbody tr + tr { border-top: 1px solid var(--border); }
+  th, td { padding: 0.65rem 1rem; vertical-align: top; }
+  td { color: #d4d4d4; }
+  td:first-child { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; font-size: 0.85em; white-space: nowrap; color: #e5e5e5; }
+  td:nth-child(2) { color: var(--muted); }
 
-        .nav-tab {
-            padding: 0.5rem 1rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            transition: all 0.3s;
-            position: relative;
-        }
+  .pager { margin-top: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .pager a {
+    display: flex; flex-direction: column; gap: 0.25rem;
+    padding: 1rem 1.25rem; border: 1px solid var(--border);
+    background: var(--card); border-radius: 0.75rem;
+    transition: all .2s;
+  }
+  .pager a:hover { border-color: var(--gold-dim); background: rgba(255,255,255,0.03); }
+  .pager a.right { align-items: flex-end; text-align: right; }
+  .pager .label-tiny { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted-2); }
+  .pager .label-main { font-weight: 600; color: var(--fg); }
 
-        .mobile-menu-btn { display: none; }
-        .mobile-menu { display: none; }
-
-        @media (max-width: 768px) {
-            .nav-tabs-desktop { display: none; }
-            .mobile-menu-btn { display: block; background: none; border: none; color: white; cursor: pointer; padding: 8px; }
-            .mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(5,5,5,0.98); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 1rem; z-index: 999; flex-direction: column; gap: 0.5rem; }
-            .mobile-menu.show { display: flex; }
-            .mobile-menu .nav-tab { text-align: center; padding: 1rem; }
-            .mobile-menu .nav-tab.active { background: rgba(199,177,143,0.1); color: #c7b18f; }
-            .sidebar { display: none; }
-            .main-content { margin-left: 0; padding: 1rem; }
-
-            nav {
-                padding: 0.5rem !important;
-            }
-
-            nav > div {
-                height: 3rem !important;
-                padding: 0 0.75rem !important;
-                border-radius: 0.75rem !important;
-            }
-
-            .logo-box {
-                width: 2rem !important;
-                height: 2rem !important;
-            }
-
-            .logo-box img {
-                width: 1.5rem !important;
-                height: 1.5rem !important;
-            }
-
-            #discord-login-btn {
-                padding: 0.5rem 0.75rem !important;
-            }
-        }
-
-        .nav-tab::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 2px;
-            background: #c7b18f;
-            transition: all 0.3s ease;
-            transform: translateX(-50%);
-        }
-
-        .nav-tab:hover, .nav-tab.active {
-            color: white;
-        }
-
-        .nav-tab.active::after,
-        .nav-tab:hover::after {
-            width: 60%;
-        }
-
-        .btn-discord {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #5865F2;
-            color: white;
-            font-weight: 700;
-            font-size: 0.75rem;
-            padding: 8px 16px;
-            border-radius: 9999px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .btn-discord:hover {
-            background: #4752c4;
-            transform: translateY(-1px);
-        }
-
-        .sidebar {
-            width: 280px;
-            background: rgba(0, 0, 0, 0.3);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-            height: calc(100vh - 64px);
-            position: fixed;
-            top: 64px;
-            left: 0;
-            overflow-y: auto;
-            padding: 1rem 0;
-        }
-
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-track { background: transparent; }
-        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-
-        .sidebar-section {
-            margin-bottom: 0.5rem;
-        }
-
-        .sidebar-title {
-            padding: 0.5rem 1.5rem;
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1.5rem;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.6);
-            text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
-            border-left: 2px solid transparent;
-        }
-
-        .sidebar-link:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.05);
-            border-left-color: rgba(255, 255, 255, 0.15);
-        }
-
-        .sidebar-link.active {
-            color: #c7b18f;
-            background: rgba(199, 177, 143, 0.1);
-            border-left-color: #c7b18f;
-            border-right: none;
-        }
-
-        .sidebar-link .method {
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 3px;
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
-        }
-
-        .sidebar-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .dot-cyan { background: #22d3ee; }
-        .dot-green { background: #4ade80; }
-        .dot-amber { background: #fbbf24; }
-        .dot-purple { background: #a78bfa; }
-        .dot-blue { background: #60a5fa; }
-        .dot-rose { background: #fb7185; }
-
-        .main-content {
-            margin-left: 280px;
-            padding: 2rem;
-            min-height: calc(100vh - 64px);
-        }
-
-        .hero-section {
-            margin-bottom: 3rem;
-            position: relative;
-        }
-
-        .hero-section::after {
-            content: '';
-            position: absolute;
-            bottom: -1.5rem;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
-        }
-
-        .hero-title {
-            font-size: 3.5rem;
-            font-weight: 900;
-            letter-spacing: -0.03em;
-            line-height: 1.1;
-            background: linear-gradient(135deg, #ffffff 0%, #94a3b8 50%, #22d3ee 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            border-radius: 9999px;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            border: 1px solid rgba(34, 211, 238, 0.25);
-            background: rgba(34, 211, 238, 0.08);
-            color: #22d3ee;
-        }
-
-        .endpoint-card {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .endpoint-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            border-radius: 12px 12px 0 0;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-
-
-        .card-accent-core::before { background: linear-gradient(90deg, #60a5fa, #3b82f6); }
-        .card-accent-library::before { background: linear-gradient(90deg, #4ade80, #22c55e); }
-        .card-accent-property::before { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
-        .card-accent-example::before { background: linear-gradient(90deg, #a78bfa, #8b5cf6); }
-        .card-accent-overview::before { background: linear-gradient(90deg, #22d3ee, #06b6d4); }
-        .card-accent-global::before { background: linear-gradient(90deg, #fb7185, #f43f5e); }
-
-        .lib-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .lib-badge-opt {
-            background: rgba(251, 191, 36, 0.15);
-            color: #fbbf24;
-            border: 1px solid rgba(251, 191, 36, 0.2);
-        }
-
-        .lib-badge-req {
-            background: rgba(239, 68, 68, 0.15);
-            color: #fb7185;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .lib-badge-core {
-            background: rgba(34, 211, 238, 0.1);
-            color: #22d3ee;
-            border: 1px solid rgba(34, 211, 238, 0.15);
-        }
-
-        .method-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .code-block {
-            background: #1e1e1e;
-            border: 1px solid #3c3c3c;
-            border-radius: 8px;
-            padding: 16px;
-            font-family: Consolas, 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            white-space: pre;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-            display: block;
-        }
-        pre:has(.code-block) {
-            overflow-x: auto;
-            border-radius: 8px;
-        }
-
-        .param-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        .param-table th {
-            text-align: left;
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.6);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.05em;
-        }
-
-        .param-table td {
-            padding: 10px 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .param-table tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .param-name {
-            font-family: 'JetBrains Mono', monospace;
-            color: #c7b18f;
-        }
-
-        .param-type {
-            font-family: 'JetBrains Mono', monospace;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 11px;
-        }
-
-        .section-divider {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin: 2.5rem 0 1.5rem;
-            color: rgba(255, 255, 255, 0.15);
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-        }
-
-        .section-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
-        }
-
-        .inline-tag {
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 3px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .tag-lua { background: rgba(0, 0, 0, 0.3); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.15); }
-
-        .prop-header {
-            cursor: pointer;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 4px 0;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-        .prop-header:hover { background: rgba(255,255,255,0.02); }
-        .prop-chevron {
-            width: 20px;
-            height: 20px;
-            color: rgba(255,255,255,0.25);
-            transition: transform 0.25s ease;
-            flex-shrink: 0;
-        }
-        .prop-chevron.collapsed { transform: rotate(-90deg); }
-        .prop-content { transition: opacity 0.2s ease; }
-
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
-
-        @media (max-width: 1024px) {
-            .sidebar {
-                display: none;
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .hero-title {
-                font-size: 2.5rem;
-            }
-        }
-    </style>
+  @media (max-width: 768px) {
+    aside { display: none; }
+    .layout { padding: 1.5rem 1rem; flex-direction: column; }
+    article h1 { font-size: 1.75rem; }
+    .nav-tabs-desktop { display: none !important; }
+    .mobile-menu-btn { display: block; }
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+</style>
 </head>
+<body>
+  <div class="bg-mesh"></div>
+  <canvas id="particle-canvas"></canvas>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
 
-<body class="antialiased">
-    <div class="bg-mesh"></div>
-    <div class="bg-glow"></div>
-
-    <nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center" style="height: 64px;">
-        <div class="w-full max-w-[1100px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">
-            <a href="../" class="flex items-center gap-3 z-10 shrink-0">
-                <div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">
-                    <img src="../favicon/favicon.ico" alt="Logo" class="w-8 h-8 rounded-lg">
-                </div>
-                <span class="text-xl font-black tracking-tighter text-white hidden sm:block">SHELDON</span>
-            </a>
-
-            <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full nav-tabs-desktop">
-                <a href="../" class="nav-tab">Home</a>
-                <a href="../luavm/" class="nav-tab active">Lua VM</a>
-                <a href="../resellers/" class="nav-tab">Resell</a>
-            </div>
-
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
-
-            <div class="mobile-menu" id="mobileMenu">
-                <a href="../" class="nav-tab">Home</a>
-                <a href="../luavm/" class="nav-tab active">Lua VM</a>
-                <a href="../resellers/" class="nav-tab">Resell</a>
-            </div>
-
-            <div class="flex items-center gap-5 z-10 shrink-0">
-                <div id="user-profile-trigger" class="hidden flex items-center gap-2 cursor-pointer group" style="position: relative;">
-                    <div class="flex flex-col leading-none text-right gap-0.5">
-                        <div class="user-name text-[0.7rem] font-bold text-neutral-400 group-hover:text-white transition-colors">Username</div>
-                        <div class="user-balance text-[0.6rem] font-bold text-[#c7b18f] tracking-wider hidden leading-none" style="margin-top: 1px"></div>
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group-hover:bg-white/10 transition-all">
-                        <img class="user-avatar w-full h-full object-cover hidden" src="" alt="Avatar">
-                        <svg class="default-avatar w-full h-full text-neutral-400" fill="#ffffff" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                        </svg>
-                    </div>
-                </div>
-
-                <button id="discord-login-btn" class="btn-discord">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 127.14 96.36" fill="#ffffff">
-                        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a.41.41,0,0,0-.43.2,72.48,72.48,0,0,0-3.17,6.52,97.26,97.26,0,0,0-29,0,72.84,72.84,0,0,0-3.19-6.52.4.4,0,0,0-.43-.2A105.09,105.09,0,0,0,19.44,8.07a.44.44,0,0,0-.2.07C2.12,34,1.15,59.39,3.46,84.41a.48.48,0,0,0,.19.34A105.77,105.77,0,0,0,35.77,96.36a.42.42,0,0,0,.46-.22,74.22,74.22,0,0,0,6.42-10.38.4.4,0,0,0-.22-.56,68.7,68.7,0,0,1-10-4.76.41.41,0,0,1,0-.69c.83-.62,1.67-1.28,2.46-1.95a.39.39,0,0,1,.41-.05,73.4,73.4,0,0,0,57.48,0,.39.39,0,0,1,.41.05c.79.67,1.63,1.33,2.46,1.95a.41.41,0,0,1,0,.69,68.61,68.61,0,0,1-10,4.76.41.41,0,0,0-.22.56,74.8,74.8,0,0,0,6.43,10.38.42.42,0,0,0,.46.22,105.48,105.48,0,0,0,32.11-11.61.45.45,0,0,0,.19-.34c2.72-28.53-4.67-53.59-20-76.27A.39.39,0,0,0,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.07,65.69,84.69,65.69Z" />
-                    </svg>
-                    <span id="discord-login-txt" class="hidden sm:inline">Login</span>
-                </button>
-            </div>
+  <nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center">
+    <div class="w-full max-w-[1100px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">
+      <div class="flex items-center gap-3 z-10 shrink-0">
+        <div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">
+          <img src="../favicon/favicon.ico" alt="Logo" class="w-8 h-8 rounded-lg">
         </div>
-    </nav>
+        <span class="text-xl font-black tracking-tighter text-white hidden sm:block">SHELDON</span>
+      </div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-section">
-            <div class="sidebar-title">Getting Started</div>
-            <a class="sidebar-link" href="#overview"><span class="sidebar-dot dot-cyan"></span>Overview</a>
+      <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full nav-tabs-desktop">
+        <a href="../" class="nav-tab">Home</a>
+        <a href="./" class="nav-tab active">Lua VM</a>
+        <a href="../resellers/" class="nav-tab">Resell</a>
+      </div>
+
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <div class="mobile-menu" id="mobileMenu">
+        <a href="../" class="nav-tab">Home</a>
+        <a href="./" class="nav-tab active">Lua VM</a>
+        <a href="../resellers/" class="nav-tab">Resell</a>
+      </div>
+
+      <div class="flex items-center gap-5 z-10 shrink-0">
+        <div id="user-profile-trigger" class="hidden flex items-center gap-2 cursor-pointer group" style="position: relative;">
+          <div class="flex flex-col leading-none text-right gap-0.5">
+            <div class="user-name text-[0.7rem] font-bold text-neutral-400 group-hover:text-white transition-colors">Username</div>
+            <div class="user-balance text-[0.6rem] font-bold text-[#c7b18f] tracking-wider hidden leading-none" style="margin-top: 1px"></div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group-hover:bg-white/10 transition-all group-hover:scale-105 group-hover:border-white/20">
+            <img class="user-avatar w-full h-full object-cover hidden" src="" alt="Avatar">
+            <svg class="default-avatar w-full h-full text-neutral-400" fill="#ffffff" viewBox="0 0 24 24">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+            </svg>
+          </div>
         </div>
-        <div class="sidebar-section">
-            <div class="sidebar-title">Core Types</div>
-            <a class="sidebar-link" href="#instance"><span class="sidebar-dot dot-blue"></span>Instance</a>
-            <a class="sidebar-link" href="#vector3"><span class="sidebar-dot dot-blue"></span>Vector3</a>
-            <a class="sidebar-link" href="#vector2"><span class="sidebar-dot dot-blue"></span>Vector2</a>
-            <a class="sidebar-link" href="#color3"><span class="sidebar-dot dot-blue"></span>Color3</a>
-        </div>
-        <div class="sidebar-section">
-            <div class="sidebar-title">Libraries</div>
-            <a class="sidebar-link" href="#lib-task"><span class="sidebar-dot dot-green"></span>task</a>
-            <a class="sidebar-link" href="#lib-io"><span class="sidebar-dot dot-green"></span>io (print/warn/error/hex)</a>
-            <a class="sidebar-link" href="#lib-file"><span class="sidebar-dot dot-green"></span>file</a>
-            <a class="sidebar-link" href="#lib-memory"><span class="sidebar-dot dot-green"></span>memory</a>
-            <a class="sidebar-link" href="#lib-cheat"><span class="sidebar-dot dot-green"></span>cheat</a>
-            <a class="sidebar-link" href="#lib-utility"><span class="sidebar-dot dot-green"></span>utility</a>
-            <a class="sidebar-link" href="#lib-draw"><span class="sidebar-dot dot-green"></span>draw</a>
-            <a class="sidebar-link" href="#lib-imgui"><span class="sidebar-dot dot-green"></span>imgui</a>
-            <a class="sidebar-link" href="#lib-gui"><span class="sidebar-dot dot-green"></span>gui</a>
-            <a class="sidebar-link" href="#lib-fflags"><span class="sidebar-dot dot-green"></span>fflags</a>
-            <a class="sidebar-link" href="#lib-entity"><span class="sidebar-dot dot-green"></span>entity</a>
-            <a class="sidebar-link" href="#lib-internet"><span class="sidebar-dot dot-green"></span>internet</a>
-        </div>
-        <div class="sidebar-section">
-            <div class="sidebar-title">Properties</div>
-            <a class="sidebar-link" href="#properties"><span class="sidebar-dot dot-amber"></span>All Properties</a>
-            <a class="sidebar-link" href="#prop-part"><span class="sidebar-dot dot-amber"></span>Part / BasePart</a>
-            <a class="sidebar-link" href="#prop-humanoid"><span class="sidebar-dot dot-amber"></span>Humanoid</a>
-            <a class="sidebar-link" href="#prop-player"><span class="sidebar-dot dot-amber"></span>Player</a>
-            <a class="sidebar-link" href="#prop-players"><span class="sidebar-dot dot-amber"></span>Players</a>
-            <a class="sidebar-link" href="#prop-camera"><span class="sidebar-dot dot-amber"></span>Camera</a>
-            <a class="sidebar-link" href="#prop-workspace"><span class="sidebar-dot dot-amber"></span>Workspace</a>
-            <a class="sidebar-link" href="#prop-lighting"><span class="sidebar-dot dot-amber"></span>Lighting</a>
-            <a class="sidebar-link" href="#prop-sky"><span class="sidebar-dot dot-amber"></span>Sky</a>
-            <a class="sidebar-link" href="#prop-atmosphere"><span class="sidebar-dot dot-amber"></span>Atmosphere</a>
-            <a class="sidebar-link" href="#prop-sunrays"><span class="sidebar-dot dot-amber"></span>SunRays</a>
-            <a class="sidebar-link" href="#prop-colorcorrection"><span class="sidebar-dot dot-amber"></span>ColorCorrection</a>
-            <a class="sidebar-link" href="#prop-teams"><span class="sidebar-dot dot-amber"></span>Teams</a>
-            <a class="sidebar-link" href="#prop-friendservice"><span class="sidebar-dot dot-amber"></span>FriendService</a>
-            <a class="sidebar-link" href="#prop-values"><span class="sidebar-dot dot-amber"></span>Value Types</a>
-        </div>
-        <div class="sidebar-section">
-            <div class="sidebar-title">Examples</div>
-            <a class="sidebar-link" href="#examples"><span class="sidebar-dot dot-purple"></span>Scripts & Examples</a>
-        </div>
-    </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="max-w-4xl mx-auto">
-            <div class="hero-section flex items-start gap-4">
-                <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="hero-badge">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                            Lua 5.4
-                        </span>
-                        <span class="hero-badge" style="border-color: rgba(74, 222, 128, 0.25); background: rgba(74, 222, 128, 0.08); color: #4ade80;">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                            sol2 Binding
-                        </span>
-                    </div>
-                    <h1 class="hero-title">Lua VM API</h1>
-                    <p class="text-neutral-500 text-sm mt-3 max-w-2xl">Complete reference for the Project Sheldon Lua scripting environment. Scripts can interact with the Roblox game instance, render overlays, manipulate memory, and more.</p>
-                </div>
-            </div>
+        <button id="discord-login-btn"
+          class="btn-discord px-5 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-wider transition-all">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 127.14 96.36" fill="#ffffff">
+            <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a.41.41,0,0,0-.43.2,72.48,72.48,0,0,0-3.17,6.52,97.26,97.26,0,0,0-29,0,72.84,72.84,0,0,0-3.19-6.52.4.4,0,0,0-.43-.2A105.09,105.09,0,0,0,19.44,8.07a.44.44,0,0,0-.2.07C2.12,34,1.15,59.39,3.46,84.41a.48.48,0,0,0,.19.34A105.77,105.77,0,0,0,35.77,96.36a.42.42,0,0,0,.46-.22,74.22,74.22,0,0,0,6.42-10.38.4.4,0,0,0-.22-.56,68.7,68.7,0,0,1-10-4.76.41.41,0,0,1,0-.69c.83-.62,1.67-1.28,2.46-1.95a.39.39,0,0,1,.41-.05,73.4,73.4,0,0,0,57.48,0,.39.39,0,0,1,.41.05c.79.67,1.63,1.33,2.46,1.95a.41.41,0,0,1,0,.69,68.61,68.61,0,0,1-10,4.76.41.41,0,0,0-.22.56,74.8,74.8,0,0,0,6.43,10.38.42.42,0,0,0,.46.22,105.48,105.48,0,0,0,32.11-11.61.45.45,0,0,0,.19-.34c2.72-28.53-4.67-53.59-20-76.27A.39.39,0,0,0,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.07,65.69,84.69,65.69Z" />
+          </svg>
+          <span id="discord-login-txt" class="hidden sm:inline">Login</span>
+        </button>
+      </div>
+    </div>
+  </nav>
 
-            <!-- Overview -->
-            <div class="endpoint-card card-accent-overview" id="overview">
-                <div class="flex items-center gap-3 mb-4">
-                    <h2 class="text-xl font-bold text-white">Overview</h2>
-                    <span class="lib-badge lib-badge-core">Lua 5.4 + sol2</span>
-                </div>
-                <p class="text-neutral-400 text-sm mb-4">The Sheldon Lua VM provides a full Lua 5.4 scripting environment powered by sol2. Scripts can interact with the Roblox game instance, render overlays, manipulate memory, and more.</p>
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Detail</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Language</span></td><td class="text-neutral-400">Lua 5.4</td></tr>
-                        <tr><td><span class="param-name">Binding</span></td><td class="text-neutral-400">sol2 (C++ to Lua)</td></tr>
-                        <tr><td><span class="param-name">Loaded std libs</span></td><td class="text-neutral-400">base, math, table, string</td></tr>
-                        <tr><td><span class="param-name">Compound assignments</span></td><td class="text-neutral-400">x += 1, x -= 1, etc. (preprocessed to vanilla Lua)</td></tr>
-                    </tbody>
-                </table>
-            </div>
+  <div class="pt-20"></div>
 
-            <div class="section-divider">Core Types</div>
+  <div class="layout">
+    <aside><nav id="sidebar" class="sidebar"></nav></aside>
+    <main id="main"></main>
+  </div>
 
-            <!-- Instance -->
-            <div class="endpoint-card card-accent-core" id="instance">
-                <h2 class="text-xl font-bold text-white mb-4">Instance <span class="lib-badge lib-badge-core">core type</span></h2>
+<script>
+const ICONS = {
+  home: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>',
+  fn: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+  gui: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+  imgui: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>',
+  draw: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>',
+  input: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/></svg>',
+  file: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+  internet: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>',
+  utility: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
+  task: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>',
+  memory: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="4" x2="9" y2="7"/><line x1="15" y1="4" x2="15" y2="7"/><line x1="9" y1="17" x2="9" y2="20"/><line x1="15" y1="17" x2="15" y2="20"/></svg>',
+  cheat: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
+  fflags: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+  entity: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
+  instance: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+  props: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>',
+  types: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>',
+  signal: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+  lock: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>',
+  note: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+};
 
-                <h3 class="text-sm font-bold text-white mb-2 mt-2">Properties</h3>
-                <table class="param-table mb-4">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Name</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Instance name</td></tr>
-                        <tr><td><span class="param-name">ClassName</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Roblox class name (e.g. "Part", "Player")</td></tr>
-                        <tr><td><span class="param-name">Parent</span></td><td><span class="param-type">Instance | nil</span></td><td class="text-neutral-400">Parent instance</td></tr>
-                        <tr><td><span class="param-name">Address</span></td><td><span class="param-type">number (uint)</span></td><td class="text-neutral-400">Raw memory address</td></tr>
-                        <tr><td><span class="param-name">FullName</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Full hierarchical path</td></tr>
-                    </tbody>
-                </table>
+const NAV_ICONS = {
+  "/": "home",
+  "/globals": "fn",
+  "/gui": "gui",
+  "/imgui": "imgui",
+  "/draw": "draw",
+  "/input": "input",
+  "/file": "file",
+  "/internet": "internet",
+  "/utility": "utility",
+  "/task": "task",
+  "/memory": "memory",
+  "/cheat": "cheat",
+  "/fflags": "fflags",
+  "/entity": "entity",
+  "/instance": "instance",
+  "/class-properties": "props",
+  "/custom-types": "types",
+  "/signals": "signal",
+  "/library-gating": "lock",
+  "/notes": "note",
+};
 
-                <h3 class="text-sm font-bold text-white mb-2">Methods</h3>
-                <pre><code class="language-lua code-block">instance:GetService(className)                       -> Instance | nil (DataModel only)
-instance:FindFirstChild(name)                        -> Instance | nil
-instance:WaitForChild(name, timeout?)                -> Instance | nil
-instance:FindFirstChildOfClass(className)            -> Instance | nil
-instance:IsA(className)                              -> bool
-instance:GetChildren()                               -> { Instance, ... }
-instance:Descendants()                               -> { Instance, ... }
-instance:Ancestors()                                 -> { Instance, ... }
-instance:IsDescendantOf(ancestor)                    -> bool
-instance:IsAncestorOf(descendant)                    -> bool
-instance:GetAttributes()                             -> { [string]: string }
-instance:GetAttribute(name)                          -> string | nil
-instance:GetTags()                                   -> { string, ... }
-instance:HasTag(tag)                                 -> bool
-instance:RenameTag(oldTag, newTag)</code></pre>
-            </div>
+const NAV = [
+  { items: [{ to: "/", label: "Overview" }] },
+  { items: [{ to: "/globals", label: "Global Functions" }] },
+  { heading: "Gui", dropdown: true, items: [
+    { to: "/gui", label: "gui" },
+    { to: "/imgui", label: "imgui" },
+    { to: "/draw", label: "draw" },
+  ]},
+  { heading: "Utility", dropdown: true, items: [
+    { to: "/input", label: "input" },
+    { to: "/file", label: "file" },
+    { to: "/internet", label: "internet" },
+    { to: "/utility", label: "utility" },
+    { to: "/task", label: "task" },
+  ]},
+  { heading: "Engine", dropdown: true, items: [
+    { to: "/memory", label: "memory" },
+    { to: "/cheat", label: "cheat" },
+    { to: "/fflags", label: "fflags" },
+    { to: "/entity", label: "entity" },
+  ]},
+  { heading: "Reference", items: [
+    { to: "/instance", label: "Instance" },
+    { to: "/class-properties", label: "Class Properties" },
+    { to: "/custom-types", label: "Custom Types" },
+    { to: "/signals", label: "RBXScriptSignal" },
+    { to: "/library-gating", label: "Library Gating" },
+    { to: "/notes", label: "Notes" },
+  ]},
+];
 
-            <!-- Vector3 -->
-            <div class="endpoint-card card-accent-core" id="vector3">
-                <h2 class="text-xl font-bold text-white mb-4">Vector3</h2>
-                <p class="text-neutral-400 text-sm mb-4">Members: <code class="text-[#c7b18f]">x</code>, <code class="text-[#c7b18f]">y</code>, <code class="text-[#c7b18f]">z</code> (floats)</p>
+function toTable(headers, rows) {
+  const h = headers.map(h => `<th>${h}</th>`).join("");
+  const r = rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("");
+  return `<div class="table-wrap"><table><thead><tr>${h}</tr></thead><tbody>${r}</tbody></table></div>`;
+}
 
-                <h3 class="text-sm font-bold text-white mb-2">Constructors</h3>
-                <pre><code class="language-lua code-block">Vector3.new()          -> (0, 0, 0)
+function toCodeblock(code) {
+  return `<div class="codeblock language-lua">${code}</div>`;
+}
+
+const PAGES = {
+  "/": {
+    title: "LuaVM Scripting Environment",
+    intro: "A Roblox exploit scripting environment built on top of Sol2/LuaJIT. Exposes a Roblox-like API including instances, services, vectors, colors, signals, and various utility/cheat libraries.",
+    body: `
+      <h2>Overview</h2>
+      <p>The LuaVM is a Roblox exploit scripting environment built on top of <a href="https://github.com/ThePhD/sol2" style="color:var(--primary)">Sol2/LuaJIT</a>. It exposes a Roblox-like API including instances, services, vectors, colors, signals, and various utility/cheat libraries.</p>
+
+      <h2>Standard Libraries</h2>
+      <p>Only <strong>4</strong> standard Lua libraries are loaded: <code>base</code>, <code>math</code>, <code>table</code>, <code>string</code>.</p>
+      <div class="callout">
+        <p><strong>Not available:</strong> <code>debug</code>, <code>io</code>, <code>os</code>, <code>coroutine</code>, <code>package</code>, <code>utf8</code>.</p>
+      </div>
+
+      <h2>Table of Contents</h2>
+      <ul>
+        <li><a href="#/globals" style="color:var(--primary)">Libraries</a></li>
+        <li><a href="#/instance" style="color:var(--primary)">Instance</a></li>
+        <li><a href="#/class-properties" style="color:var(--primary)">Class Properties</a></li>
+        <li><a href="#/custom-types" style="color:var(--primary)">Custom Types</a></li>
+        <li><a href="#/signals" style="color:var(--primary)">RBXScriptSignal (Events)</a></li>
+        <li><a href="#/library-gating" style="color:var(--primary)">Library Gating</a></li>
+        <li><a href="#/notes" style="color:var(--primary)">Notes</a></li>
+      </ul>
+    `,
+  },
+
+  "/globals": {
+    title: "Global Functions",
+    intro: "Built-in global functions available in the LuaVM environment.",
+    body: `
+      ${toTable(
+        ["Function", "Description"],
+        [
+          ["<b>print(...)</b>", "Outputs to console with <code>[print]</code> prefix"],
+          ["<b>warn(...)</b>", "Outputs to console with <code>[warn]</code> prefix"],
+          ["<b>error(...)</b>", "Throws a Lua error"],
+          ["<b>hex(number)</b>", "Formats a number as hex string (e.g. <code>0x7FF...</code>)"],
+          ["<b>tick()</b>", "Returns <code>GetTickCount64()</code>"],
+          ["<b>loadstring(source)</b>", "Loads and compiles Lua source code"],
+        ]
+      )}
+    `,
+  },
+
+  "/task": {
+    title: "task",
+    intro: "Scheduling utilities for asynchronous execution.",
+    body: `
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>task.spawn(fn)</b>", "<code>function</code>", "Schedules <code>fn</code> to run asynchronously"],
+          ["<b>task.delay(seconds, fn)</b>", "<code>number, function</code>", "Schedules <code>fn</code> after <code>seconds</code>"],
+          ["<b>task.wait(seconds)</b>", "<code>number</code>", "Busy-waits, returns actual elapsed time"],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`task.spawn(function()
+    print("Runs asynchronously!")
+end)
+
+local elapsed = task.wait(1)
+print("Waited", elapsed, "seconds")`)}
+    `,
+  },
+
+  "/memory": {
+    title: "memory",
+    intro: "Raw memory read/write operations. Requires the <code>Memory</code> library to be enabled.",
+    body: `
+      <div class="requires-badge"><strong>Requires:</strong> <code>Memory</code> library enabled</div>
+
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>memory.Read(type, address)</b>", "<code>string, uintptr</code>", "Reads from memory"],
+          ["<b>memory.Write(type, address, value)</b>", "<code>string, uintptr, any</code>", "Writes to memory"],
+          ["<b>memory.GetRTTI(address)</b>", "<code>uintptr</code>", "Gets RTTI type from vtable"],
+          ["<b>memory.GetBase()</b>", "", "Returns Roblox process base address"],
+          ["<b>memory.Rebase(offset)</b>", "<code>uintptr</code>", "Returns <code>base + offset</code>"],
+        ]
+      )}
+
+      <h3>Supported Types</h3>
+      <p><strong>Read/Write:</strong> <code>float</code>, <code>double</code>, <code>int</code>, <code>uint</code>, <code>bool</code>, <code>byte</code>, <code>short</code>, <code>ushort</code>, <code>int64</code>, <code>uint64</code>, <code>string</code>, <code>vector2</code>, <code>vector3</code>, <code>color3</code>.</p>
+      <p><strong>Write also supports:</strong> <code>pointer</code>.</p>
+
+      <h3>Example</h3>
+      ${toCodeblock(`local base = memory.GetBase()
+local value = memory.Read("int", base + 0x1234)
+print(hex(value))
+memory.Write("int", base + 0x1234, 999)`)}
+    `,
+  },
+
+  "/cheat": {
+    title: "cheat",
+    intro: "Cheat utilities including event registration and raycasting.",
+    body: `
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>Register(eventType, fn)</b>", "<code>string, function</code>", "Register a callback for an event type"],
+          ["<b>Unregister(eventType, fn)</b>", "<code>string, function</code>", "Unregister a callback"],
+          ["<b>Raycast(pos, dir, distance, ignoreTransparent?)</b>", "<code>Vector3, Vector3, number, bool</code>", "Returns <code>(hit, instance, position, distance)</code>"],
+        ]
+      )}
+
+      <h4>Event Types</h4>
+      ${toTable(
+        ["Event", "Description"],
+        [
+          ["<b>onPaint</b>", "Fires every frame for rendering"],
+          ["<b>onUpdate</b>", "Fires every frame for logic updates"],
+          ["<b>onSlowUpdate</b>", "Fires at a reduced rate"],
+          ["<b>teleport</b>", "Fires when the player teleports"],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`cheat.Register("onPaint", function()
+    draw.Text("ESP Label", 100, 50, Color3.new(1, 1, 0))
+end)
+
+local hit, inst, pos, dist = cheat.Raycast(
+    Vector3.new(0, 5, 0),
+    Vector3.new(0, -1, 0),
+    500
+)`)}
+    `,
+  },
+
+  "/internet": {
+    title: "internet",
+    intro: "HTTP networking functions. Requires the <code>Internet</code> library to be enabled.",
+    body: `
+      <div class="requires-badge"><strong>Requires:</strong> <code>Internet</code> library enabled</div>
+
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>internet.get(url, timeout?, info?)</b>", "<code>string, number?, table?</code>", "HTTP GET. Info supports <code>{headers={}}</code>. Returns <code>{text, status_code}</code>"],
+          ["<b>internet.post(url, body?, timeout?, info?)</b>", "<code>string, string?, number?, table?</code>", "HTTP POST"],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`local res = internet.get("https://api.example.com/data", 5000)
+print(res.status_code)
+print(res.text)`)}
+    `,
+  },
+
+  "/input": {
+    title: "input",
+    intro: "Mouse and keyboard input simulation. Requires the <code>Input</code> library to be enabled.",
+    body: `
+      <div class="requires-badge"><strong>Requires:</strong> <code>Input</code> library enabled</div>
+
+      <h3>Mouse</h3>
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>input.MoveMouse(dir, relative?)</b>", "<code>Vector2, bool?</code>", "Move mouse (absolute or relative to overlay)"],
+          ["<b>input.GetMousePosition()</b>", "", "Current cursor position"],
+          ["<b>input.MouseClick(click, time?)</b>", "<code>int, int?</code>", "Simulate click (1=left, 2=right)"],
+          ["<b>input.MousePress(click)</b>", "<code>int</code>", "Press button"],
+          ["<b>input.MouseRelease(click)</b>", "<code>int</code>", "Release button"],
+          ["<b>input.GetScrollDelta()</b>", "", "Scroll wheel delta"],
+          ["<b>input.GetMoveDelta()</b>", "", "Mouse move delta"],
+        ]
+      )}
+
+      <h3>Keyboard</h3>
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>input.IsHeld(vKey)</b>", "<code>int|string</code>", "Key held down"],
+          ["<b>input.IsPressed(vKey)</b>", "<code>int|string</code>", "Key just pressed"],
+          ["<b>input.IsReleased(vKey)</b>", "<code>int|string</code>", "Key just released"],
+          ["<b>input.PressKey(vKey, time?)</b>", "<code>int|string, int?</code>", "Press and release key"],
+          ["<b>input.HoldKey(vKey)</b>", "<code>int|string</code>", "Hold key down"],
+          ["<b>input.ReleaseKey(vKey)</b>", "<code>int|string</code>", "Release key"],
+          ["<b>input.Type(text, time?)</b>", "<code>string, int?</code>", "Type text character by character"],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`-- Center mouse and click
+input.MoveMouse(Vector2.new(960, 540))
+input.MouseClick(1)
+
+-- Type a message
+input.Type("Hello, world!", 50)`)}
+    `,
+  },
+
+  "/file": {
+    title: "file",
+    intro: "Sandboxed file system operations. Requires the <code>File_Management</code> library to be enabled.",
+    body: `
+      <div class="requires-badge"><strong>Requires:</strong> <code>File_Management</code> library enabled</div>
+
+      <p>All operations are sandboxed to <code>{workspaceDir}/scripts/SandboxEnv/</code>. Path traversal (<code>..</code>) is blocked.</p>
+
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>file.write(location, content)</b>", "<code>string, string</code>", "Write file"],
+          ["<b>file.read(location)</b>", "<code>string</code>", "Read file"],
+          ["<b>file.rename(location, newName)</b>", "<code>string, string</code>", "Rename/move file"],
+          ["<b>file.delete(location)</b>", "<code>string</code>", "Delete file"],
+          ["<b>file.list(location)</b>", "<code>string</code>", "List directory"],
+          ["<b>file.append(location, content)</b>", "<code>string, string</code>", "Append to file"],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`file.write("config.txt", "Hello, world!")
+local content = file.read("config.txt")
+print(content)
+file.delete("config.txt")`)}
+    `,
+  },
+
+  "/utility": {
+    title: "utility",
+    intro: "Various utility functions including world-to-screen projection and clipboard access.",
+    body: `
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>utility.WorldToScreen(worldPos)</b>", "<code>Vector3</code>", "Project world position to screen"],
+          ["<b>utility.GetClipboard()</b>", "", "Get clipboard text"],
+          ["<b>utility.SetClipboard(text)</b>", "<code>string</code>", "Set clipboard text"],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`-- Project a player's position to screen
+local pos = utility.WorldToScreen(player.Character.HumanoidRootPart.Position)
+draw.Text("Player", pos.X, pos.Y, Color3.new(1, 1, 1))`)}
+
+      <p style="margin-top: 0.75rem"><code>GetClipboard</code> / <code>SetClipboard</code> require <code>Clipboard</code> library enabled.</p>
+    `,
+  },
+
+  "/entity": {
+    title: "entity",
+    intro: "Custom entity management system.",
+    body: `
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>entity.AddEntity(key, data)</b>", "<code>string, table</code>", "Add custom entity. <code>data</code> needs <code>Character</code>, <code>PrimaryPart</code>, <code>Name</code>"],
+          ["<b>entity.EditEntity(key, data)</b>", "<code>string, table</code>", "Edit entity data"],
+          ["<b>entity.RemoveEntity(key)</b>", "<code>string</code>", "Remove entity"],
+          ["<b>entity.Clear()</b>", "", "Remove all entities"],
+          ["<b>entity.GetEntity(key)</b>", "<code>string</code>", "Get entity data"],
+          ["<b>entity.GetPlayers(includeEnemies?, includeEntities?)</b>", "<code>bool?, bool?</code>", "Get players/entities data"],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`entity.AddEntity("target", {
+    Character = char,
+    PrimaryPart = char.HumanoidRootPart,
+    Name = "Player1"
+})
+local data = entity.GetEntity("target")
+print(data.Name, data.Character)`)}
+    `,
+  },
+
+  "/draw": {
+    title: "draw",
+    intro: "2D drawing primitives for rendering overlays.",
+    body: `
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>draw.Text(text, x, y, color?, font?, alpha?)</b>", "<code>string, number, number, Color3?, string?, int?</code>"],
+          ["<b>draw.TextOutlined(text, x, y, color?, font?, alpha?)</b>", "same"],
+          ["<b>draw.GetTextSize(text, font?)</b>", ""],
+          ["<b>draw.Line(x1,y1,x2,y2, color?, thickness?, alpha?)</b>", ""],
+          ["<b>draw.Rect(x,y,w,h, color?, thickness?, rounding?, alpha?)</b>", ""],
+          ["<b>draw.RectFilled(x,y,w,h, color?, rounding?, alpha?)</b>", ""],
+          ["<b>draw.Circle(cx,cy,radius, color?, thickness?, segments?, alpha?)</b>", ""],
+          ["<b>draw.CircleFilled(cx,cy,radius, color?, segments?, alpha?)</b>", ""],
+          ["<b>draw.Triangle(x1,y1,x2,y2,x3,y3, color?, thickness?, alpha?)</b>", ""],
+          ["<b>draw.TriangleFilled(x1,y1,x2,y2,x3,y3, color?, alpha?)</b>", ""],
+          ["<b>draw.Gradient(x,y,w,h, startColor, endColor, isHorizontal, startAlpha?, endAlpha?)</b>", ""],
+          ["<b>draw.Image(textureId, x,y,w,h, r,g,b,a)</b>", "<code>int, number,number,number,number, int,int,int,int</code>"],
+          ["<b>draw.Polyline(points, color, closed, thickness, alpha?)</b>", "<code>table, Color3, bool, number, int?</code>"],
+          ["<b>draw.ConvexPolyFilled(points, color, alpha?)</b>", ""],
+          ["<b>draw.ComputeConvexHull(points)</b>", "<code>table</code>"],
+          ["<b>draw.GetPartCorners(part)</b>", "<code>Instance</code>"],
+          ["<b>draw.DeltaTime()</b>", ""],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`-- Draw overlay text and shapes
+draw.Text("Hello World", 100, 100, Color3.new(1, 1, 1))
+draw.RectFilled(50, 50, 200, 100, Color3.new(1, 0, 0), 4, 0.8)`)}
+    `,
+  },
+
+  "/gui": {
+    title: "gui",
+    intro: "Overlay GUI management functions.",
+    body: `
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>gui.AddTab(tabName, func)</b>", "<code>string, function</code>", "Add a scripted runtime tab"],
+          ["<b>gui.RemoveTab(tabName)</b>", "<code>string</code>", "Remove a runtime tab"],
+          ["<b>gui.IsTab(tabName)</b>", "<code>string</code>", "Check if tab exists"],
+          ["<b>gui.GetMenuState(checkForeground?)</b>", "<code>bool?</code>", "Menu overlay state"],
+          ["<b>gui.IsForeground()</b>", "", "Roblox is foreground window"],
+          ["<b>gui.GetWindowSize()</b>", "", "Overlay window dimensions"],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`-- Add a runtime tab
+gui.AddTab("My Script", function()
+    print("Tab opened!")
+end)`)}
+    `,
+  },
+
+  "/imgui": {
+    title: "imgui",
+    intro: "Dear ImGui-style immediate mode GUI system.",
+    body: `
+      <h3>Windowing</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.Begin(name, flags?)</b>", "<code>string, int?</code>"],
+          ["<b>imgui.End()</b>", ""],
+          ["<b>imgui.BeginChild(id, w?, h?, border?, flags?)</b>", ""],
+          ["<b>imgui.EndChild()</b>", ""],
+          ["<b>imgui.SetNextWindowPos(x,y, cond?, pivot_x?, pivot_y?)</b>", ""],
+          ["<b>imgui.SetNextWindowSize(w,h, cond?)</b>", ""],
+          ["<b>imgui.SetNextWindowBgAlpha(alpha)</b>", ""],
+          ["<b>imgui.SetNextWindowCollapsed(collapsed, cond?)</b>", ""],
+          ["<b>imgui.SetNextWindowFocus()</b>", ""],
+        ]
+      )}
+
+      <h3>Position</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.GetWindowPos()</b>", ""],
+          ["<b>imgui.GetWindowSize()</b>", ""],
+          ["<b>imgui.GetCursorPos()</b>", ""],
+          ["<b>imgui.SetCursorPos(x,y)</b>", ""],
+          ["<b>imgui.SameLine(...)</b>", ""],
+          ["<b>imgui.Spacing()</b>", ""],
+          ["<b>imgui.Separator()</b>", ""],
+          ["<b>imgui.SeparatorText(label)</b>", ""],
+        ]
+      )}
+
+      <h3>Widgets</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.Button(text, w?, h?)</b>", ""],
+          ["<b>imgui.TabButton(text, w?, h?, active?)</b>", ""],
+          ["<b>imgui.Checkbox(text, v)</b>", ""],
+          ["<b>imgui.Slider(title, v, min, max)</b>", ""],
+          ["<b>imgui.SliderInt(title, v, min, max)</b>", ""],
+          ["<b>imgui.InputText(title, v, placeholder, w?, flags?)</b>", ""],
+          ["<b>imgui.MultilineInput(title, v, placeholder, w?, flags?)</b>", ""],
+          ["<b>imgui.WidgetsText(text, color?, alpha?)</b>", ""],
+          ["<b>imgui.BeginContent(title, h?, w?)</b>", ""],
+          ["<b>imgui.EndContent()</b>", ""],
+          ["<b>imgui.ColorPicker(title, color?, alpha?)</b>", ""],
+          ["<b>imgui.ProgressBar(title, value01, width, divisions, align?)</b>", ""],
+          ["<b>imgui.Note(text)</b>", ""],
+          ["<b>imgui.ListBox(label, items, height?, w?, listHeight?)</b>", ""],
+          ["<b>imgui.Dropdown(title, items, current?)</b>", ""],
+          ["<b>imgui.Shimmer(w, h)</b>", ""],
+        ]
+      )}
+
+      <h3>Tabs</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.BeginTabs(title, enableAnim?)</b>", ""],
+          ["<b>imgui.BeginTab(name)</b>", ""],
+          ["<b>imgui.EndTab()</b>", ""],
+          ["<b>imgui.EndTabs()</b>", ""],
+        ]
+      )}
+
+      <h3>Item State</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.IsItemHovered(flags?)</b>", ""],
+          ["<b>imgui.IsItemActive()</b>", ""],
+          ["<b>imgui.IsItemFocused()</b>", ""],
+          ["<b>imgui.IsItemClicked(btn?)</b>", ""],
+          ["<b>imgui.IsWindowHovered(flags?)</b>", ""],
+          ["<b>imgui.IsWindowFocused(flags?)</b>", ""],
+        ]
+      )}
+
+      <h3>Columns</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.Columns(...)</b>", ""],
+          ["<b>imgui.NextColumn()</b>", ""],
+          ["<b>imgui.GetColumnIndex()</b>", ""],
+          ["<b>imgui.GetColumnWidth()</b>", ""],
+          ["<b>imgui.SetColumnWidth()</b>", ""],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`imgui.Begin("My Window", 0)
+imgui.Text("Hello, world!")
+if imgui.Button("Click Me") then
+    print("Button clicked!")
+end
+imgui.End()`)}
+    `,
+  },
+
+  "/fflags": {
+    title: "fflags",
+    intro: "FastFlag (FFlag) reading and writing utilities.",
+    body: `
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>fflags.Get(name, type, original?)</b>", "<code>string, string, bool?</code>", "Get an FFlag value"],
+          ["<b>fflags.Set(name, type, value)</b>", "<code>string, string, any</code>", "Set an FFlag value"],
+          ["<b>fflags.GetAll()</b>", "", "Get all FFlags"],
+        ]
+      )}
+
+      <h3>Types</h3>
+      <p><code>float</code>, <code>double</code>, <code>int</code>, <code>uint</code>, <code>bool</code>, <code>byte</code>, <code>short</code>, <code>ushort</code>, <code>int64</code>, <code>uint64</code>, <code>string</code>. Set also supports <code>pointer</code>.</p>
+
+      <h3>Example</h3>
+      ${toCodeblock(`local val = fflags.Get("FFlagEnableVR", "bool")
+print("VR enabled:", val)
+fflags.Set("FFlagEnableVR", "bool", true)`)}
+    `,
+  },
+
+  "/instance": {
+    title: "Instance",
+    intro: "The core Roblox instance type. Access instances via <code>game</code>, <code>Instance</code> constructors, or methods.",
+    body: `
+      <h3>Properties</h3>
+      ${toTable(
+        ["Property", "Type", "Access", "Description"],
+        [
+          ["<b>Name</b>", "<code>string</code>", "RW", "Instance name"],
+          ["<b>ClassName</b>", "<code>string</code>", "RO", "Class name"],
+          ["<b>Parent</b>", "<code>Instance</code>", "RW", "Parent instance"],
+          ["<b>Address</b>", "<code>uintptr</code>", "RO", "Raw memory address"],
+          ["<b>FullName</b>", "<code>string</code>", "RO", "Full hierarchical path"],
+        ]
+      )}
+
+      <h3>Methods</h3>
+      ${toTable(
+        ["Method", "Returns", "Description"],
+        [
+          ["<b>:FindFirstChild(name)</b>", "<code>Instance|nil</code>", "Find first child by name"],
+          ["<b>:WaitForChild(name, timeout?)</b>", "<code>Instance|nil</code>", "Wait for child to appear"],
+          ["<b>:FindFirstChildOfClass(className)</b>", "<code>Instance|nil</code>", "Find first child of class"],
+          ["<b>:FindDescendants(name)</b>", "<code>table</code>", "Find all descendants by name"],
+          ["<b>:FindDescendantsOfClass(className)</b>", "<code>table</code>", "Find all descendants of class"],
+          ["<b>:GetChildren()</b>", "<code>table</code>", "Direct children"],
+          ["<b>:Descendants()</b>", "<code>table</code>", "All descendants"],
+          ["<b>:Ancestors()</b>", "<code>table</code>", "All ancestors"],
+          ["<b>:IsDescendantOf(ancestor)</b>", "<code>bool</code>", "Check ancestry"],
+          ["<b>:IsA(className)</b>", "<code>bool</code>", "Check class"],
+          ["<b>:IsAncestorOf(descendant)</b>", "<code>bool</code>", "Check if is ancestor"],
+          ["<b>:GetAttributes()</b>", "<code>table</code>", "Attribute table"],
+          ["<b>:GetAttribute(name)</b>", "<code>string|nil</code>", "Get attribute"],
+          ["<b>:SetAttribute(name, value)</b>", "", "Set attribute"],
+          ["<b>:GetTags()</b>", "<code>table</code>", "Collection tags"],
+          ["<b>:HasTag(tag)</b>", "<code>bool</code>", "Check tag"],
+          ["<b>:RenameTag(oldName, newName)</b>", "", "Rename tag"],
+        ]
+      )}
+
+      <h3>Meta-Behavior</h3>
+      <ul>
+        <li><code>instance.PropertyName</code> first checks built-in properties, then registered class properties, then falls back to child lookup by name.</li>
+        <li>Setting properties respects read-only flags.</li>
+      </ul>
+
+      <h3 style="margin-top:3rem">DataModel</h3>
+      <p>Both <code>game</code> and <code>Game</code> resolve to the Roblox <code>DataModel</code> instance.</p>
+      <p><code>DataModel</code> inherits from <code>Instance</code>, so all Instance methods are available.</p>
+
+      <h4>GetService</h4>
+      ${toTable(
+        ["Method", "Returns", "Description"],
+        [
+          ["<b>:GetService(className)</b>", "<code>Instance|nil</code>", "Get service by class name"],
+        ]
+      )}
+
+      ${toCodeblock(`local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")`)}
+    `,
+  },
+
+  "/class-properties": {
+    title: "Class Properties",
+    intro: "Registered class properties for common Roblox classes.",
+    body: `
+      <h3>Part / MeshPart (BasePart)</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Transparency", "float", "RW"],
+          ["Reflectance", "float", "RW"],
+          ["Position", "Vector3", "RW"],
+          ["Size", "Vector3", "RW"],
+          ["LinearVelocity", "Vector3", "RW"],
+          ["AngularVelocity", "Vector3", "RW"],
+          ["Rotation", "Vector3 (euler)", "RW"],
+          ["RightVector", "Vector3", "RO"],
+          ["UpVector", "Vector3", "RO"],
+          ["ForwardVector", "Vector3", "RO"],
+          ["Anchored", "bool", "RW"],
+          ["CanCollide", "bool", "RW"],
+          ["Color", "Color3", "RW"],
+        ]
+      )}
+
+      <h3>Humanoid</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Health", "float", "RW"],
+          ["MaxHealth", "float", "RW"],
+          ["WalkSpeed", "float", "RW"],
+          ["JumpPower", "float", "RW"],
+          ["JumpHeight", "float", "RW"],
+          ["HipHeight", "float", "RW"],
+          ["MaxSlopeAngle", "float", "RW"],
+          ["PlatformStand", "bool", "RW"],
+          ["AutoRotate", "bool", "RW"],
+          ["UseJumpPower", "bool", "RW"],
+          ["Sit", "bool", "RW"],
+        ]
+      )}
+
+      <h3>Player</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["UserId", "uintptr", "RO"],
+          ["DisplayName", "string", "RO"],
+          ["Character", "Instance", "RO"],
+          ["CameraMode", "int", "RW"],
+        ]
+      )}
+
+      <h3>Players</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["LocalPlayer", "Instance (Player)", "RO"],
+          ["GetPlayers", "function", "RO"],
+          ["PlayerAdded", "RBXScriptSignal", "RO"],
+          ["PlayerRemoving", "RBXScriptSignal", "RO"],
+        ]
+      )}
+
+      <h3>Camera</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Fov", "float", "RW"],
+          ["Position", "Vector3", "RW"],
+          ["Subject", "Instance|nil", "RW"],
+          ["CameraType", "int", "RW"],
+        ]
+      )}
+
+      <h3>Workspace</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Gravity", "float", "RW"],
+        ]
+      )}
+
+      <h3>Lighting</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Brightness", "float", "RW"],
+          ["FogStart", "float", "RW"],
+          ["FogEnd", "float", "RW"],
+          ["ClockTime", "float", "RW"],
+          ["Exposure", "float", "RW"],
+          ["Latitude", "float", "RW"],
+          ["GlobalShadows", "bool", "RW"],
+          ["FogColor", "Color3", "RW"],
+          ["Ambient", "Color3", "RW"],
+          ["ColorShiftTop", "float", "RW"],
+          ["ColorShiftBottom", "float", "RW"],
+          ["SkyTopAmbient", "Color3", "RW"],
+          ["SkyBottomAmbient", "Color3", "RW"],
+          ["LightColor", "Color3", "RW"],
+          ["LightDirection", "Vector3", "RW"],
+          ["TrueSunPosition", "Vector3", "RW"],
+          ["TrueMoonPosition", "Vector3", "RW"],
+          ["Sky", "Instance", "RO"],
+          ["Atmosphere", "Instance", "RO"],
+          ["SunRays", "Instance", "RO"],
+          ["ColorCorrection", "Instance", "RO"],
+        ]
+      )}
+
+      <h3>Sky</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["SkyboxBk / SkyboxDn / SkyboxFt / SkyboxLf / SkyboxRt / SkyboxUp", "string", "RW"],
+          ["MoonTextureId", "string", "RW"],
+          ["MoonSize", "float", "RW"],
+          ["SunTextureId", "string", "RW"],
+          ["SunSize", "float", "RW"],
+          ["StarCount", "int", "RW"],
+          ["SkyboxOrientation", "Vector3", "RW"],
+        ]
+      )}
+
+      <h3>Atmosphere</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Color", "Color3", "RW"],
+          ["Decay", "Color3", "RW"],
+          ["Glare", "float", "RW"],
+          ["Haze", "float", "RW"],
+          ["Density", "float", "RW"],
+        ]
+      )}
+
+      <h3>SunRays</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Intensity", "float", "RW"],
+          ["Spread", "float", "RW"],
+        ]
+      )}
+
+      <h3>ColorCorrection</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Brightness", "float", "RW"],
+          ["Contrast", "float", "RW"],
+          ["Saturation", "float", "RW"],
+          ["TintColor", "Color3", "RW"],
+        ]
+      )}
+
+      <h3>Teams</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["GetPlayers", "function(team)", "RO"],
+        ]
+      )}
+
+      <h3>FriendService</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["FriendsStatus", "function()", "RO"],
+          ["GetFriendStatus", "function(userId, otherUserId?)", "RO"],
+        ]
+      )}
+
+      <h3>Value Objects</h3>
+      <p><code>IntValue</code>, <code>BoolValue</code>, <code>StringValue</code>, <code>NumberValue</code>, <code>ObjectValue</code>, <code>Color3Value</code>, <code>Vector3Value</code> — all have a single <code>Value</code> property of their respective type (RW).</p>
+
+      <h3>Animation</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["AnimationId", "string", "RW"],
+        ]
+      )}
+
+      <h3>Animator</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["ActiveAnimations", "function()", "RO"],
+        ]
+      )}
+
+      <h3>AnimationTrack</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Speed", "float", "RW"],
+          ["TimePosition", "float", "RO"],
+          ["Influence", "float", "RW"],
+          ["Animation", "Instance", "RO"],
+          ["Animator", "Instance", "RO"],
+        ]
+      )}
+    `,
+  },
+
+  "/custom-types": {
+    title: "Custom Types",
+    intro: "Vector3, Vector2, and Color3 types with Roblox-like semantics.",
+    body: `
+      <h3>Vector3</h3>
+      ${toCodeblock(`Vector3.new()           -- (0, 0, 0)
 Vector3.new(x, y, z)
-Vector3.new(n)         -> (n, n, n)</code></pre>
+Vector3.new(n)          -- (n, n, n)`)}
+      ${toTable(
+        ["Member", "Type"],
+        [
+          [".x", "float"],
+          [".y", "float"],
+          [".z", "float"],
+          [".Magnitude", "float (RO)"],
+          [".Unit", "Vector3 (RO)"],
+        ]
+      )}
+      <p><strong>Operators:</strong> <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, unary <code>-</code></p>
 
-                <p class="text-neutral-400 text-sm mt-4"><span class="font-bold text-white">Operators:</span> <code class="text-[#c7b18f]">+</code>, <code class="text-[#c7b18f]">-</code>, <code class="text-[#c7b18f]">*</code>, <code class="text-[#c7b18f]">/</code>, unary <code class="text-[#c7b18f]">-</code></p>
-                <p class="text-neutral-400 text-sm"><span class="font-bold text-white">print:</span> <code class="text-neutral-500">print(Vector3.new()) --> "x: 0.000 y: 0.000 z: 0.000"</code></p>
-            </div>
+      <h3>Vector2</h3>
+      ${toCodeblock(`Vector2.new()           -- (0, 0)
+Vector2.new(x, y)
+Vector2.new(n)          -- (n, n)`)}
+      ${toTable(
+        ["Member", "Type"],
+        [
+          [".x", "float"],
+          [".y", "float"],
+          [".Magnitude", "float (method)"],
+          [".Unit", "Vector2 (RO)"],
+        ]
+      )}
 
-            <!-- Vector2 -->
-            <div class="endpoint-card card-accent-core" id="vector2">
-                <h2 class="text-xl font-bold text-white mb-4">Vector2</h2>
-                <p class="text-neutral-400 text-sm mb-4">Members: <code class="text-[#c7b18f]">x</code>, <code class="text-[#c7b18f]">y</code> (floats)</p>
-                <p class="text-neutral-400 text-sm"><span class="font-bold text-white">print:</span> <code class="text-neutral-500">print(Vector2.new()) --> "x: 0.000 y: 0.000"</code></p>
-            </div>
-
-            <!-- Color3 -->
-            <div class="endpoint-card card-accent-core" id="color3">
-                <h2 class="text-xl font-bold text-white mb-4">Color3</h2>
-                <p class="text-neutral-400 text-sm mb-4">Members: <code class="text-[#c7b18f]">r</code>, <code class="text-[#c7b18f]">g</code>, <code class="text-[#c7b18f]">b</code> (floats, 0-1 range)</p>
-
-                <h3 class="text-sm font-bold text-white mb-2">Constructors</h3>
-                <pre><code class="language-lua code-block">Color3.new()                    -> black
-Color3.new(r, g, b)             -- auto-detects 0-255 vs 0-1
-Color3.fromRGB(r, g, b)         -- 0-255 range
+      <h3>Color3</h3>
+      ${toCodeblock(`Color3.new(r, g, b)     -- values > 1 are divided by 255
+Color3.fromRGB(r, g, b)
 Color3.fromHSV(h, s, v)
-Color3.fromHex(hexString)</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Static Constants</h3>
-                <pre><code class="language-lua code-block">Color3.White()   Color3.Red()     Color3.Green()
-Color3.Blue()    Color3.Yellow()  Color3.Black()</code></pre>
-                <p class="text-neutral-400 text-sm mt-4"><span class="font-bold text-white">print:</span> <code class="text-neutral-500">print(Color3.new()) --> "r: 0.000 g: 0.000 b: 0.000"</code></p>
-            </div>
-
-            <div class="section-divider">Libraries</div>
-
-            <!-- task -->
-            <div class="endpoint-card card-accent-library" id="lib-task">
-                <h2 class="text-xl font-bold text-white mb-4">task <span class="lib-badge lib-badge-core">core</span></h2>
-                <pre><code class="language-lua code-block">task.spawn(fn)                       -- Schedule fn for next-tick execution
-task.delay(seconds, fn)              -- Schedule fn after delay
-task.wait(seconds)          -> number -- Block current thread, returns actual elapsed</code></pre>
-            </div>
-
-            <!-- io -->
-            <div class="endpoint-card card-accent-library" id="lib-io">
-                <h2 class="text-xl font-bold text-white mb-4">io <span class="lib-badge lib-badge-core">global</span></h2>
-                <pre><code class="language-lua code-block">print(...)      -- Output to console (white, [print] prefix)
-warn(...)       -- Output to console (yellow, [warn] prefix)
-error(...)      -- Throws Lua error with joined args
-hex(value)      -> string -- Format number as hex ("0xFF")
-loadstring(src, name?) -> fn, err -- Dynamic compile, returns function or nil + error</code></pre>
-            </div>
-
-            <!-- file -->
-            <div class="endpoint-card card-accent-library" id="lib-file">
-                <h2 class="text-xl font-bold text-white mb-4">file <span class="lib-badge lib-badge-req">requires File_Management</span></h2>
-                <p class="text-neutral-500 text-xs mb-4">All paths sandboxed to <code class="text-[#c7b18f]">&lt;workspace&gt;/scripts/SandboxEnv/</code>. Path traversal (<code class="text-[#c7b18f]">..</code>) rejected.</p>
-                <pre><code class="language-lua code-block">file.write(path, content)             -- Write file (creates dirs)
-file.read(path)           -> string   -- Read file contents
-file.rename(oldPath, newPath)         -- Rename/move file
-file.delete(path)                     -- Delete file
-file.list(path)           -> {string} -- List directory contents
-file.append(path, content)            -- Append to file</code></pre>
-            </div>
-
-            <!-- memory -->
-            <div class="endpoint-card card-accent-library" id="lib-memory">
-                <h2 class="text-xl font-bold text-white mb-4">memory <span class="lib-badge lib-badge-req">requires Memory</span></h2>
-
-                <h3 class="text-sm font-bold text-white mb-2">Read / Write</h3>
-                <pre><code class="language-lua code-block">memory.Read(type, address)        -> any
-memory.Write(type, address, value)
-memory.GetRTTI(address)           -> string   -- RTTI type name
-memory.GetBase()                  -> number   -- Module base address
-memory.Rebase(offset)             -> number   -- base + offset</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Supported Types</h3>
-                <pre><code class="language-lua code-block">"float"    "double"    "int"      "uint"
-"bool"     "byte"      "short"    "ushort"
-"int64"    "uint64"    "pointer"* "string"
-"vector2"  "vector3"   "color3"</code></pre>
-                <p class="text-neutral-500 text-xs mt-2"><code class="text-[#c7b18f]">*pointer</code> write-only (not supported for Read).</p>
-            </div>
-
-            <!-- cheat -->
-            <div class="endpoint-card card-accent-library" id="lib-cheat">
-                <h2 class="text-xl font-bold text-white mb-4">cheat <span class="lib-badge lib-badge-core">event system</span></h2>
-                <pre><code class="language-lua code-block">cheat.Register(eventType, fn)        -- Register callback for event
-cheat.Unregister(eventType, fn)      -- Unregister callback</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Event Types</h3>
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Event</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">"onUpdate"</span></td><td class="text-neutral-400">Every game frame (fast cache update)</td></tr>
-                        <tr><td><span class="param-name">"onSlowUpdate"</span></td><td class="text-neutral-400">Every ~1-2 seconds (slow cache update)</td></tr>
-                        <tr><td><span class="param-name">"teleport"</span></td><td class="text-neutral-400">On teleport detected</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- fflags -->
-            <div class="endpoint-card card-accent-library" id="lib-fflags">
-                <h2 class="text-xl font-bold text-white mb-4">fflags <span class="lib-badge lib-badge-core">Roblox FastFlags</span></h2>
-                <pre><code class="language-lua code-block">fflags.Get(name, type, getOriginal?)                 -> any | nil
-fflags.Set(name, type, value)
-fflags.GetAll()                                       -> { {name, runtime, original}, ... }</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Parameters</h3>
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Parameter</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">getOriginal?</span></td><td class="text-neutral-400">When true, returns the original/static FFlag value instead of the current runtime value</td></tr>
-                    </tbody>
-                </table>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Supported Types</h3>
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Operation</th><th>Types</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Get</span></td><td class="text-neutral-400"><code class="text-[#c7b18f]">float</code>, <code class="text-[#c7b18f]">double</code>, <code class="text-[#c7b18f]">int</code>, <code class="text-[#c7b18f]">uint</code>, <code class="text-[#c7b18f]">bool</code>, <code class="text-[#c7b18f]">byte</code>, <code class="text-[#c7b18f]">short</code>, <code class="text-[#c7b18f]">ushort</code>, <code class="text-[#c7b18f]">int64</code>, <code class="text-[#c7b18f]">uint64</code>, <code class="text-[#c7b18f]">string</code></td></tr>
-                        <tr><td><span class="param-name">Set</span></td><td class="text-neutral-400">Same as Get + <code class="text-[#c7b18f]">pointer</code> (accepts uintptr_t)</td></tr>
-                    </tbody>
-                </table>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">GetAll Return Fields</h3>
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">name</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">FFlag name</td></tr>
-                        <tr><td><span class="param-name">runtime</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Current runtime value (as string)</td></tr>
-                        <tr><td><span class="param-name">original</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Original/static value (as string)</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- entity -->
-            <div class="endpoint-card card-accent-library" id="lib-entity">
-                <h2 class="text-xl font-bold text-white mb-4">entity <span class="lib-badge lib-badge-core">player tracking</span></h2>
-
-                <h3 class="text-sm font-bold text-white mb-2">AddEntity</h3>
-                <pre><code class="language-lua code-block">entity.AddEntity(key, data)                          -> bool</code></pre>
-                <p class="text-neutral-400 text-xs mb-4">Adds a custom tracked entity. Returns false if key already exists.</p>
-                <p class="text-neutral-500 text-xs mb-2 font-bold">Data table fields:</p>
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Character</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">Yes</td><td class="text-neutral-400">Character model instance</td></tr>
-                        <tr><td><span class="param-name">PrimaryPart</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">Yes</td><td class="text-neutral-400">Root part (HumanoidRootPart)</td></tr>
-                        <tr><td><span class="param-name">Name</span></td><td><span class="param-type">string</span></td><td class="text-red-400 text-xs">Yes</td><td class="text-neutral-400">Entity name displayed in visuals</td></tr>
-                        <tr><td><span class="param-name">DisplayName</span></td><td><span class="param-type">string</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">Display name (defaults to Name)</td></tr>
-                        <tr><td><span class="param-name">Team</span></td><td><span class="param-type">Instance|string</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">Team instance or team name</td></tr>
-                        <tr><td><span class="param-name">TeamColor</span></td><td><span class="param-type">number</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">BrickColor index for team color</td></tr>
-                        <tr><td><span class="param-name">Humanoid</span></td><td><span class="param-type">Instance</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">Humanoid instance (auto-detects rig type)</td></tr>
-                        <tr><td><span class="param-name">MaxHealth</span></td><td><span class="param-type">number</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">Override max health</td></tr>
-                        <tr><td><span class="param-name">Bones</span></td><td><span class="param-type">table</span></td><td class="text-neutral-500 text-xs">No</td><td class="text-neutral-400">Bone name -> Instance map for custom rigs. Keys: Head, Torso, Left/Right Arm, Left/Right Leg (R6); UpperTorso, LowerTorso, LeftUpper/LowerArm, LeftHand, RightUpper/LowerArm, RightHand, LeftUpper/LowerLeg, LeftFoot, RightUpper/LowerLeg, RightFoot (R15)</td></tr>
-                    </tbody>
-                </table>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">EditEntity / RemoveEntity / ClearEntities</h3>
-                <pre><code class="language-lua code-block">entity.EditEntity(key, data)                         -> bool
-entity.RemoveEntity(key)                             -> bool
-entity.ClearEntities()                               -> bool</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">GetEntity</h3>
-                <pre><code class="language-lua code-block">entity.GetEntity(key)                                -> table | nil</code></pre>
-                <p class="text-neutral-400 text-xs mb-4">Returns the data table previously passed to AddEntity.</p>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">GetPlayers</h3>
-                <pre><code class="language-lua code-block">entity.GetPlayers(includeEnemies?, includeEntities?) -> { table, ... }</code></pre>
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Param</th><th>Type</th><th>Default</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">includeEnemies?</span></td><td><span class="param-type">bool</span></td><td><span class="param-type">true</span></td><td class="text-neutral-400">When false, filters to only same-team players</td></tr>
-                        <tr><td><span class="param-name">includeEntities?</span></td><td><span class="param-type">bool</span></td><td><span class="param-type">false</span></td><td class="text-neutral-400">When true, only returns custom entities (added via AddEntity)</td></tr>
-                    </tbody>
-                </table>
-
-                <p class="text-neutral-500 text-xs mb-2 mt-4 font-bold">Return entry fields:</p>
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Character</span></td><td><span class="param-type">Instance</span></td><td class="text-neutral-400">Character model</td></tr>
-                        <tr><td><span class="param-name">PrimaryPart</span></td><td><span class="param-type">Instance</span></td><td class="text-neutral-400">Root part</td></tr>
-                        <tr><td><span class="param-name">Name</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Player/entity name</td></tr>
-                        <tr><td><span class="param-name">DisplayName</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Display name</td></tr>
-                        <tr><td><span class="param-name">Team</span></td><td><span class="param-type">Instance|string</span></td><td class="text-neutral-400">Team instance or team name</td></tr>
-                        <tr><td><span class="param-name">Humanoid</span></td><td><span class="param-type">Instance</span></td><td class="text-neutral-400">Humanoid instance</td></tr>
-                        <tr><td><span class="param-name">MaxHealth</span></td><td><span class="param-type">number</span></td><td class="text-neutral-400">Maximum health</td></tr>
-                        <tr><td><span class="param-name">Health</span></td><td><span class="param-type">number</span></td><td class="text-neutral-400">Current health</td></tr>
-                        <tr><td><span class="param-name">UserId</span></td><td><span class="param-type">number</span></td><td class="text-neutral-400">User ID (negative for custom entities)</td></tr>
-                        <tr><td><span class="param-name">IsEntity</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">True if custom entity (added via AddEntity)</td></tr>
-                        <tr><td><span class="param-name">IsAlive</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whether player is alive</td></tr>
-                        <tr><td><span class="param-name">IsCameraVisible</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whether on screen</td></tr>
-                        <tr><td><span class="param-name">IsLocal</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whether this is the local player</td></tr>
-                        <tr><td><span class="param-name">IsPreview</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Preview state</td></tr>
-                        <tr><td><span class="param-name">IsTargeted</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whether currently targeted</td></tr>
-                        <tr><td><span class="param-name">IsFriend</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Friend status</td></tr>
-                        <tr><td><span class="param-name">IsWhitelisted</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whitelist status</td></tr>
-                        <tr><td><span class="param-name">IsEnemy</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Whether on opposite team</td></tr>
-                        <tr><td><span class="param-name">RigType</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">"R6" or "R15"</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- internet -->
-            <div class="endpoint-card card-accent-library" id="lib-internet">
-                <h2 class="text-xl font-bold text-white mb-4">internet <span class="lib-badge lib-badge-req">requires Internet</span></h2>
-                <pre><code class="language-lua code-block">internet.get(url, timeout?, info?)       -> { text, status_code }
-internet.post(url, body?, timeout?, info?) -> { text, status_code }</code></pre>
-
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Param</th><th>Type</th><th>Default</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">url</span></td><td><span class="param-type">string</span></td><td class="text-neutral-500">-</td><td class="text-neutral-400">Target URL</td></tr>
-                        <tr><td><span class="param-name">body?</span></td><td><span class="param-type">string</span></td><td class="text-neutral-500">""</td><td class="text-neutral-400">Request body (post only)</td></tr>
-                        <tr><td><span class="param-name">timeout?</span></td><td><span class="param-type">number</span></td><td class="text-neutral-500">5000</td><td class="text-neutral-400">Timeout in milliseconds</td></tr>
-                        <tr><td><span class="param-name">info?</span></td><td><span class="param-type">table</span></td><td class="text-neutral-500">nil</td><td class="text-neutral-400">Optional table with <code class="text-[#c7b18f]">headers</code> sub-table for custom headers</td></tr>
-                    </tbody>
-                </table>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Return Value</h3>
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">text</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">Response body</td></tr>
-                        <tr><td><span class="param-name">status_code</span></td><td><span class="param-type">int</span></td><td class="text-neutral-400">HTTP status code (200, 404, etc.)</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- utility -->
-            <div class="endpoint-card card-accent-library" id="lib-utility">
-                <h2 class="text-xl font-bold text-white mb-4">utility <span class="lib-badge lib-badge-core">utility</span></h2>
-                <pre><code class="language-lua code-block">utility.WorldToScreen(worldPos: Vector3) -> Vector2, bool
-  -- Converts 3D world pos to 2D screen pos. Returns (screenPos, validFlag)</code></pre>
-
-                <div class="mt-4 p-3 rounded-lg" style="background: rgba(251, 191, 36, 0.06); border: 1px solid rgba(251, 191, 36, 0.12);">
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        <span class="text-xs font-bold text-[#fbbf24] uppercase tracking-wider">Requires Clipboard Library</span>
-                    </div>
-                    <p class="text-neutral-500 text-xs">Enable <span class="text-[#c7b18f]">Clipboard</span> in <span class="text-[#c7b18f]">Script &gt; Settings</span> to use:</p>
-                    <pre><code class="language-lua code-block" style="margin-top: 8px;">utility.GetClipboard()   -> string
-utility.SetClipboard(text)</code></pre>
-                </div>
-            </div>
-
-            <!-- draw -->
-            <div class="endpoint-card card-accent-library" id="lib-draw">
-                <h2 class="text-xl font-bold text-white mb-4">draw <span class="lib-badge lib-badge-core">2D rendering</span></h2>
-                <p class="text-neutral-400 text-xs mb-4">Color params are Color3 objects. Alpha 0-1.</p>
-
-                <h3 class="text-sm font-bold text-white mb-2">Text</h3>
-                <pre><code class="language-lua code-block">draw.Text(text, x, y, color?, fontName?, alpha?)
-draw.TextOutlined(text, x, y, color?, fontName?, alpha?)
-draw.GetTextSize(text, fontName?)        -> width, height</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Shapes</h3>
-                <pre><code class="language-lua code-block">draw.Line(x1, y1, x2, y2, color?, thickness?, alpha?)
-draw.Rect(x, y, w, h, color?, thickness?, rounding?, alpha?)
-draw.RectFilled(x, y, w, h, color?, rounding?, alpha?)
-draw.Circle(cx, cy, radius, color?, thickness?, segments?, alpha?)
-draw.CircleFilled(cx, cy, radius, color?, segments?, alpha?)
-draw.Triangle(x1,y1, x2,y2, x3,y3, color?, thickness?, alpha?)
-draw.TriangleFilled(x1,y1, x2,y2, x3,y3, color?, alpha?)
-draw.Gradient(x, y, w, h, startColor, endColor, isHorizontal, startAlpha?, endAlpha?)
-draw.Image(textureId, x, y, w, h, r, g, b, a)
-draw.Polyline(points, color, closed, thickness, alpha?)
-draw.ConvexPolyFilled(points, color, alpha?)
-draw.ComputeConvexHull(points)           -> points (convex hull)
-draw.GetPartCorners(part: Instance)      -> {Vector3,...} (8 corners)
-draw.DeltaTime()                         -> number (ImGui frame delta)</code></pre>
-            </div>
-
-            <!-- imgui -->
-            <div class="endpoint-card card-accent-library" id="lib-imgui">
-                <h2 class="text-xl font-bold text-white mb-4">imgui <span class="lib-badge lib-badge-core">Dear ImGui</span></h2>
-                <p class="text-neutral-400 text-xs mb-4">Flags are ImGuiWindowFlags_* int values.</p>
-
-                <h3 class="text-sm font-bold text-white mb-2">Windowing</h3>
-                <pre><code class="language-lua code-block">imgui.Begin(name, flags?)                    -> bool (visible)
-imgui.BeginChild(id, w?, h?, border?, flags?) -> bool
-imgui.End()
-imgui.EndChild()
-imgui.SetNextWindowPos(x, y, cond?, pivot_x?, pivot_y?)
-imgui.SetNextWindowSize(w, h, cond?)
-imgui.SetNextWindowBgAlpha(alpha)
-imgui.SetNextWindowCollapsed(collapsed, cond?)
-imgui.SetNextWindowFocus()
-imgui.GetWindowPos()                         -> x, y
-imgui.GetWindowSize()                        -> w, h
-imgui.GetWindowContentRegionMin()            -> x, y
-imgui.GetWindowContentRegionMax()            -> x, y</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Cursor</h3>
-                <pre><code class="language-lua code-block">imgui.GetCursorPos()                         -> x, y
-imgui.SetCursorPos(x, y)
-imgui.GetCursorScreenPos()                   -> x, y
-imgui.SetCursorScreenPos(x, y)
-imgui.GetCursorStartPos()                    -> x, y
-imgui.GetContentRegionAvail()                -> w, h</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Layout</h3>
-                <pre><code class="language-lua code-block">imgui.SameLine(offset_from_start_x?, spacing?)
-imgui.Spacing()
-imgui.Separator()
-imgui.SeparatorText(label)
-imgui.Dummy(w, h)
-imgui.Indent(indent_w?)
-imgui.Unindent(indent_w?)
-imgui.BeginGroup()
-imgui.EndGroup()
-imgui.GetFrameHeight()                       -> number
-imgui.GetFrameHeightWithSpacing()            -> number</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Item Width / ID</h3>
-                <pre><code class="language-lua code-block">imgui.PushItemWidth(width)
-imgui.PopItemWidth()
-imgui.PushID(id)
-imgui.PopID()</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Text</h3>
-                <pre><code class="language-lua code-block">imgui.Text(text)
-imgui.CalcTextSize(text)                     -> w, h</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Item / Window State</h3>
-                <pre><code class="language-lua code-block">imgui.IsItemHovered(flags?)                  -> bool
-imgui.IsItemActive()                         -> bool
-imgui.IsItemFocused()                        -> bool
-imgui.IsItemClicked(mouse_button?)           -> bool
-imgui.IsAnyItemHovered()                     -> bool
-imgui.IsAnyItemActive()                      -> bool
-imgui.IsAnyItemFocused()                     -> bool
-imgui.IsWindowHovered(flags?)                -> bool
-imgui.IsWindowFocused(flags?)                -> bool
-imgui.GetItemRectMin()                       -> x, y
-imgui.GetItemRectMax()                       -> x, y
-imgui.GetItemRectSize()                      -> w, h</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Columns</h3>
-                <pre><code class="language-lua code-block">imgui.Columns(count?, id?, border?)
-imgui.NextColumn()
-imgui.GetColumnIndex()                       -> int
-imgui.GetColumnWidth(column_index?)          -> number
-imgui.SetColumnWidth(column_index, width)</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Widgets <span class="text-neutral-500 text-xs font-normal">(returns changed, new_value)</span></h3>
-                <pre><code class="language-lua code-block">imgui.Button(text, width?, height?)               -> bool (clicked)
-imgui.TabButton(text, width?, height?, active?)    -> bool (clicked)
-imgui.Checkbox(text, v)                            -> bool, bool
-imgui.Slider(title, v, min, max)                   -> bool, number
-imgui.SliderInt(title, v, min, max)                -> bool, int
-imgui.InputText(title, v, placeholder, width?, flags?)    -> bool, string
-imgui.MultilineInput(title, v, placeholder, width?, flags?) -> bool, string</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Custom Themed Widgets</h3>
-                <pre><code class="language-lua code-block">imgui.WidgetsText(text, color?, alpha?)
-imgui.BeginContent(title, height?, width?)        -> bool (opened)
-imgui.EndContent()
-imgui.GetContentAvail()                           -> w, h
-imgui.BeginIndent()
-imgui.EndIndent()
-imgui.ColorPicker(title, color?, alpha?)           -> bool, Color3
-imgui.ProgressBar(title, value01, width, divisions, align)
-imgui.Note(text)
-imgui.ListBox(label, items, height?, width?, listHeight?) -> bool, string
-imgui.Dropdown(title, items, current?)             -> bool, string
-imgui.Shimmer(w, h)</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Tabs</h3>
-                <pre><code class="language-lua code-block">imgui.BeginTabs(title, enable_anim?)               -> bool (opened)
-imgui.BeginTab(name)                               -> bool (active)
-imgui.EndTab()
-imgui.EndTabs()</code></pre>
-            </div>
-
-            <!-- gui -->
-            <div class="endpoint-card card-accent-library" id="lib-gui">
-                <h2 class="text-xl font-bold text-white mb-4">gui <span class="lib-badge lib-badge-core">overlay / UI</span></h2>
-                <pre><code class="language-lua code-block">gui.AddTab(tabName, func)              -- Add runtime tab with render function
-gui.RemoveTab(tabName)                 -- Remove tab
-gui.IsTab(tabName)           -> bool   -- Check if tab exists
-gui.GetMenuState(checkForeground?) -> bool -- Is menu open
-gui.IsForeground()           -> bool   -- Is Roblox window foreground
-gui.GetWindowSize()          -> Vector2 -- Overlay dimensions</code></pre>
-            </div>
-
-            <div class="section-divider">Properties</div>
-
-            <div id="properties">
-                <div class="prop-header" onclick="toggleProp(this)" style="background:#0d1117; border:1px solid #30363d; border-radius:12px; padding:20px 24px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:border-color 0.3s ease;" onmouseover="this.style.borderColor='#3b4252'" onmouseout="this.style.borderColor='#30363d'">
-                    <h2 class="text-xl font-bold text-white">Properties</h2>
-                    <svg class="prop-chevron collapsed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden" style="margin-top:12px">
-
-            <!-- Part -->
-            <div class="endpoint-card card-accent-property" id="prop-part">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Part / BasePart <span class="text-neutral-500 text-sm font-mono font-normal">(also Head, MeshPart, WedgePart, etc.)</span></h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                    <p class="text-neutral-400 text-xs mb-4 mt-2">Properties accessed directly on Instance objects: <code class="text-[#c7b18f]">part.Transparency = 0.5</code></p>
-                    <table class="param-table">
-                        <thead>
-                            <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td><span class="param-name">Transparency</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Part transparency (0 = opaque, 1 = invisible)</td></tr>
-                            <tr><td><span class="param-name">Reflectance</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Surface reflectivity</td></tr>
-                            <tr><td><span class="param-name">Position</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">World position</td></tr>
-                            <tr><td><span class="param-name">RightVector</span></td><td><span class="param-type">Vector3</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Right direction vector</td></tr>
-                            <tr><td><span class="param-name">UpVector</span></td><td><span class="param-type">Vector3</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Up direction vector</td></tr>
-                            <tr><td><span class="param-name">ForwardVector</span></td><td><span class="param-type">Vector3</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Look direction vector</td></tr>
-                            <tr><td><span class="param-name">Size</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Part dimensions</td></tr>
-                            <tr><td><span class="param-name">Anchored</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Whether part is fixed in place</td></tr>
-                            <tr><td><span class="param-name">CanCollide</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Whether part collides with others</td></tr>
-                            <tr><td><span class="param-name">Color</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Part color</td></tr>
-                            <tr><td><span class="param-name">Rotation</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Euler rotation angles (degrees)</td></tr>
-                            <tr><td><span class="param-name">LinearVelocity</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Linear velocity</td></tr>
-                            <tr><td><span class="param-name">AngularVelocity</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Angular velocity</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Humanoid -->
-            <div class="endpoint-card card-accent-property" id="prop-humanoid">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Humanoid</h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Health</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Current health</td></tr>
-                        <tr><td><span class="param-name">MaxHealth</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Maximum health</td></tr>
-                        <tr><td><span class="param-name">WalkSpeed</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Movement speed</td></tr>
-                        <tr><td><span class="param-name">JumpPower</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Jump power</td></tr>
-                        <tr><td><span class="param-name">JumpHeight</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Jump height</td></tr>
-                        <tr><td><span class="param-name">HipHeight</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Hip height</td></tr>
-                        <tr><td><span class="param-name">MaxSlopeAngle</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Maximum walkable slope angle</td></tr>
-                        <tr><td><span class="param-name">PlatformStand</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Is in platform stand</td></tr>
-                        <tr><td><span class="param-name">AutoRotate</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Auto-rotate toward movement direction</td></tr>
-                        <tr><td><span class="param-name">UseJumpPower</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Use legacy jump power</td></tr>
-                        <tr><td><span class="param-name">Sit</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Is sitting</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Player -->
-            <div class="endpoint-card card-accent-property" id="prop-player">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Player</h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">UserId</span></td><td><span class="param-type">number</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Unique player ID</td></tr>
-                        <tr><td><span class="param-name">DisplayName</span></td><td><span class="param-type">string</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Display name</td></tr>
-                        <tr><td><span class="param-name">Character</span></td><td><span class="param-type">Instance | nil</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Character model</td></tr>
-                        <tr><td><span class="param-name">CameraMode</span></td><td><span class="param-type">int</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Camera mode enum value</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Players -->
-            <div class="endpoint-card card-accent-property" id="prop-players">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Players <span class="text-neutral-500 text-sm font-mono font-normal">(service)</span></h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">LocalPlayer</span></td><td><span class="param-type">Instance | nil</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Local player</td></tr>
-                        <tr><td><span class="param-name">GetPlayers</span></td><td><span class="param-type">{Instance,...}</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Array of all Player instances</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Teams -->
-            <div class="endpoint-card card-accent-property" id="prop-teams">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Teams <span class="text-neutral-500 text-sm font-mono font-normal">(service)</span></h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">:GetPlayers(team)</span></td><td><span class="param-type">{Instance,...}</span></td><td class="text-neutral-400">Get players belonging to a specific team</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- FriendService -->
-            <div class="endpoint-card card-accent-property" id="prop-friendservice">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">FriendService</h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property/Method</th><th>Type</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">FriendsStatus</span></td><td><span class="param-type">table</span> (RO)</td><td class="text-neutral-400">Friend status data</td></tr>
-                        <tr><td><span class="param-name">:GetFriendStatus(userId)</span></td><td><span class="param-type">any</span></td><td class="text-neutral-400">Get friend status for a user</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Camera -->
-            <div class="endpoint-card card-accent-property" id="prop-camera">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Camera</h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Fov</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Field of view (degrees)</td></tr>
-                        <tr><td><span class="param-name">Position</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Camera position</td></tr>
-                        <tr><td><span class="param-name">Subject</span></td><td><span class="param-type">Instance | nil</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Camera subject</td></tr>
-                        <tr><td><span class="param-name">CameraType</span></td><td><span class="param-type">int</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Camera type enum value</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Workspace -->
-            <div class="endpoint-card card-accent-property" id="prop-workspace">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Workspace</h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Gravity</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Workspace gravity</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Lighting -->
-            <div class="endpoint-card card-accent-property" id="prop-lighting">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Lighting</h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Brightness</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Lighting brightness</td></tr>
-                        <tr><td><span class="param-name">FogStart</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Fog start distance</td></tr>
-                        <tr><td><span class="param-name">FogEnd</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Fog end distance</td></tr>
-                        <tr><td><span class="param-name">ClockTime</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Time of day (0-24)</td></tr>
-                        <tr><td><span class="param-name">Exposure</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Exposure compensation</td></tr>
-                        <tr><td><span class="param-name">Latitude</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Latitude for sun position</td></tr>
-                        <tr><td><span class="param-name">GlobalShadows</span></td><td><span class="param-type">bool</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Global shadows enabled</td></tr>
-                        <tr><td><span class="param-name">FogColor</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Fog color</td></tr>
-                        <tr><td><span class="param-name">Ambient</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Ambient light color</td></tr>
-                        <tr><td><span class="param-name">ColorShiftTop</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Top color shift</td></tr>
-                        <tr><td><span class="param-name">ColorShiftBottom</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Bottom color shift</td></tr>
-                        <tr><td><span class="param-name">SkyTopAmbient</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sky top ambient color</td></tr>
-                        <tr><td><span class="param-name">SkyBottomAmbient</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sky bottom ambient color</td></tr>
-                        <tr><td><span class="param-name">LightColor</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun light color</td></tr>
-                        <tr><td><span class="param-name">LightDirection</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun light direction</td></tr>
-                        <tr><td><span class="param-name">TrueSunPosition</span></td><td><span class="param-type">Vector3</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Actual sun world position</td></tr>
-                        <tr><td><span class="param-name">TrueMoonPosition</span></td><td><span class="param-type">Vector3</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Actual moon world position</td></tr>
-                        <tr><td><span class="param-name">Sky</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Sky instance</td></tr>
-                        <tr><td><span class="param-name">Atmosphere</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">Atmosphere instance</td></tr>
-                        <tr><td><span class="param-name">SunRays</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">SunRays instance</td></tr>
-                        <tr><td><span class="param-name">ColorCorrection</span></td><td><span class="param-type">Instance</span></td><td class="text-red-400 text-xs">RO</td><td class="text-neutral-400">ColorCorrection instance</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Sky -->
-            <div class="endpoint-card card-accent-property" id="prop-sky">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Sky <span class="text-neutral-500 text-sm font-mono font-normal">(lighting.Sky)</span></h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">SkyboxBk</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Back skybox texture ID</td></tr>
-                        <tr><td><span class="param-name">SkyboxDn</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Down skybox texture ID</td></tr>
-                        <tr><td><span class="param-name">SkyboxFt</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Front skybox texture ID</td></tr>
-                        <tr><td><span class="param-name">SkyboxLf</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Left skybox texture ID</td></tr>
-                        <tr><td><span class="param-name">SkyboxRt</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Right skybox texture ID</td></tr>
-                        <tr><td><span class="param-name">SkyboxUp</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Up skybox texture ID</td></tr>
-                        <tr><td><span class="param-name">MoonTextureId</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Moon texture ID</td></tr>
-                        <tr><td><span class="param-name">MoonSize</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Moon angular size</td></tr>
-                        <tr><td><span class="param-name">SunTextureId</span></td><td><span class="param-type">string</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun texture ID</td></tr>
-                        <tr><td><span class="param-name">SunSize</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun angular size</td></tr>
-                        <tr><td><span class="param-name">StarCount</span></td><td><span class="param-type">int</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Number of stars</td></tr>
-                        <tr><td><span class="param-name">SkyboxOrientation</span></td><td><span class="param-type">Vector3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Skybox orientation</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Atmosphere -->
-            <div class="endpoint-card card-accent-property" id="prop-atmosphere">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Atmosphere <span class="text-neutral-500 text-sm font-mono font-normal">(lighting.Atmosphere)</span></h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Color</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Atmosphere color</td></tr>
-                        <tr><td><span class="param-name">Decay</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Atmosphere decay color</td></tr>
-                        <tr><td><span class="param-name">Glare</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Glare amount</td></tr>
-                        <tr><td><span class="param-name">Haze</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Haze amount</td></tr>
-                        <tr><td><span class="param-name">Density</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Atmosphere density</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- SunRays -->
-            <div class="endpoint-card card-accent-property" id="prop-sunrays">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">SunRays <span class="text-neutral-500 text-sm font-mono font-normal">(lighting.SunRays)</span></h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Intensity</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun rays intensity</td></tr>
-                        <tr><td><span class="param-name">Spread</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Sun rays spread</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- ColorCorrection -->
-            <div class="endpoint-card card-accent-property" id="prop-colorcorrection">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">ColorCorrection <span class="text-neutral-500 text-sm font-mono font-normal">(lighting.ColorCorrection)</span></h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Property</th><th>Type</th><th>RW</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">Brightness</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Color correction brightness</td></tr>
-                        <tr><td><span class="param-name">Contrast</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Color correction contrast</td></tr>
-                        <tr><td><span class="param-name">Saturation</span></td><td><span class="param-type">float</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Color correction saturation</td></tr>
-                        <tr><td><span class="param-name">TintColor</span></td><td><span class="param-type">Color3</span></td><td class="text-green-400 text-xs">RW</td><td class="text-neutral-400">Tint color</td></tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Value Types -->
-            <div class="endpoint-card card-accent-property" id="prop-values">
-                <div class="prop-header" onclick="toggleProp(this)">
-                    <h3 class="text-lg font-bold text-white">Value Types</h3>
-                    <svg class="prop-chevron collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="prop-content hidden">
-                <table class="param-table">
-                    <thead>
-                        <tr><th>Class</th><th>Value Type</th><th>Description</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><span class="param-name">IntValue</span></td><td><span class="param-type">int</span></td><td class="text-neutral-400">Integer value</td></tr>
-                        <tr><td><span class="param-name">BoolValue</span></td><td><span class="param-type">bool</span></td><td class="text-neutral-400">Boolean value</td></tr>
-                        <tr><td><span class="param-name">StringValue</span></td><td><span class="param-type">string</span></td><td class="text-neutral-400">String value</td></tr>
-                        <tr><td><span class="param-name">NumberValue</span></td><td><span class="param-type">number</span></td><td class="text-neutral-400">Double-precision number</td></tr>
-                        <tr><td><span class="param-name">ObjectValue</span></td><td><span class="param-type">Instance|nil</span></td><td class="text-neutral-400">Object reference</td></tr>
-                        <tr><td><span class="param-name">Color3Value</span></td><td><span class="param-type">Color3</span></td><td class="text-neutral-400">Color3 value</td></tr>
-                        <tr><td><span class="param-name">Vector3Value</span></td><td><span class="param-type">Vector3</span></td><td class="text-neutral-400">Vector3 value</td></tr>
-                    </tbody>
-                </table>
-                <p class="text-neutral-500 text-xs mt-4">All expose <code class="text-[#c7b18f]">instance.Value</code> (RW). ObjectValue write accepts Instance or raw memory address (number).</p>
-                </div>
-            </div>
-
-                </div>
-            </div>
-
-            <div class="section-divider">Scripts & Examples</div>
-
-            <div class="endpoint-card card-accent-example" id="examples">
-                <h2 class="text-xl font-bold text-white mb-4">Scripts & Examples</h2>
-
-                <h3 class="text-sm font-bold text-white mb-2">Basic Usage</h3>
-                <pre><code class="language-lua code-block">print("Hello from Sheldon!")
-local player = game:FindFirstChildOfClass("Players").LocalPlayer
-print("Current player:", player.DisplayName)</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Drawing ESP</h3>
-                <pre><code class="language-lua code-block">cheat.Register("onPaint", function()
-  local players = game:FindFirstChildOfClass("Players")
-  for _, player in ipairs(players:GetChildren()) do
-    local char = player.Character
-    if char then
-      local root = char:FindFirstChild("HumanoidRootPart")
-      if root then
-        local screenPos, onScreen = utility.WorldToScreen(root.Position)
-        if onScreen then
-          draw.TextOutlined(player.Name, screenPos.x, screenPos.y, Color3.Red())
-        end
-      end
-    end
-  end
-end)</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Custom UI Tab</h3>
-                <pre><code class="language-lua code-block">gui.AddTab("My Script", function()
-  if imgui.Begin("My Window") then
-    imgui.Text("Hello from Lua!")
-  end
-  imgui.End()
-end)</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">Memory Reading</h3>
-                <pre><code class="language-lua code-block">local base = memory.GetBase()
-local someValue = memory.Read("int", base + 0x123456)</code></pre>
-
-                <h3 class="text-sm font-bold text-white mb-2 mt-4">File Usage</h3>
-                <pre><code class="language-lua code-block">file.write("config.txt", "hello")
-local data = file.read("config.txt")</code></pre>
-            </div>
-        </div>
-    </main>
-
-    <script type="module" src="../js/util/backend.js"></script>
-    <script type="module">
-        import Api from "../js/util/backend.js";
-        window.Api = Api;
-    </script>
-    <script type="module" src="../js/discord/topbar_buttons.js"></script>
-    <script type="module" src="../js/util/redirect.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            hljs.highlightAll();
-
-            // Copy button for code blocks
-            document.querySelectorAll('.code-block').forEach(function(block) {
-                var wrapper = block.parentElement;
-                wrapper.style.position = 'relative';
-                var btn = document.createElement('button');
-                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:block"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-                btn.style.cssText = 'position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:rgba(255,255,255,0.3);cursor:pointer;padding:6px;opacity:0;transition:all 0.2s;z-index:1;line-height:0';
-                wrapper.appendChild(btn);
-                wrapper.addEventListener('mouseenter', function() { btn.style.opacity = '1'; });
-                wrapper.addEventListener('mouseleave', function() { btn.style.opacity = '0'; });
-                btn.addEventListener('click', function() {
-                    var text = block.textContent;
-                    navigator.clipboard.writeText(text).then(function() {
-                        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" style="display:block"><polyline points="20 6 9 17 4 12"/></svg>';
-                        setTimeout(function() {
-                            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:block"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-                        }, 2000);
-                    });
-                });
-            });
-
-            // Smooth scroll to section when clicking sidebar
-            document.querySelectorAll('.sidebar-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const targetId = this.getAttribute('href').substring(1);
-                    const targetSection = document.getElementById(targetId);
-                    if (targetSection) {
-                        const offsetTop = targetSection.offsetTop - 80;
-                        window.scrollTo({
-                            top: offsetTop,
-                            behavior: 'smooth'
-                        });
-                    }
-                });
-            });
-
-            const sidebarLinks = document.querySelectorAll('.sidebar-link');
-            const sections = document.querySelectorAll('.endpoint-card');
-
-            function updateActiveLink() {
-                let current = '';
-                sections.forEach(section => {
-                    const sectionTop = section.offsetTop;
-                    if (window.scrollY >= sectionTop - 150) {
-                        current = section.getAttribute('id');
-                    }
-                });
-
-                sidebarLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('href') === '#' + current) {
-                        link.classList.add('active');
-                    }
-                });
-            }
-
-            window.addEventListener('scroll', updateActiveLink);
-            updateActiveLink();
-        });
-    </script>
-    <script>
-        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('show'); }
-        document.querySelectorAll('#mobileMenu .nav-tab').forEach(link => link.addEventListener('click', () => document.getElementById('mobileMenu').classList.remove('show')));
-        window.addEventListener('resize', () => { if (window.innerWidth > 768) document.getElementById('mobileMenu').classList.remove('show'); });
-        function toggleProp(el) {
-            var chevron = el.querySelector('.prop-chevron');
-            var content = el.parentElement.querySelector('.prop-content');
-            if (content) {
-                content.classList.toggle('hidden');
-                if (chevron) chevron.classList.toggle('collapsed');
-            }
-        }
-    </script>
+Color3.fromHex(string)`)}
+      ${toTable(
+        ["Member", "Type"],
+        [
+          [".r", "float"],
+          [".g", "float"],
+          [".b", "float"],
+        ]
+      )}
+      <p><strong>Static constants:</strong> <code>.White</code>, <code>.Red</code>, <code>.Green</code>, <code>.Blue</code>, <code>.Yellow</code>, <code>.Black</code></p>
+    `,
+  },
+
+  "/signals": {
+    title: "RBXScriptSignal (Events)",
+    intro: "Roblox-style event connection system.",
+    body: `
+      ${toCodeblock(`local connection = signal:Connect(fn)
+connection:Disconnect()
+connection:Stop()
+
+local result = signal:Wait()  -- yields coroutine`)}
+
+      <h3>Built-in Signals</h3>
+      ${toTable(
+        ["Signal", "Description"],
+        [
+          ["<b>Players.PlayerAdded</b>", "Fires when a new player is detected"],
+          ["<b>Players.PlayerRemoving</b>", "Fires when a player leaves"],
+        ]
+      )}
+    `,
+  },
+
+  "/library-gating": {
+    title: "Library Gating",
+    intro: "Some libraries must be explicitly enabled before use.",
+    body: `
+      ${toTable(
+        ["Library", "Gated Functions"],
+        [
+          ["<b>Memory</b>", "All <code>memory.*</code>"],
+          ["<b>Clipboard</b>", "<code>utility.GetClipboard</code>, <code>utility.SetClipboard</code>"],
+          ["<b>File_Management</b>", "All <code>file.*</code>"],
+          ["<b>Internet</b>", "All <code>internet.*</code>"],
+          ["<b>Input</b>", "All <code>input.*</code>"],
+        ]
+      )}
+    `,
+  },
+
+  "/notes": {
+    title: "Notes",
+    intro: "Additional implementation details and behavior notes.",
+    body: `
+      <ul>
+        <li>Compound assignments (<code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>, <code>**=</code>) are automatically expanded before execution.</li>
+        <li><code>pcall</code> and <code>xpcall</code> are overridden to support script interruption.</li>
+        <li>Scripts can be interrupted mid-execution via a Lua instruction hook (every 10 instructions) that checks the stop flag.</li>
+        <li>File operations are sandboxed; path traversal (<code>..</code>) is blocked.</li>
+      </ul>
+    `,
+  },
+};
+
+function currentPath() {
+  const h = location.hash.replace(/^#/, "");
+  return h && PAGES[h] ? h : "/";
+}
+
+// Flatten NAV items (in order) for prev/next
+function flatNav() {
+  const result = [];
+  NAV.forEach(g => {
+    if (g.items) g.items.forEach(i => { if (i.to) result.push(i); });
+  });
+  return result;
+}
+
+function renderSidebar() {
+  const path = currentPath();
+  // Preserve manually toggled open state across re-renders
+  const openHeadings = new Set();
+  document.querySelectorAll(".nav-group-heading").forEach(el => {
+    const next = el.nextElementSibling;
+    if (next && next.classList.contains("nav-group-items") && next.classList.contains("open") && el.dataset.heading) {
+      openHeadings.add(el.dataset.heading);
+    }
+  });
+  document.getElementById("sidebar").innerHTML = NAV.map(group => {
+    const heading = group.heading ? `<div class="nav-group-heading" data-heading="${group.heading}" onclick="toggleGroup(this)">${group.dropdown ? `<span class="chevron">▸</span>` : ""}${group.heading}</div>` : "";
+    const items = group.items.map(item => {
+      if (!item.to) return "";
+      const active = path === item.to || (item.to !== "/" && path.startsWith(item.to + "/"));
+      const icon = NAV_ICONS[item.to] ? ICONS[NAV_ICONS[item.to]] : "";
+      return `<li><a href="#${item.to}" class="nav-link${active ? " active" : ""}">${icon}<span class="label">${item.label}</span></a></li>`;
+    }).join("");
+    if (group.dropdown) {
+      const autoOpen = group.items.some(i => i.to && (path === i.to || path.startsWith(i.to + "/")));
+      const wasOpen = openHeadings.has(group.heading);
+      const isOpen = autoOpen || wasOpen;
+      return `<div>${heading}<div class="nav-group-items${isOpen ? " open" : ""}"><ul class="nav-list">${items}</ul></div></div>`;
+    }
+    return `<div>${heading}<ul class="nav-list">${items}</ul></div>`;
+  }).join("");
+  // Update chevrons based on open state
+  document.querySelectorAll(".nav-group-heading").forEach(el => {
+    const next = el.nextElementSibling;
+    const chev = el.querySelector(".chevron");
+    if (chev && next && next.classList.contains("nav-group-items") && next.classList.contains("open")) {
+      chev.classList.add("open");
+    }
+  });
+}
+
+function toggleGroup(el) {
+  const next = el.nextElementSibling;
+  if (next && next.classList.contains("nav-group-items")) {
+    next.classList.toggle("open");
+    const chev = el.querySelector(".chevron");
+    if (chev) chev.classList.toggle("open");
+  }
+}
+
+function getNavNeighbors(path) {
+  const flat = flatNav();
+  let idx = flat.findIndex(i => i.to === path);
+  if (idx === -1) return {};
+  return {
+    prev: idx > 0 ? flat[idx - 1] : null,
+    next: idx < flat.length - 1 ? flat[idx + 1] : null,
+  };
+}
+
+function renderMain() {
+  const path = currentPath();
+  const page = PAGES[path];
+  if (!page) { location.hash = "/"; return; }
+  document.title = `${page.title} — LuaVM`;
+  const { prev, next } = getNavNeighbors(path);
+  const pager = (prev || next) ? `
+    <div class="pager">
+      ${prev ? `<a href="#${prev.to}"><span class="label-tiny">← Previous</span><span class="label-main">${prev.label}</span></a>` : `<div></div>`}
+      ${next ? `<a href="#${next.to}" class="right"><span class="label-tiny">Next →</span><span class="label-main">${next.label}</span></a>` : `<div></div>`}
+    </div>` : "";
+  document.getElementById("main").innerHTML = `
+    <article>
+      <h1>${page.title}</h1>
+      <p class="intro">${page.intro}</p>
+      <div class="body">${page.body}</div>
+      ${pager}
+    </article>
+  `;
+  window.scrollTo({ top: 0 });
+}
+
+function render() { renderSidebar(); renderMain(); if (typeof hljs !== 'undefined') { if (typeof hljsDefineLuau !== 'undefined') hljs.registerLanguage('luau', hljsDefineLuau); document.querySelectorAll('.codeblock').forEach(el => hljs.highlightElement(el)); } }
+window.addEventListener("hashchange", render);
+render();
+
+// Scroll effect for nav
+const navbar = document.querySelector('.glass-nav');
+if (navbar) {
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) navbar.classList.add('scrolled');
+    else navbar.classList.remove('scrolled');
+  });
+}
+
+// Simple search filtering
+document.getElementById("search-input").addEventListener("input", function() {
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll(".nav-link").forEach(el => {
+    const label = el.querySelector(".label");
+    if (label) {
+      const text = label.textContent.toLowerCase();
+      el.style.display = !q || text.includes(q) ? "" : "none";
+    }
+  });
+});
+</script>
+
+<script>
+function toggleMobileMenu() {
+  document.getElementById('mobileMenu').classList.toggle('show');
+}
+document.querySelectorAll('#mobileMenu .nav-tab').forEach(link => {
+  link.addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.remove('show');
+  });
+});
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) {
+    document.getElementById('mobileMenu').classList.remove('show');
+  }
+});
+</script>
+<script>
+const canvas = document.getElementById('particle-canvas');
+let ctx = null;
+let particles = [];
+const particleCount = 150;
+function resize() {
+  if (!canvas) return;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+class Particle {
+  constructor() {this.init();}
+  init() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.vx = (Math.random() - 0.5) * 0.25;
+    this.vy = (Math.random() - 0.5) * 0.25;
+    this.size = Math.random() * 2;
+    this.opacity = Math.random() * 0.4;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.init();
+  }
+  draw() {
+    ctx.fillStyle = `rgba(199, 177, 143, ${this.opacity})`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+function initParticles() {
+  if (!canvas) return;
+  ctx = canvas.getContext('2d');
+  for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+  animate();
+}
+function animate() {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {p.update(); p.draw();});
+  requestAnimationFrame(animate);
+}
+initParticles();
+</script>
+<script type="module" src="../js/discord/topbar_buttons.js"></script>
+<script src="../js/util/notify.js"></script>
 </body>
-
 </html>
+
