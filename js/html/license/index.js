@@ -68,34 +68,6 @@ async function loadLicenses()
     const urlParams = new URLSearchParams(window.location.search);
     const list = document.getElementById('license-list');
 
-    async function tryWorkinkToken(tokenVal)
-    {
-        let sessionToken = localStorage.getItem('discord_session');
-        if(!sessionToken) return null;
-
-        let discordId = window.DiscordAuth?.currentUser?.id || null;
-        if(!discordId)
-        {
-            const user = window.DiscordAuth?.currentUser || await DiscordAuth.GetUser();
-            if(user) discordId = user.id;
-        }
-
-        try
-        {
-            const apiUrl = await Api.GetApiUrl();
-            const response = await fetch(`${apiUrl}/workink/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: tokenVal, discordId, sessionToken })
-            });
-            return await response.json();
-        }
-        catch(e)
-        {
-            return null;
-        }
-    }
-
     const token = urlParams.get('token');
     if(token)
     {
@@ -162,23 +134,6 @@ async function loadLicenses()
     const singleKey = urlParams.get('key');
     if(singleKey)
     {
-        const data = await tryWorkinkToken(singleKey);
-        if(data && data.ok && data.license)
-        {
-            keys = [ { key: data.license.key, tier: data.license.product } ];
-            render();
-            return;
-        }
-        else if(data && data.ok && data.new_balance !== undefined)
-        {
-            const added = (typeof data.added === 'number' && !isNaN(data.added)) ? data.added : 0;
-            const oldBalance = data.new_balance - added;
-            sessionStorage.setItem('balance_added', String(added));
-            sessionStorage.setItem('balance_old', String(Math.max(0, oldBalance)));
-            window.location.href = '/?balance=' + added;
-            return;
-        }
-
         const colonIdx = singleKey.indexOf(':');
         if(colonIdx !== -1)
         {
