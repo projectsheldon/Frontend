@@ -604,8 +604,16 @@
         <div id="signup-state" class="centered-card hidden">
             <div class="centered-content">
                 <h2 class="card-title">Become a Reseller</h2>
-                <p class="card-desc">Create a password to submit your reseller application.</p>
+                <p class="card-desc">Fill in your details to submit your reseller application.</p>
                 <form id="signup-form" class="flex flex-col gap-3 mt-4">
+                    <div id="info-section">
+                        <input type="text" id="signup-discord" placeholder="Discord contact (username, server invite, etc.)" 
+                            class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full">
+                        <p id="discord-error" class="text-red-400 text-xs mt-1 hidden">Please enter your Discord contact info</p>
+                        <input type="text" id="signup-website" placeholder="Website URL (https://your-store.com)" 
+                            class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full mt-3">
+                        <p id="website-error" class="text-red-400 text-xs mt-1 hidden">Please enter a valid website URL</p>
+                    </div>
                     <div id="password-section">
                         <div class="relative">
                             <input type="password" id="signup-password" placeholder="Create password" 
@@ -1384,6 +1392,8 @@
             const token = DiscordAuth.GetSessionToken();
             const password = document.getElementById('signup-password')?.value;
             const confirm = document.getElementById('signup-confirm')?.value;
+            const discordInfo = document.getElementById('signup-discord')?.value?.trim();
+            const websiteUrl = document.getElementById('signup-website')?.value?.trim();
             const errorEl = document.getElementById('signup-error');
             
             if (!token) {
@@ -1399,6 +1409,18 @@
                 return;
             }
             
+            if (!discordInfo || discordInfo.length < 2) {
+                errorEl.textContent = 'Please provide your Discord contact information';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (!websiteUrl || websiteUrl.length < 4 || !/^https?:\/\/.+\..+|^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}/.test(websiteUrl)) {
+                errorEl.textContent = 'Please provide a valid website URL';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
             try {
                 const response = await fetch(`${apiUrl}/resellers/signup`, {
                     method: 'POST',
@@ -1406,7 +1428,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ password })
+                    body: JSON.stringify({ password, discord_info: discordInfo, website: websiteUrl })
                 });
                 const data = await response.json();
                 
@@ -1929,8 +1951,30 @@
             checkPasswordStrength(e.target.value);
         });
         
-        // Continue button - shows confirm password field
+        // Continue button - validates info fields then shows confirm password
         document.getElementById('signup-continue')?.addEventListener('click', () => {
+            const discordInfo = document.getElementById('signup-discord')?.value?.trim();
+            const websiteUrl = document.getElementById('signup-website')?.value?.trim();
+            const discordError = document.getElementById('discord-error');
+            const websiteError = document.getElementById('website-error');
+            const errorEl = document.getElementById('signup-error');
+            
+            errorEl.classList.add('hidden');
+            discordError.classList.add('hidden');
+            websiteError.classList.add('hidden');
+            
+            let valid = true;
+            
+            if (!discordInfo || discordInfo.length < 2) {
+                discordError.classList.remove('hidden');
+                valid = false;
+            }
+            
+            if (!websiteUrl || websiteUrl.length < 4 || !/^https?:\/\/.+\..+|^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}/.test(websiteUrl)) {
+                websiteError.classList.remove('hidden');
+                valid = false;
+            }
+            
             const password = document.getElementById('signup-password')?.value;
             const hasNumber = /\d/.test(password);
             const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
@@ -1938,12 +1982,14 @@
             const hasCapital = /[A-Z]/.test(password);
             
             if (!hasNumber || !hasSpecial || !hasLetters || !hasCapital) {
-                const errorEl = document.getElementById('signup-error');
                 errorEl.textContent = 'Password does not meet all requirements';
                 errorEl.classList.remove('hidden');
-                return;
+                valid = false;
             }
             
+            if (!valid) return;
+            
+            document.getElementById('info-section').classList.add('hidden');
             document.getElementById('password-section').classList.add('hidden');
             document.getElementById('confirm-section').classList.remove('hidden');
             document.getElementById('signup-continue').classList.add('hidden');
