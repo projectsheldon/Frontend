@@ -604,22 +604,13 @@
         <div id="signup-state" class="centered-card hidden">
             <div class="centered-content">
                 <h2 class="card-title">Become a Reseller</h2>
-                <p class="card-desc">Fill in your details to submit your reseller application.</p>
+                <p id="signup-desc" class="card-desc">Create your password to get started.</p>
                 <div id="membership-notice" class="hidden mb-4 p-4 rounded-xl bg-red-950/50 border border-red-800/50">
                     <p class="text-red-400 font-bold text-sm">⚠️ Not a Member</p>
                     <p id="membership-notice-text" class="text-red-300/70 text-xs mt-1"></p>
                     <a id="join-server-link" href="#" target="_blank" class="mt-2 inline-block px-4 py-2 bg-[#5865F2] text-white text-xs font-bold uppercase rounded-lg">Join Discord Server</a>
                 </div>
                 <form id="signup-form" class="flex flex-col gap-3 mt-4">
-                    <p id="signup-step-hint" class="text-neutral-500 text-xs text-center">Step 1: Create a password</p>
-                    <div id="info-section" class="hidden">
-                        <input type="text" id="signup-discord" placeholder="Discord contact (username, server invite, etc.)" 
-                            class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full">
-                        <p id="discord-error" class="text-red-400 text-xs mt-1 hidden">Please enter your Discord contact info</p>
-                        <input type="text" id="signup-website" placeholder="Website URL (https://your-store.com)" 
-                            class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full mt-3">
-                        <p id="website-error" class="text-red-400 text-xs mt-1 hidden">Please enter a valid website URL</p>
-                    </div>
                     <div id="password-section">
                         <div class="relative">
                             <input type="password" id="signup-password" placeholder="Create password" 
@@ -653,35 +644,42 @@
                         </div>
                     </div>
                     <div id="confirm-section" class="hidden">
-                        <input type="password" id="signup-confirm" placeholder="Confirm password" 
+                        <input type="password" id="signup-confirm" placeholder="Repeat your password" 
                             class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full">
                         <p id="signup-error" class="text-red-400 text-sm text-center mt-2 hidden"></p>
                     </div>
                     <button type="button" id="signup-continue" class="btn-primary mt-2">Continue</button>
-                    <button type="submit" id="signup-submit" class="btn-primary mt-2 hidden">Submit Application</button>
                 </form>
             </div>
         </div>
 
-        <!-- Confirmation popup with 5-second delay -->
-        <div id="signup-confirm-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
-            <div class="p-8 rounded-2xl max-w-md mx-4 text-center" style="background: rgba(15, 15, 15, 0.98); border: 1px solid rgba(255, 255, 255, 0.1);">
-                <div class="w-16 h-16 rounded-full bg-[#c7b18f]/20 flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-[#c7b18f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+        <!-- Popup: asks for Discord/website info + 5-second delay -->
+        <div id="signup-info-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
+            <div class="p-8 rounded-2xl max-w-md mx-4" style="background: rgba(15, 15, 15, 0.98); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 rounded-full bg-[#c7b18f]/20 flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-[#c7b18f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Almost there!</h3>
+                    <p class="text-neutral-400 text-sm">Please provide your contact and store info.</p>
                 </div>
-                <h3 class="text-xl font-bold text-white mb-2">Confirm Your Application</h3>
-                <p class="text-neutral-400 text-sm mb-4">By submitting this application you agree that:</p>
-                <ul class="text-left text-neutral-400 text-xs space-y-2 mb-6">
-                    <li class="flex gap-2">• The provided information is accurate and will be kept up to date</li>
-                    <li class="flex gap-2">• You will follow the reseller terms and conditions</li>
-                    <li class="flex gap-2">• Your application may be rejected without explanation</li>
-                    <li class="flex gap-2">• You may request deletion of your application at any time</li>
-                </ul>
+                <div class="space-y-3 mb-6">
+                    <div>
+                        <input type="text" id="signup-discord" placeholder="Discord contact (username, server invite, etc.)" 
+                            class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full">
+                        <p id="discord-error" class="text-red-400 text-xs mt-1 hidden">Please enter your Discord contact info</p>
+                    </div>
+                    <div>
+                        <input type="text" id="signup-website" placeholder="Website URL (https://your-store.com)" 
+                            class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full">
+                        <p id="website-error" class="text-red-400 text-xs mt-1 hidden">Please enter a valid website URL</p>
+                    </div>
+                </div>
                 <div class="flex gap-3 justify-center">
-                    <button id="signup-confirm-cancel" class="btn-secondary">Cancel</button>
-                    <button id="signup-confirm-proceed" class="btn-primary" disabled style="opacity: 0.5;">Continue (<span id="signup-confirm-countdown">5</span>)</button>
+                    <button id="signup-info-cancel" class="btn-secondary">Cancel</button>
+                    <button id="signup-info-submit" class="btn-primary" disabled style="opacity: 0.5;">Continue (<span id="signup-info-countdown">5</span>)</button>
                 </div>
             </div>
         </div>
@@ -1442,92 +1440,96 @@
             }
         }
 
-        let signupConfirmCountdown = null;
+        let signupInfoCountdown = null;
+        let signupPhase = 'password'; // 'password' | 'confirm' | 'done'
 
-        function resetSignupConfirmModal() {
-            const btn = document.getElementById('signup-confirm-proceed');
-            const countdownSpan = document.getElementById('signup-confirm-countdown');
-            if (signupConfirmCountdown) {
-                clearInterval(signupConfirmCountdown);
-                signupConfirmCountdown = null;
+        function resetInfoModalCountdown() {
+            const btn = document.getElementById('signup-info-submit');
+            const countdownSpan = document.getElementById('signup-info-countdown');
+            if (signupInfoCountdown) {
+                clearInterval(signupInfoCountdown);
+                signupInfoCountdown = null;
             }
             btn.disabled = true;
             btn.style.opacity = '0.5';
             countdownSpan.textContent = '5';
         }
 
-        function showSignupConfirmModal() {
-            const modal = document.getElementById('signup-confirm-modal');
-            resetSignupConfirmModal();
+        function showInfoModal() {
+            const modal = document.getElementById('signup-info-modal');
+            // Clear fields each time modal opens
+            document.getElementById('signup-discord').value = '';
+            document.getElementById('signup-website').value = '';
+            document.getElementById('discord-error').classList.add('hidden');
+            document.getElementById('website-error').classList.add('hidden');
+
+            resetInfoModalCountdown();
             modal.classList.remove('hidden');
 
             let count = 5;
-            const btn = document.getElementById('signup-confirm-proceed');
-            const countdownSpan = document.getElementById('signup-confirm-countdown');
+            const btn = document.getElementById('signup-info-submit');
+            const countdownSpan = document.getElementById('signup-info-countdown');
 
-            signupConfirmCountdown = setInterval(() => {
+            signupInfoCountdown = setInterval(() => {
                 count--;
                 countdownSpan.textContent = count;
                 if (count <= 0) {
-                    clearInterval(signupConfirmCountdown);
-                    signupConfirmCountdown = null;
+                    clearInterval(signupInfoCountdown);
+                    signupInfoCountdown = null;
                     btn.disabled = false;
                     btn.style.opacity = '1';
                     countdownSpan.textContent = '0';
+                    btn.textContent = 'Submit Application';
                 }
             }, 1000);
         }
 
-        function hideSignupConfirmModal() {
-            const modal = document.getElementById('signup-confirm-modal');
+        function hideInfoModal() {
+            const modal = document.getElementById('signup-info-modal');
             modal.classList.add('hidden');
-            resetSignupConfirmModal();
+            resetInfoModalCountdown();
+            const btn = document.getElementById('signup-info-submit');
+            btn.textContent = 'Continue (5)';
         }
 
-        function onSignupProceed() {
-            hideSignupConfirmModal();
-            document.getElementById('signup-step-hint').textContent = 'Step 2: Fill in your details';
-            document.getElementById('info-section').classList.remove('hidden');
-            document.getElementById('confirm-section').classList.remove('hidden');
-            document.getElementById('signup-continue').classList.add('hidden');
-            document.getElementById('signup-submit').classList.remove('hidden');
-            document.getElementById('signup-discord').focus();
-        }
-
-        async function signup() {
-            const apiUrl = await getApiUrl();
-            const token = DiscordAuth.GetSessionToken();
-            const password = document.getElementById('signup-password')?.value;
-            const confirm = document.getElementById('signup-confirm')?.value;
+        async function submitInfoFromModal() {
             const discordInfo = document.getElementById('signup-discord')?.value?.trim();
             const websiteUrl = document.getElementById('signup-website')?.value?.trim();
-            const errorEl = document.getElementById('signup-error');
-            
+            const discordError = document.getElementById('discord-error');
+            const websiteError = document.getElementById('website-error');
+            const password = document.getElementById('signup-password')?.value;
+
+            discordError.classList.add('hidden');
+            websiteError.classList.add('hidden');
+
+            if (!discordInfo || discordInfo.length < 2) {
+                discordError.classList.remove('hidden');
+                document.getElementById('signup-discord').focus();
+                return;
+            }
+
+            if (!websiteUrl || websiteUrl.length < 4 || !/^https?:\/\/.+\..+|^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}/.test(websiteUrl)) {
+                websiteError.classList.remove('hidden');
+                document.getElementById('signup-website').focus();
+                return;
+            }
+
+            // Validation passed — submit
+            await signup(password, discordInfo, websiteUrl);
+        }
+
+        async function signup(password, discordInfo, websiteUrl) {
+            const apiUrl = await getApiUrl();
+            const token = DiscordAuth.GetSessionToken();
+
             if (!token) {
                 showState('login');
                 return;
             }
-            
+
+            const errorEl = document.getElementById('signup-error');
             errorEl.classList.add('hidden');
-            
-            if (password !== confirm) {
-                errorEl.textContent = 'Passwords do not match';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-            
-            if (!discordInfo || discordInfo.length < 2) {
-                errorEl.textContent = 'Please provide your Discord contact information';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-            
-            if (!websiteUrl || websiteUrl.length < 4 || !/^https?:\/\/.+\..+|^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}/.test(websiteUrl)) {
-                errorEl.textContent = 'Please provide a valid website URL';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-            
+
             try {
                 const response = await fetch(`${apiUrl}/resellers/signup`, {
                     method: 'POST',
@@ -1538,8 +1540,9 @@
                     body: JSON.stringify({ password, discord_info: discordInfo, website: websiteUrl })
                 });
                 const data = await response.json();
-                
+
                 if (data.ok) {
+                    hideInfoModal();
                     showState('notVerified');
                 } else {
                     errorEl.textContent = data.message || 'Failed to submit application';
@@ -2058,31 +2061,71 @@
             checkPasswordStrength(e.target.value);
         });
         
-        // Continue button - validates password then shows confirmation modal
+        // Continue button - two-phase flow: password → confirm → info modal
         document.getElementById('signup-continue')?.addEventListener('click', () => {
             const errorEl = document.getElementById('signup-error');
             errorEl.classList.add('hidden');
-            
-            const password = document.getElementById('signup-password')?.value;
-            const hasNumber = /\d/.test(password);
-            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-            const hasLetters = password.replace(/[^a-zA-Z]/g, '').length >= 5;
-            const hasCapital = /[A-Z]/.test(password);
-            
-            if (!hasNumber || !hasSpecial || !hasLetters || !hasCapital) {
-                errorEl.textContent = 'Password does not meet all requirements';
-                errorEl.classList.remove('hidden');
+
+            if (signupPhase === 'password') {
+                // Phase 1: validate password, move to confirm
+                const password = document.getElementById('signup-password')?.value;
+                const hasNumber = /\d/.test(password);
+                const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+                const hasLetters = password.replace(/[^a-zA-Z]/g, '').length >= 5;
+                const hasCapital = /[A-Z]/.test(password);
+
+                if (!hasNumber || !hasSpecial || !hasLetters || !hasCapital) {
+                    errorEl.textContent = 'Password does not meet all requirements';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                signupPhase = 'confirm';
+                document.getElementById('password-section').classList.add('hidden');
+                document.getElementById('confirm-section').classList.remove('hidden');
+                document.getElementById('signup-desc').textContent = 'Repeat your password to confirm.';
+                document.getElementById('signup-confirm').focus();
                 return;
             }
-            
-            showSignupConfirmModal();
+
+            if (signupPhase === 'confirm') {
+                // Phase 2: check passwords match, open info modal
+                const password = document.getElementById('signup-password')?.value;
+                const confirm = document.getElementById('signup-confirm')?.value;
+
+                if (password !== confirm) {
+                    errorEl.textContent = 'Passwords do not match';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                signupPhase = 'done';
+                document.getElementById('confirm-section').classList.add('hidden');
+                document.getElementById('signup-continue').classList.add('hidden');
+                document.getElementById('signup-desc').textContent = 'Fill in your details.';
+                showInfoModal();
+                return;
+            }
         });
         
-        // Signup confirmation modal
-        document.getElementById('signup-confirm-cancel')?.addEventListener('click', hideSignupConfirmModal);
-        document.getElementById('signup-confirm-proceed')?.addEventListener('click', onSignupProceed);
-        document.getElementById('signup-confirm-modal')?.addEventListener('click', (e) => {
-            if (e.target.id === 'signup-confirm-modal') hideSignupConfirmModal();
+        // Info modal
+        document.getElementById('signup-info-cancel')?.addEventListener('click', () => {
+            hideInfoModal();
+            // Reset back to password phase
+            signupPhase = 'password';
+            document.getElementById('password-section').classList.remove('hidden');
+            document.getElementById('signup-continue').classList.remove('hidden');
+            document.getElementById('signup-desc').textContent = 'Create your password to get started.';
+        });
+        document.getElementById('signup-info-submit')?.addEventListener('click', submitInfoFromModal);
+        document.getElementById('signup-info-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'signup-info-modal') {
+                hideInfoModal();
+                signupPhase = 'password';
+                document.getElementById('password-section').classList.remove('hidden');
+                document.getElementById('signup-continue').classList.remove('hidden');
+                document.getElementById('signup-desc').textContent = 'Create your password to get started.';
+            }
         });
 
         // Close modal on background click
