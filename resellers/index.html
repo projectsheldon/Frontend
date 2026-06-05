@@ -656,7 +656,7 @@
                         <input type="text" id="signup-website" placeholder="Website URL (https://your-store.com)" 
                             class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full">
                         <p id="website-error" class="text-red-400 text-xs mt-1 hidden">Please enter a valid website URL</p>
-                        <p id="signup-error" class="text-red-400 text-sm text-center mt-2 hidden"></p>
+                        <p id="signup-info-error" class="text-red-400 text-sm text-center mt-2 hidden"></p>
                         <button type="button" id="signup-submit-btn" class="btn-primary mt-2">Submit Application</button>
                     </div>
                 </form>
@@ -1500,9 +1500,8 @@
             const discordInfo = document.getElementById('signup-discord')?.value?.trim();
             const websiteUrl = document.getElementById('signup-website')?.value?.trim();
             const password = document.getElementById('signup-password')?.value;
-            const errorEl = document.getElementById('signup-error');
 
-            errorEl.classList.add('hidden');
+            document.getElementById('signup-info-error').classList.add('hidden');
             document.getElementById('discord-error').classList.add('hidden');
             document.getElementById('website-error').classList.add('hidden');
 
@@ -1530,9 +1529,6 @@
                 return;
             }
 
-            const errorEl = document.getElementById('signup-error');
-            errorEl.classList.add('hidden');
-
             try {
                 const response = await fetch(`${apiUrl}/resellers/signup`, {
                     method: 'POST',
@@ -1547,10 +1543,12 @@
                 if (data.ok) {
                     showState('notVerified');
                 } else {
+                    const errorEl = document.getElementById('signup-info-error');
                     errorEl.textContent = data.message || 'Failed to submit application';
                     errorEl.classList.remove('hidden');
                 }
             } catch (err) {
+                const errorEl = document.getElementById('signup-info-error');
                 errorEl.textContent = 'Connection error. Please try again.';
                 errorEl.classList.remove('hidden');
             }
@@ -1624,7 +1622,7 @@
             const reqLetters = document.getElementById('req-letters');
             const reqCapital = document.getElementById('req-capital');
             const passwordBar = document.getElementById('password-bar');
-            const submitBtn = document.getElementById('signup-submit');
+            const continueBtn = document.getElementById('signup-continue');
             
             reqNumber.classList.toggle('met', hasNumber);
             reqNumber.querySelector('.req-icon').textContent = hasNumber ? '✓' : '✗';
@@ -1646,16 +1644,13 @@
             
             if (metCount === 4) {
                 passwordBar.style.background = '#22c55e';
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
+                if (continueBtn) continueBtn.disabled = false;
             } else if (metCount >= 2) {
                 passwordBar.style.background = '#eab308';
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.5';
+                if (continueBtn) continueBtn.disabled = false;
             } else {
                 passwordBar.style.background = '#dc2626';
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.5';
+                if (continueBtn) continueBtn.disabled = false;
             }
         }
 
