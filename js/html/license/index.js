@@ -66,54 +66,34 @@ function render()
 async function loadLicenses()
 {
     const urlParams = new URLSearchParams(window.location.search);
+    const list = document.getElementById('license-list');
 
-    const singleKey = urlParams.get('key');
-    if(singleKey)
+    async function tryWorkinkToken(tokenVal)
     {
-        const colonIdx = singleKey.indexOf(':');
-        if(colonIdx !== -1)
-        {
-            const key = singleKey.substring(0, colonIdx).trim();
-            const tier = singleKey.substring(colonIdx + 1).trim();
-            keys = [{ key, tier: tier || 'License' }];
-        }
-        else
-        {
-            keys = [{ key: singleKey.trim(), tier: 'License' }];
-        }
-        render();
-        return;
-    }
+        let sessionToken = localStorage.getItem('discord_session');
+        if(!sessionToken) return null;
 
-    const showKeys = urlParams.get('showKeys');
-    if(showKeys)
-    {
+        let discordId = window.DiscordAuth?.currentUser?.id || null;
+        if(!discordId)
+        {
+            const user = window.DiscordAuth?.currentUser || await DiscordAuth.GetUser();
+            if(user) discordId = user.id;
+        }
+
         try
         {
-            const keyList = showKeys.split(',');
-            keys = keyList.map(entry =>
-            {
-                const colonIdx = entry.indexOf(':');
-                if(colonIdx === -1)
-                {
-                    const key = entry.trim();
-                    return { key: key, tier: 'License' };
-                }
-                
-                const key = entry.substring(0, colonIdx).trim();
-                const tier = entry.substring(colonIdx + 1).trim();
-                
-                return { key: key, tier: tier || 'License' };
-            })
-            .filter(item => item.key.length > 0 && item.key.length <= 128);
+            const apiUrl = await Api.GetApiUrl();
+            const response = await fetch(`${apiUrl}/workink/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: tokenVal, discordId, sessionToken })
+            });
+            return await response.json();
         }
         catch(e)
         {
-            keys = [];
+            return null;
         }
-        
-        render();
-        return;
     }
 
     const token = urlParams.get('token');
@@ -175,6 +155,72 @@ async function loadLicenses()
             console.error('Failed to generate license:', e);
             keys = [];
         }
+        render();
+        return;
+    }
+
+    const singleKey = urlParams.get('key');
+    if(singleKey)
+    {
+        const data = await tryWorkinkToken(singleKey);
+        if(data && data.ok && data.license)
+        {
+            keys = [ { key: data.license.key, tier: data.license.product } ];
+            render();
+            return;
+        }
+        else if(data && data.ok && data.new_balance !== undefined)
+        {
+            const added = (typeof data.added === 'number' && !isNaN(data.added)) ? data.added : 0;
+            const oldBalance = data.new_balance - added;
+            sessionStorage.setItem('balance_added', String(added));
+            sessionStorage.setItem('balance_old', String(Math.max(0, oldBalance)));
+            window.location.href = '/?balance=' + added;
+            return;
+        }
+
+        const colonIdx = singleKey.indexOf(':');
+        if(colonIdx !== -1)
+        {
+            const key = singleKey.substring(0, colonIdx).trim();
+            const tier = singleKey.substring(colonIdx + 1).trim();
+            keys = [{ key, tier: tier || 'License' }];
+        }
+        else
+        {
+            keys = [{ key: singleKey.trim(), tier: 'License' }];
+        }
+        render();
+        return;
+    }
+
+    const showKeys = urlParams.get('showKeys');
+    if(showKeys)
+    {
+        try
+        {
+            const keyList = showKeys.split(',');
+            keys = keyList.map(entry =>
+            {
+                const colonIdx = entry.indexOf(':');
+                if(colonIdx === -1)
+                {
+                    const key = entry.trim();
+                    return { key: key, tier: 'License' };
+                }
+                
+                const key = entry.substring(0, colonIdx).trim();
+                const tier = entry.substring(colonIdx + 1).trim();
+                
+                return { key: key, tier: tier || 'License' };
+            })
+            .filter(item => item.key.length > 0 && item.key.length <= 128);
+        }
+        catch(e)
+        {
+            keys = [];
+        }
+        
         render();
         return;
     }
