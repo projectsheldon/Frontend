@@ -611,7 +611,8 @@
                     <a id="join-server-link" href="#" target="_blank" class="mt-2 inline-block px-4 py-2 bg-[#5865F2] text-white text-xs font-bold uppercase rounded-lg">Join Discord Server</a>
                 </div>
                 <form id="signup-form" class="flex flex-col gap-3 mt-4">
-                    <div id="info-section">
+                    <p id="signup-step-hint" class="text-neutral-500 text-xs text-center">Step 1: Create a password</p>
+                    <div id="info-section" class="hidden">
                         <input type="text" id="signup-discord" placeholder="Discord contact (username, server invite, etc.)" 
                             class="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20 w-full">
                         <p id="discord-error" class="text-red-400 text-xs mt-1 hidden">Please enter your Discord contact info</p>
@@ -1485,12 +1486,12 @@
 
         function onSignupProceed() {
             hideSignupConfirmModal();
-            document.getElementById('info-section').classList.add('hidden');
-            document.getElementById('password-section').classList.add('hidden');
+            document.getElementById('signup-step-hint').textContent = 'Step 2: Fill in your details';
+            document.getElementById('info-section').classList.remove('hidden');
             document.getElementById('confirm-section').classList.remove('hidden');
             document.getElementById('signup-continue').classList.add('hidden');
             document.getElementById('signup-submit').classList.remove('hidden');
-            document.getElementById('signup-confirm').focus();
+            document.getElementById('signup-discord').focus();
         }
 
         async function signup() {
@@ -2057,29 +2058,10 @@
             checkPasswordStrength(e.target.value);
         });
         
-        // Continue button - validates info fields then shows confirmation modal
+        // Continue button - validates password then shows confirmation modal
         document.getElementById('signup-continue')?.addEventListener('click', () => {
-            const discordInfo = document.getElementById('signup-discord')?.value?.trim();
-            const websiteUrl = document.getElementById('signup-website')?.value?.trim();
-            const discordError = document.getElementById('discord-error');
-            const websiteError = document.getElementById('website-error');
             const errorEl = document.getElementById('signup-error');
-            
             errorEl.classList.add('hidden');
-            discordError.classList.add('hidden');
-            websiteError.classList.add('hidden');
-            
-            let valid = true;
-            
-            if (!discordInfo || discordInfo.length < 2) {
-                discordError.classList.remove('hidden');
-                valid = false;
-            }
-            
-            if (!websiteUrl || websiteUrl.length < 4 || !/^https?:\/\/.+\..+|^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}/.test(websiteUrl)) {
-                websiteError.classList.remove('hidden');
-                valid = false;
-            }
             
             const password = document.getElementById('signup-password')?.value;
             const hasNumber = /\d/.test(password);
@@ -2090,10 +2072,8 @@
             if (!hasNumber || !hasSpecial || !hasLetters || !hasCapital) {
                 errorEl.textContent = 'Password does not meet all requirements';
                 errorEl.classList.remove('hidden');
-                valid = false;
+                return;
             }
-            
-            if (!valid) return;
             
             showSignupConfirmModal();
         });
