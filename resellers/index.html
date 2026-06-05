@@ -605,6 +605,11 @@
             <div class="centered-content">
                 <h2 class="card-title">Become a Reseller</h2>
                 <p class="card-desc">Fill in your details to submit your reseller application.</p>
+                <div id="membership-notice" class="hidden mb-4 p-4 rounded-xl bg-red-950/50 border border-red-800/50">
+                    <p class="text-red-400 font-bold text-sm">⚠️ Not a Member</p>
+                    <p id="membership-notice-text" class="text-red-300/70 text-xs mt-1"></p>
+                    <a id="join-server-link" href="#" target="_blank" class="mt-2 inline-block px-4 py-2 bg-[#5865F2] text-white text-xs font-bold uppercase rounded-lg">Join Discord Server</a>
+                </div>
                 <form id="signup-form" class="flex flex-col gap-3 mt-4">
                     <div id="info-section">
                         <input type="text" id="signup-discord" placeholder="Discord contact (username, server invite, etc.)" 
@@ -654,6 +659,29 @@
                     <button type="button" id="signup-continue" class="btn-primary mt-2">Continue</button>
                     <button type="submit" id="signup-submit" class="btn-primary mt-2 hidden">Submit Application</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Confirmation popup with 5-second delay -->
+        <div id="signup-confirm-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
+            <div class="p-8 rounded-2xl max-w-md mx-4 text-center" style="background: rgba(15, 15, 15, 0.98); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <div class="w-16 h-16 rounded-full bg-[#c7b18f]/20 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-[#c7b18f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Confirm Your Application</h3>
+                <p class="text-neutral-400 text-sm mb-4">By submitting this application you agree that:</p>
+                <ul class="text-left text-neutral-400 text-xs space-y-2 mb-6">
+                    <li class="flex gap-2">• The provided information is accurate and will be kept up to date</li>
+                    <li class="flex gap-2">• You will follow the reseller terms and conditions</li>
+                    <li class="flex gap-2">• Your application may be rejected without explanation</li>
+                    <li class="flex gap-2">• You may request deletion of your application at any time</li>
+                </ul>
+                <div class="flex gap-3 justify-center">
+                    <button id="signup-confirm-cancel" class="btn-secondary">Cancel</button>
+                    <button id="signup-confirm-proceed" class="btn-primary" disabled style="opacity: 0.5;">Continue (<span id="signup-confirm-countdown">5</span>)</button>
+                </div>
             </div>
         </div>
 
@@ -1049,6 +1077,7 @@
                 
                 stopVerificationCheck();
                 showState('signup');
+                checkMembership();
                 return;
             } catch (err) {
                 stopVerificationCheck();
@@ -1385,6 +1414,83 @@
                 confirmBtn.innerHTML = originalBtnText;
                 confirmBtn.disabled = false;
             }
+        }
+
+        async function checkMembership() {
+            const notice = document.getElementById('membership-notice');
+            const textEl = document.getElementById('membership-notice-text');
+            const linkEl = document.getElementById('join-server-link');
+            notice.classList.add('hidden');
+
+            const apiUrl = await getApiUrl();
+            const token = DiscordAuth.GetSessionToken();
+            if (!token) return;
+
+            try {
+                const res = await fetch(`${apiUrl}/resellers/check-membership`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!data.inGuild) {
+                    textEl.textContent = data.message || 'You must be a member of the Discord server to apply.';
+                    linkEl.href = 'https://discord.gg/sheldon';
+                    notice.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error('Membership check failed:', err);
+            }
+        }
+
+        let signupConfirmCountdown = null;
+
+        function resetSignupConfirmModal() {
+            const btn = document.getElementById('signup-confirm-proceed');
+            const countdownSpan = document.getElementById('signup-confirm-countdown');
+            if (signupConfirmCountdown) {
+                clearInterval(signupConfirmCountdown);
+                signupConfirmCountdown = null;
+            }
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            countdownSpan.textContent = '5';
+        }
+
+        function showSignupConfirmModal() {
+            const modal = document.getElementById('signup-confirm-modal');
+            resetSignupConfirmModal();
+            modal.classList.remove('hidden');
+
+            let count = 5;
+            const btn = document.getElementById('signup-confirm-proceed');
+            const countdownSpan = document.getElementById('signup-confirm-countdown');
+
+            signupConfirmCountdown = setInterval(() => {
+                count--;
+                countdownSpan.textContent = count;
+                if (count <= 0) {
+                    clearInterval(signupConfirmCountdown);
+                    signupConfirmCountdown = null;
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    countdownSpan.textContent = '0';
+                }
+            }, 1000);
+        }
+
+        function hideSignupConfirmModal() {
+            const modal = document.getElementById('signup-confirm-modal');
+            modal.classList.add('hidden');
+            resetSignupConfirmModal();
+        }
+
+        function onSignupProceed() {
+            hideSignupConfirmModal();
+            document.getElementById('info-section').classList.add('hidden');
+            document.getElementById('password-section').classList.add('hidden');
+            document.getElementById('confirm-section').classList.remove('hidden');
+            document.getElementById('signup-continue').classList.add('hidden');
+            document.getElementById('signup-submit').classList.remove('hidden');
+            document.getElementById('signup-confirm').focus();
         }
 
         async function signup() {
@@ -1951,7 +2057,7 @@
             checkPasswordStrength(e.target.value);
         });
         
-        // Continue button - validates info fields then shows confirm password
+        // Continue button - validates info fields then shows confirmation modal
         document.getElementById('signup-continue')?.addEventListener('click', () => {
             const discordInfo = document.getElementById('signup-discord')?.value?.trim();
             const websiteUrl = document.getElementById('signup-website')?.value?.trim();
@@ -1989,14 +2095,16 @@
             
             if (!valid) return;
             
-            document.getElementById('info-section').classList.add('hidden');
-            document.getElementById('password-section').classList.add('hidden');
-            document.getElementById('confirm-section').classList.remove('hidden');
-            document.getElementById('signup-continue').classList.add('hidden');
-            document.getElementById('signup-submit').classList.remove('hidden');
-            document.getElementById('signup-confirm').focus();
+            showSignupConfirmModal();
         });
         
+        // Signup confirmation modal
+        document.getElementById('signup-confirm-cancel')?.addEventListener('click', hideSignupConfirmModal);
+        document.getElementById('signup-confirm-proceed')?.addEventListener('click', onSignupProceed);
+        document.getElementById('signup-confirm-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'signup-confirm-modal') hideSignupConfirmModal();
+        });
+
         // Close modal on background click
         document.getElementById('delete-modal')?.addEventListener('click', (e) => {
             if (e.target.id === 'delete-modal') hideDeleteModal();
