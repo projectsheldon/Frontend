@@ -15,7 +15,7 @@ class Product
 
     get IsFree()
     {
-        return typeof this.price !== 'number';
+        return this.key === 'free';
     }
 
     get IsLifetime()
@@ -25,7 +25,7 @@ class Product
 
     FormatPrice()
     {
-        if(typeof this.price !== 'number') return this.price;
+        if(this.IsFree) return `${Number(this.price).toFixed(1)} Balance`;
         return `€${this.price.toFixed(2)}`;
     }
     FormatDuration()

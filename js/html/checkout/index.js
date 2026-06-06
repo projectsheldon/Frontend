@@ -14,6 +14,8 @@ const personalUseSection = document.getElementById('personal-use-section');
 
 document.addEventListener("DOMContentLoaded", async function()
 {
+    await LoadProductInfo();
+
     const isLoggedIn = await CheckAuthStatus();
 
     if(isLoggedIn)
@@ -24,22 +26,6 @@ document.addEventListener("DOMContentLoaded", async function()
 
     ShowLoginForm();
 });
-
-async function ShowCheckout()
-{
-    const ticketSection = document.getElementById('ticket-section');
-    if(ticketSection) ticketSection.style.display = 'none';
-    
-    TogglePaymentForm(true);
-    await LoadProductInfo();
-    
-    // Show purchase ticket section for non-free products
-    if(productKey !== 'free')
-    {
-        if(ticketSection) ticketSection.style.display = 'block';
-        await CheckResellerStatus();
-    }
-}
 
 async function CheckResellerStatus() {
     const token = DiscordAuth.GetSessionToken();
@@ -115,13 +101,22 @@ async function LoadProductInfo()
             if(subtotalRow) subtotalRow.style.display = 'none';
             const discountRow = document.getElementById('discount-row');
             if(discountRow) discountRow.style.display = 'none';
-            const totalEl = document.getElementById('final-total-price');
-            if(totalEl) totalEl.textContent = `${window.quantity}.0 Balance`;
             const couponSection = document.getElementById('coupon-section');
             if(couponSection) couponSection.style.display = 'none';
         }
 
-        await ShowBalanceCheckout();
+        try
+        {
+            const response = await fetch(`${await Api.GetApiUrl()}/products/get?product=free`);
+            const product = await response.json();
+            if(product && product.price)
+            {
+                window.basePrice = parseFloat(product.price) || 0.9;
+                const totalEl = document.getElementById('final-total-price');
+                if(totalEl) totalEl.textContent = `${(window.basePrice * window.quantity).toFixed(1)} Balance`;
+            }
+        } catch(e) {}
+
         return;
     }
 
@@ -139,14 +134,30 @@ async function LoadProductInfo()
             if(priceEl) priceEl.textContent = '€' + parseFloat(product.price).toFixed(2);
             window.basePrice = parseFloat(product.price) || 0;
             await window.fetchPriceFromApi();
-
         }
     } catch(error)
     {
         console.error('Failed to load product:', error);
     }
+}
+
+async function ShowCheckout()
+{
+    const ticketSection = document.getElementById('ticket-section');
+    if(ticketSection) ticketSection.style.display = 'none';
+    
+    TogglePaymentForm(true);
+
+    if(productKey === 'free')
+    {
+        await ShowBalanceCheckout();
+        return;
+    }
     
     SetupTicketButton();
+
+    if(ticketSection) ticketSection.style.display = 'block';
+    await CheckResellerStatus();
 }
 
 function SetupTicketButton()

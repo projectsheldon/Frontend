@@ -44,6 +44,13 @@
             if (!window.basePrice || !window.productKey) {
                 return;
             }
+
+            if(window.productKey === 'free')
+            {
+                const totalEl = document.getElementById('final-total-price');
+                if(totalEl) totalEl.textContent = `${(window.basePrice * window.quantity).toFixed(1)} Balance`;
+                return;
+            }
             
             try {
                 const apiUrl = await Api.GetApiUrl();
@@ -81,6 +88,7 @@
         }
 
         window.updatePriceDisplay = function () {
+            if(window.productKey === 'free') return;
             function fadeUpdate(element, newText) {
                 if (!element) return;
                 element.style.transition = 'opacity 0.2s ease';
