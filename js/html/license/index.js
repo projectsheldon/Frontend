@@ -111,6 +111,12 @@ async function loadLicenses()
                 const oldBalance = data.new_balance - added;
                 sessionStorage.setItem('balance_added', String(added));
                 sessionStorage.setItem('balance_old', String(Math.max(0, oldBalance)));
+                if(data.capped)
+                {
+                    list.innerHTML = '<p class="text-neutral-500">Max balance of 3.0 reached. Spend some balance first!</p>';
+                    setTimeout(() => { window.location.href = '/?balance=' + added; }, 2000);
+                    return;
+                }
                 window.location.href = '/?balance=' + added;
                 return;
             } else
@@ -119,6 +125,11 @@ async function loadLicenses()
                 if(data.message === "Not logged in" || data.message === "Invalid session")
                 {
                     list.innerHTML = '<p class="text-neutral-500">Please log in with Discord first to claim your free license.</p>';
+                    return;
+                }
+                if(data.message)
+                {
+                    list.innerHTML = `<p class="text-neutral-500">${window.escapeHtml(data.message)}</p>`;
                     return;
                 }
             }
