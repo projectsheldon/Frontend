@@ -260,6 +260,8 @@ async function ShowBalanceCheckout()
         const adRewardBalance = data.ad_reward_balance || 0.1;
         const freeKeyCost = data.free_key_cost || 1.0;
         const noCooldown = data.no_cooldown ? true : false;
+        const isRateLimited = data.rate_limited || false;
+        const rateLimitedUntil = data.rate_limited_until || 0;
 
         let durationHours = 4.5;
         try
@@ -293,9 +295,12 @@ async function ShowBalanceCheckout()
                         ${canAfford ? `PURCHASE KEY${qty > 1 ? 'S' : ''}` : 'Insufficient Balance'}
                     </button>
 
-                    <a href="${workinkLink}" style="font-size: 13px; color: #c7b18f; text-decoration: underline;">
-                        ${noCooldown ? 'Watch Ads for 1 Free Key' : `Watch Ads for +${adRewardBalance} balance`}
-                    </a>
+                    ${isRateLimited
+                        ? `<span style="font-size: 12px; color: #ef4444; font-weight: 700;">Rate limited — max balance reached. Come back later.</span>`
+                        : `<a href="${workinkLink}" style="font-size: 13px; color: #c7b18f; text-decoration: underline;">
+                            ${noCooldown ? 'Watch Ads for 1 Free Key' : `Watch Ads for +${adRewardBalance} balance`}
+                           </a>`
+                    }
                 </div>
             `;
 
