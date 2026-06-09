@@ -262,6 +262,7 @@ async function ShowBalanceCheckout()
         const noCooldown = data.no_cooldown ? true : false;
         const isRateLimited = data.rate_limited || false;
         const rateLimitedUntil = data.rate_limited_until || 0;
+        const freeKeyCooldownUntil = data.free_key_cooldown_until || 0;
 
         let durationHours = 4.5;
         try
@@ -274,11 +275,28 @@ async function ShowBalanceCheckout()
 
         const workinkLink = await Api.GetLink('workink');
 
+        let cooldownTimer = null;
+
+        function formatCooldown(ms)
+        {
+            const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            if(hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+            if(minutes > 0) return `${minutes}m ${seconds}s`;
+            return `${seconds}s`;
+        }
+
         function renderCheckout()
         {
             const qty = window.quantity || 1;
             const totalCost = qty * freeKeyCost;
             const canAfford = balance >= totalCost;
+
+            const now = Date.now();
+            const isOnCooldown = freeKeyCooldownUntil > 0 && freeKeyCooldownUntil > now;
+            const cooldownRemaining = isOnCooldown ? freeKeyCooldownUntil - now : 0;
 
             const paymentForm = document.getElementById('payment-form');
             if(!paymentForm) return;
@@ -291,15 +309,23 @@ async function ShowBalanceCheckout()
                         Redeem your balance for ${qty} x ${durationHours} hours key${qty > 1 ? 's' : ''}
                     </div>
 
-                    <button id="purchase-balance-btn" class="btn-action" style="max-width: 300px; padding-top: 17px; padding-bottom: 17px; ${canAfford ? '' : 'opacity: 0.5; cursor: not-allowed;'}" ${canAfford ? '' : 'disabled'}>
-                        ${canAfford ? `PURCHASE KEY${qty > 1 ? 'S' : ''}` : 'Insufficient Balance'}
-                    </button>
+                    ${isOnCooldown
+                        ? `<button id="purchase-balance-btn" class="btn-action" style="max-width: 300px; padding-top: 17px; padding-bottom: 17px; opacity: 0.4; cursor: not-allowed;" disabled>
+                            COOLDOWN — ${formatCooldown(cooldownRemaining)}
+                           </button>
+                           <span style="font-size: 12px; color: #ef4444; font-weight: 700;">
+                            You have been rate limited. Please wait ${formatCooldown(cooldownRemaining)} before purchasing again.
+                           </span>`
+                        : `<button id="purchase-balance-btn" class="btn-action" style="max-width: 300px; padding-top: 17px; padding-bottom: 17px; ${canAfford ? '' : 'opacity: 0.5; cursor: not-allowed;'}" ${canAfford ? '' : 'disabled'}>
+                            ${canAfford ? `PURCHASE KEY${qty > 1 ? 'S' : ''}` : 'Insufficient Balance'}
+                           </button>`
+                    }
 
                     ${isRateLimited
                         ? `<span style="font-size: 12px; color: #ef4444; font-weight: 700;">Rate limited — max balance reached. Come back later.</span>`
-                        : `<a href="${workinkLink}" style="font-size: 13px; color: #c7b18f; text-decoration: underline;">
+                        : (isOnCooldown ? '' : `<a href="${workinkLink}" style="font-size: 13px; color: #c7b18f; text-decoration: underline;">
                             ${noCooldown ? 'Watch Ads for 1 Free Key' : `Watch Ads for +${adRewardBalance} balance`}
-                           </a>`
+                           </a>`)
                     }
                 </div>
             `;
@@ -307,54 +333,82 @@ async function ShowBalanceCheckout()
             const totalEl = document.getElementById('final-total-price');
             if(totalEl) totalEl.textContent = `${totalCost.toFixed(1)} Balance`;
 
-            const purchaseBtn = document.getElementById('purchase-balance-btn');
-            if(purchaseBtn && canAfford)
+            if(isOnCooldown)
             {
-                purchaseBtn.addEventListener('click', async () =>
+                if(cooldownTimer) clearInterval(cooldownTimer);
+                cooldownTimer = setInterval(() =>
                 {
-                    purchaseBtn.disabled = true;
-                    purchaseBtn.textContent = 'Processing...';
-
-                    try
+                    const remaining = freeKeyCooldownUntil - Date.now();
+                    if(remaining <= 0)
                     {
-                        const purchaseRes = await fetch(`${apiUrl}/discord/purchase-free-key`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', ...authHeaders },
-                            credentials: 'include',
-                            body: JSON.stringify({ quantity: qty })
-                        });
-                        const purchaseData = await purchaseRes.json();
+                        clearInterval(cooldownTimer);
+                        cooldownTimer = null;
+                        renderCheckout();
+                        return;
+                    }
+                    const btn = document.getElementById('purchase-balance-btn');
+                    const msg = document.querySelector('#payment-form span[style*="color: #ef4444"]');
+                    if(btn) btn.textContent = `COOLDOWN — ${formatCooldown(remaining)}`;
+                    if(msg) msg.textContent = `You have been rate limited. Please wait ${formatCooldown(remaining)} before purchasing again.`;
+                }, 1000);
+            }
+            else
+            {
+                if(cooldownTimer)
+                {
+                    clearInterval(cooldownTimer);
+                    cooldownTimer = null;
+                }
 
-                        if(purchaseData.ok)
+                const purchaseBtn = document.getElementById('purchase-balance-btn');
+                if(purchaseBtn && canAfford)
+                {
+                    purchaseBtn.addEventListener('click', async () =>
+                    {
+                        purchaseBtn.disabled = true;
+                        purchaseBtn.textContent = 'Processing...';
+
+                        try
                         {
-                            try { localStorage.removeItem('cache_licenses'); } catch(e) {}
+                            const purchaseRes = await fetch(`${apiUrl}/discord/purchase-free-key`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', ...authHeaders },
+                                credentials: 'include',
+                                body: JSON.stringify({ quantity: qty })
+                            });
+                            const purchaseData = await purchaseRes.json();
 
-                            if(purchaseData.licenses && purchaseData.licenses.length > 0)
+                            if(purchaseData.ok)
                             {
-                                const params = purchaseData.licenses.map(l =>
-                                    `${encodeURIComponent(l.key)}:${encodeURIComponent(l.product || 'License')}`
-                                ).join(',');
-                                window.location.href = `/license/?showKeys=${params}`;
+                                try { localStorage.removeItem('cache_licenses'); } catch(e) {}
+
+                                if(purchaseData.licenses && purchaseData.licenses.length > 0)
+                                {
+                                    const params = purchaseData.licenses.map(l =>
+                                        `${encodeURIComponent(l.key)}:${encodeURIComponent(l.product || 'License')}`
+                                    ).join(',');
+                                    window.location.href = `/license/?showKeys=${params}`;
+                                }
+                                else
+                                {
+                                    window.location.href = '/license/';
+                                }
                             }
                             else
                             {
-                                window.location.href = '/license/';
+                                alert(purchaseData.message || 'Purchase failed');
+                                purchaseBtn.disabled = false;
+                                purchaseBtn.textContent = `PURCHASE ${qty} KEY${qty > 1 ? 'S' : ''} (${totalCost.toFixed(1)} Balance)`;
                             }
                         }
-                        else
+                        catch(err)
                         {
-                            alert(purchaseData.message || 'Purchase failed');
+                            alert('Purchase failed');
                             purchaseBtn.disabled = false;
                             purchaseBtn.textContent = `PURCHASE ${qty} KEY${qty > 1 ? 'S' : ''} (${totalCost.toFixed(1)} Balance)`;
                         }
-                    }
-                    catch(err)
-                    {
-                        alert('Purchase failed');
-                        purchaseBtn.disabled = false;
-                        purchaseBtn.textContent = `PURCHASE ${qty} KEY${qty > 1 ? 'S' : ''} (${totalCost.toFixed(1)} Balance)`;
-                    }
-                });
+                    });
+                }
             }
         }
 

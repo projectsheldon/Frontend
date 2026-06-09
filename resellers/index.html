@@ -1435,7 +1435,12 @@
                 const data = await res.json();
                 if (!data.inGuild) {
                     textEl.textContent = data.message || 'You must be a member of the Discord server to apply.';
-                    linkEl.href = 'https://discord.gg/sheldon';
+                    if (data.ok === false) {
+                        linkEl.style.display = 'none';
+                    } else {
+                        linkEl.style.display = 'inline-block';
+                        linkEl.href = 'https://discord.gg/sheldon';
+                    }
                     notice.classList.remove('hidden');
                 }
             } catch (err) {
