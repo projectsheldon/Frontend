@@ -229,16 +229,28 @@ const DiscordAuth = {
 
         requestAnimationFrame(() => overlay.style.opacity = '1');
 
-        function dismiss(val)
+        let minCloseTime = 0;
+
+        function closeOverlay()
         {
-            callback(val);
             overlay.style.opacity = '0';
             setTimeout(() => overlay.remove(), 200);
         }
 
-        overlay.onclick = (e) => { if(e.target === overlay) dismiss(null); };
-        document.getElementById('discord-app-yes').onclick = () => dismiss('app');
-        document.getElementById('discord-app-no').onclick = () => dismiss('browser');
+        overlay.onclick = (e) => {
+            if(e.target === overlay && Date.now() >= minCloseTime) {
+                callback(null);
+                closeOverlay();
+            }
+        };
+        document.getElementById('discord-app-yes').onclick = () => {
+            minCloseTime = Date.now() + 2000;
+            callback('app');
+        };
+        document.getElementById('discord-app-no').onclick = () => {
+            callback('browser');
+            closeOverlay();
+        };
     },
 
     // window
@@ -248,32 +260,77 @@ const DiscordAuth = {
         const clientId = await this.GetClientId();
         const redirectUri = encodeURIComponent(`${apiUrl.replace(/\/+$/, '')}/discord/callback`);
         const scope = "identify";
-        const state = window.location.origin;
-        const oauthUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${encodeURIComponent(state)}`;
-        const discordAppUrl = `discord://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${encodeURIComponent(state)}`;
+        const origin = window.location.origin;
+
+        let authCode = '';
+        try
+        {
+            const res = await fetch(`${apiUrl}/discord/init-auth?origin=${encodeURIComponent(origin)}`);
+            const data = await res.json();
+            if(data.ok) authCode = data.code;
+        } catch(e) {}
+
+        const oauthUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${encodeURIComponent(authCode || origin)}`;
+        const discordAppUrl = `discord://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${encodeURIComponent(authCode || origin)}`;
 
         this._PromptDiscordApp(function(choice) {
             if(choice === 'app')
             {
                 const modal = document.querySelector('#discord-app-modal');
-                if(modal) modal.innerHTML = '<h3 style="color:white;font-size:18px;margin:0 0 8px;">Opening Discord...</h3><p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0;">Please authorize in the Discord app.</p>';
-
-                const popup = window.open(discordAppUrl, '_blank');
-                if(!popup || popup.closed)
+                if(modal)
                 {
-                    const a = document.createElement('a');
-                    a.href = discordAppUrl;
-                    a.style.display = 'none';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                }
-                else
-                {
-                    setTimeout(() => { try { if(!popup.closed) popup.close(); } catch(e) {} }, 1000);
+                    modal.innerHTML = '<h3 style="color:white;font-size:18px;margin:0 0 8px;">Opening Discord...</h3>' +
+                        '<p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0 0 16px;">Authorize in the Discord app.</p>' +
+                        (authCode
+                            ? '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:12px;margin-bottom:8px;">' +
+                                '<p style="color:rgba(255,255,255,0.5);font-size:11px;margin:0 0 8px;">If a new browser tab opens, enter the code from there:</p>' +
+                                '<div style="display:flex;gap:8px;">' +
+                                    '<input id="auth-code-input" type="text" maxlength="8" placeholder="Enter code" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:8px 12px;color:white;font-size:14px;text-align:center;letter-spacing:2px;text-transform:uppercase;outline:none;">' +
+                                    '<button id="auth-code-submit" style="background:#5865F2;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:bold;cursor:pointer;">Submit</button>' +
+                                '</div>' +
+                            '</div>'
+                            : '');
                 }
 
-                DiscordAuth._PollForToken(oauthUrl);
+                if(authCode)
+                {
+                    document.getElementById('auth-code-submit').onclick = async () =>
+                    {
+                        const input = document.getElementById('auth-code-input');
+                        if(!input || !input.value.trim()) return;
+                        const code = input.value.trim().toUpperCase();
+                        try
+                        {
+                            const res = await fetch(`${apiUrl}/discord/poll-auth?code=${code}`);
+                            const data = await res.json();
+                            if(data.ok && data.status === 'success')
+                            {
+                                if(window._resolveAuthPoll) window._resolveAuthPoll(data.token);
+                            }
+                            else if(data.ok && data.status === 'error')
+                            {
+                                if(window._resolveAuthPoll) window._resolveAuthPoll(null, 'Login cancelled');
+                            }
+                            else if(data.status === 'pending')
+                            {
+                                if(typeof Notify !== 'undefined') Notify('Code not ready yet. Try again.', 'info', 2000);
+                            }
+                            else
+                            {
+                                if(typeof Notify !== 'undefined') Notify('Invalid code.', 'error', 3000);
+                            }
+                        } catch(e) {}
+                    };
+                }
+
+                const a = document.createElement('a');
+                a.href = discordAppUrl;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                DiscordAuth._PollForToken(oauthUrl, authCode, apiUrl);
             }
             else if(choice === 'browser')
             {
@@ -282,65 +339,92 @@ const DiscordAuth = {
         });
     },
 
-    async _PollForToken(fallbackOauthUrl)
+    async _PollForToken(fallbackOauthUrl, authCode, apiUrl)
     {
         await new Promise(resolve =>
         {
-            const onStorage = (e) =>
+            function completeAuth(token, error)
             {
-                if(e.key === 'discord_session' && e.newValue)
-                {
-                    cleanup();
-                    resolve();
-                }
-                if(e.key === 'discord_error' && e.newValue)
-                {
-                    cleanup();
-                    try { localStorage.removeItem('discord_error'); } catch(e) {}
-                    if(typeof Notify !== 'undefined') Notify('Login cancelled', 'warning', 3000);
-                    resolve();
-                }
-            };
-            window.addEventListener('storage', onStorage);
+                clearInterval(pollInterval);
+                clearTimeout(fallbackTimer);
+                window._resolveAuthPoll = null;
 
-            function poll()
+                if(token) DiscordAuth.SetSessionToken(token);
+
+                const o = document.querySelector('#discord-app-overlay');
+                if(o)
+                {
+                    const modal = document.querySelector('#discord-app-modal');
+                    if(modal)
+                    {
+                        if(token)
+                        {
+                            modal.innerHTML = '<h3 style="color:#22c55e;font-size:18px;margin:0 0 8px;">Login Successful!</h3>' +
+                                '<p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0;">You are now logged in.</p>';
+                        }
+                        else
+                        {
+                            modal.innerHTML = '<h3 style="color:#ef4444;font-size:18px;margin:0 0 8px;">' + (error || 'Login Cancelled') + '</h3>' +
+                                '<p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0;">Please try again.</p>';
+                        }
+                    }
+                    setTimeout(() => {
+                        o.style.opacity = '0';
+                        setTimeout(() => o.remove(), 200);
+                    }, 3000);
+                }
+
+                resolve();
+            }
+
+            window._resolveAuthPoll = completeAuth;
+
+            const pollInterval = setInterval(async () =>
             {
                 if(DiscordAuth.GetSessionToken())
                 {
-                    cleanup();
-                    resolve();
+                    completeAuth(DiscordAuth.GetSessionToken());
                     return;
                 }
+
+                if(authCode)
+                {
+                    try
+                    {
+                        const res = await fetch(`${apiUrl}/discord/poll-auth?code=${authCode}`);
+                        const data = await res.json();
+                        if(data.ok && data.status === 'success')
+                        {
+                            completeAuth(data.token);
+                            return;
+                        }
+                        if(data.ok && data.status === 'error')
+                        {
+                            completeAuth(null, 'Login cancelled');
+                            return;
+                        }
+                    } catch(e) {}
+                }
+
                 try
                 {
                     const err = localStorage.getItem('discord_error');
                     if(err)
                     {
                         localStorage.removeItem('discord_error');
-                        cleanup();
-                        if(typeof Notify !== 'undefined') Notify('Login cancelled', 'warning', 3000);
-                        resolve();
+                        completeAuth(null, 'Login cancelled');
                         return;
                     }
                 } catch(e) {}
-            }
-            poll();
-            const checkInterval = setInterval(poll, 500);
+            }, 2000);
 
             const fallbackTimer = setTimeout(() =>
             {
-                cleanup();
-                window.location.href = fallbackOauthUrl;
-            }, 120000);
-
-            function cleanup()
-            {
-                window.removeEventListener('storage', onStorage);
-                clearInterval(checkInterval);
-                clearTimeout(fallbackTimer);
+                clearInterval(pollInterval);
                 const o = document.querySelector('#discord-app-overlay');
                 if(o) { o.style.opacity = '0'; setTimeout(() => o.remove(), 200); }
-            }
+                window.location.href = fallbackOauthUrl;
+            }, 120000);
         });
 
         CheckAuthStatus();
