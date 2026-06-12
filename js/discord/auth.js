@@ -233,6 +233,7 @@ const DiscordAuth = {
 
         function closeOverlay()
         {
+            window._discordLoginPopupOpen = false;
             overlay.style.opacity = '0';
             setTimeout(() => overlay.remove(), 200);
         }
@@ -256,7 +257,8 @@ const DiscordAuth = {
     // window
     async LoginPopup()
     {
-        if(document.querySelector('#discord-app-overlay')) return;
+        if(window._discordLoginPopupOpen) return;
+        window._discordLoginPopupOpen = true;
         const apiUrl = await Api.GetApiUrl();
         const clientId = await this.GetClientId();
         const redirectUri = encodeURIComponent(`${apiUrl.replace(/\/+$/, '')}/discord/callback`);
@@ -370,6 +372,7 @@ const DiscordAuth = {
                         }
                     }
                     setTimeout(() => {
+                        window._discordLoginPopupOpen = false;
                         o.style.opacity = '0';
                         setTimeout(() => o.remove(), 200);
                     }, 3000);
@@ -422,6 +425,7 @@ const DiscordAuth = {
             const fallbackTimer = setTimeout(() =>
             {
                 clearInterval(pollInterval);
+                window._discordLoginPopupOpen = false;
                 const o = document.querySelector('#discord-app-overlay');
                 if(o) { o.style.opacity = '0'; setTimeout(() => o.remove(), 200); }
                 window.location.href = fallbackOauthUrl;
