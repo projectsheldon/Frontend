@@ -126,6 +126,15 @@
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
   article .intro { margin-top: 0.75rem; font-size: 1rem; color: var(--muted); line-height: 1.7; }
+  .btn-copy-all {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--gold-dim); border: 1px solid rgba(199,177,143,0.2);
+    color: var(--gold); padding: 0.6rem 1.25rem; border-radius: 2rem;
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    cursor: pointer; transition: all .2s; margin-top: 1rem;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-copy-all:hover { background: rgba(199,177,143,0.25); border-color: var(--gold); }
   article .body { margin-top: 2rem; }
   article h2 {
     font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em;
@@ -341,32 +350,24 @@ const NAV_ICONS = {
 const NAV = [
   { items: [{ to: "/", label: "Overview" }] },
   { items: [{ to: "/globals", label: "Global Functions" }] },
-  { heading: "Gui", dropdown: true, items: [
-    { to: "/gui", label: "gui" },
-    { to: "/imgui", label: "imgui" },
-    { to: "/draw", label: "draw" },
-  ]},
-  { heading: "Utility", dropdown: true, items: [
-    { to: "/input", label: "input" },
-    { to: "/file", label: "file" },
-    { to: "/internet", label: "internet" },
-    { to: "/utility", label: "utility" },
-    { to: "/task", label: "task" },
-  ]},
-  { heading: "Engine", dropdown: true, items: [
-    { to: "/memory", label: "memory" },
-    { to: "/cheat", label: "cheat" },
-    { to: "/fflags", label: "fflags" },
-    { to: "/entity", label: "entity" },
-  ]},
-  { heading: "Reference", items: [
-    { to: "/instance", label: "Instance" },
-    { to: "/class-properties", label: "Class Properties" },
-    { to: "/custom-types", label: "Custom Types" },
-    { to: "/signals", label: "RBXScriptSignal" },
-    { to: "/library-gating", label: "Library Gating" },
-    { to: "/notes", label: "Notes" },
-  ]},
+  { items: [{ to: "/gui", label: "gui" }] },
+  { items: [{ to: "/imgui", label: "imgui" }] },
+  { items: [{ to: "/draw", label: "draw" }] },
+  { items: [{ to: "/input", label: "input" }] },
+  { items: [{ to: "/file", label: "file" }] },
+  { items: [{ to: "/internet", label: "internet" }] },
+  { items: [{ to: "/utility", label: "utility" }] },
+  { items: [{ to: "/task", label: "task" }] },
+  { items: [{ to: "/memory", label: "memory" }] },
+  { items: [{ to: "/cheat", label: "cheat" }] },
+  { items: [{ to: "/fflags", label: "fflags" }] },
+  { items: [{ to: "/entity", label: "entity" }] },
+  { items: [{ to: "/instance", label: "Instance" }] },
+  { items: [{ to: "/class-properties", label: "Class Properties" }] },
+  { items: [{ to: "/custom-types", label: "Custom Types" }] },
+  { items: [{ to: "/signals", label: "RBXScriptSignal" }] },
+  { items: [{ to: "/library-gating", label: "Library Gating" }] },
+  { items: [{ to: "/notes", label: "Notes" }] },
 ];
 
 function toTable(headers, rows) {
@@ -386,7 +387,19 @@ const PAGES = {
     body: `
       <h2>Table of Contents</h2>
       <ul>
-        <li><a href="#/globals" style="color:var(--primary)">Libraries</a></li>
+        <li><a href="#/globals" style="color:var(--primary)">Global Functions</a></li>
+        <li><a href="#/gui" style="color:var(--primary)">gui</a></li>
+        <li><a href="#/imgui" style="color:var(--primary)">imgui</a></li>
+        <li><a href="#/draw" style="color:var(--primary)">draw</a></li>
+        <li><a href="#/input" style="color:var(--primary)">input</a></li>
+        <li><a href="#/file" style="color:var(--primary)">file</a></li>
+        <li><a href="#/internet" style="color:var(--primary)">internet</a></li>
+        <li><a href="#/utility" style="color:var(--primary)">utility</a></li>
+        <li><a href="#/task" style="color:var(--primary)">task</a></li>
+        <li><a href="#/memory" style="color:var(--primary)">memory</a></li>
+        <li><a href="#/cheat" style="color:var(--primary)">cheat</a></li>
+        <li><a href="#/fflags" style="color:var(--primary)">fflags</a></li>
+        <li><a href="#/entity" style="color:var(--primary)">entity</a></li>
         <li><a href="#/instance" style="color:var(--primary)">Instance</a></li>
         <li><a href="#/class-properties" style="color:var(--primary)">Class Properties</a></li>
         <li><a href="#/custom-types" style="color:var(--primary)">Custom Types</a></li>
@@ -394,6 +407,11 @@ const PAGES = {
         <li><a href="#/library-gating" style="color:var(--primary)">Library Gating</a></li>
         <li><a href="#/notes" style="color:var(--primary)">Notes</a></li>
       </ul>
+
+      <button class="btn-copy-all" onclick="copyAllAsText()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy All as Text (for AI Agent)
+      </button>
     `,
   },
 
@@ -1220,47 +1238,15 @@ function flatNav() {
 
 function renderSidebar() {
   const path = currentPath();
-  // Preserve manually toggled open state across re-renders
-  const openHeadings = new Set();
-  document.querySelectorAll(".nav-group-heading").forEach(el => {
-    const next = el.nextElementSibling;
-    if (next && next.classList.contains("nav-group-items") && next.classList.contains("open") && el.dataset.heading) {
-      openHeadings.add(el.dataset.heading);
-    }
-  });
   document.getElementById("sidebar").innerHTML = NAV.map(group => {
-    const heading = group.heading ? `<div class="nav-group-heading" data-heading="${group.heading}" onclick="toggleGroup(this)">${group.dropdown ? `<span class="chevron">▸</span>` : ""}${group.heading}</div>` : "";
     const items = group.items.map(item => {
       if (!item.to) return "";
       const active = path === item.to || (item.to !== "/" && path.startsWith(item.to + "/"));
       const icon = NAV_ICONS[item.to] ? ICONS[NAV_ICONS[item.to]] : "";
       return `<li><a href="#${item.to}" class="nav-link${active ? " active" : ""}">${icon}<span class="label">${item.label}</span></a></li>`;
     }).join("");
-    if (group.dropdown) {
-      const autoOpen = group.items.some(i => i.to && (path === i.to || path.startsWith(i.to + "/")));
-      const wasOpen = openHeadings.has(group.heading);
-      const isOpen = autoOpen || wasOpen;
-      return `<div>${heading}<div class="nav-group-items${isOpen ? " open" : ""}"><ul class="nav-list">${items}</ul></div></div>`;
-    }
-    return `<div>${heading}<ul class="nav-list">${items}</ul></div>`;
+    return `<ul class="nav-list">${items}</ul>`;
   }).join("");
-  // Update chevrons based on open state
-  document.querySelectorAll(".nav-group-heading").forEach(el => {
-    const next = el.nextElementSibling;
-    const chev = el.querySelector(".chevron");
-    if (chev && next && next.classList.contains("nav-group-items") && next.classList.contains("open")) {
-      chev.classList.add("open");
-    }
-  });
-}
-
-function toggleGroup(el) {
-  const next = el.nextElementSibling;
-  if (next && next.classList.contains("nav-group-items")) {
-    next.classList.toggle("open");
-    const chev = el.querySelector(".chevron");
-    if (chev) chev.classList.toggle("open");
-  }
 }
 
 function getNavNeighbors(path) {
@@ -1295,6 +1281,59 @@ function renderMain() {
   window.scrollTo({ top: 0 });
 }
 
+function stripHtml(html) {
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  d.querySelectorAll('script,style').forEach(el => el.remove());
+  let text = d.textContent || '';
+  text = text.replace(/\s+/g, ' ').trim();
+  return text;
+}
+
+function copyAllAsText() {
+  const lines = [];
+  const ordered = flatNav();
+  lines.push('=== SHELDON LUA VM - FULL DOCUMENTATION ===');
+  lines.push('');
+  ordered.forEach(item => {
+    if (!item.to) return;
+    const page = PAGES[item.to];
+    if (!page) return;
+    lines.push('---');
+    lines.push(`# ${page.title}`);
+    lines.push('');
+    lines.push(stripHtml(page.intro));
+    lines.push('');
+    lines.push(stripHtml(page.body));
+    lines.push('');
+  });
+  lines.push('=== END OF DOCUMENTATION ===');
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.btn-copy-all');
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = 'Copied!';
+      setTimeout(() => btn.innerHTML = orig, 2000);
+    }
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.querySelector('.btn-copy-all');
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = 'Copied!';
+      setTimeout(() => btn.innerHTML = orig, 2000);
+    }
+  });
+}
+
 function render() { renderSidebar(); renderMain(); if (typeof hljs !== 'undefined') { if (typeof hljsDefineLuau !== 'undefined') hljs.registerLanguage('luau', hljsDefineLuau); document.querySelectorAll('.codeblock').forEach(el => hljs.highlightElement(el)); } }
 window.addEventListener("hashchange", render);
 render();
@@ -1308,17 +1347,7 @@ if (navbar) {
   });
 }
 
-// Simple search filtering
-document.getElementById("search-input").addEventListener("input", function() {
-  const q = this.value.toLowerCase().trim();
-  document.querySelectorAll(".nav-link").forEach(el => {
-    const label = el.querySelector(".label");
-    if (label) {
-      const text = label.textContent.toLowerCase();
-      el.style.display = !q || text.includes(q) ? "" : "none";
-    }
-  });
-});
+
 </script>
 
 <script>
