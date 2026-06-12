@@ -256,6 +256,7 @@ const DiscordAuth = {
     // window
     async LoginPopup()
     {
+        if(document.querySelector('#discord-app-overlay')) return;
         const apiUrl = await Api.GetApiUrl();
         const clientId = await this.GetClientId();
         const redirectUri = encodeURIComponent(`${apiUrl.replace(/\/+$/, '')}/discord/callback`);
