@@ -327,6 +327,9 @@ const ICONS = {
 const NAV_ICONS = {
   "/": "home",
   "/globals": "fn",
+  "/base64": "fn",
+  "/hash": "fn",
+  "/compress": "fn",
   "/gui": "gui",
   "/imgui": "imgui",
   "/draw": "draw",
@@ -350,6 +353,9 @@ const NAV_ICONS = {
 const NAV = [
   { items: [{ to: "/", label: "Overview" }] },
   { items: [{ to: "/globals", label: "Global Functions" }] },
+  { items: [{ to: "/base64", label: "base64" }] },
+  { items: [{ to: "/hash", label: "hash" }] },
+  { items: [{ to: "/compress", label: "compress" }] },
   { items: [{ to: "/gui", label: "gui" }] },
   { items: [{ to: "/imgui", label: "imgui" }] },
   { items: [{ to: "/draw", label: "draw" }] },
@@ -388,6 +394,9 @@ const PAGES = {
       <h2>Table of Contents</h2>
       <ul>
         <li><a href="#/globals" style="color:var(--primary)">Global Functions</a></li>
+        <li><a href="#/base64" style="color:var(--primary)">base64</a></li>
+        <li><a href="#/hash" style="color:var(--primary)">hash</a></li>
+        <li><a href="#/compress" style="color:var(--primary)">compress</a></li>
         <li><a href="#/gui" style="color:var(--primary)">gui</a></li>
         <li><a href="#/imgui" style="color:var(--primary)">imgui</a></li>
         <li><a href="#/draw" style="color:var(--primary)">draw</a></li>
@@ -426,10 +435,98 @@ const PAGES = {
           ["<b>warn(...)</b>", "Outputs to console with <code>[warn]</code> prefix"],
           ["<b>error(...)</b>", "Throws a Lua error"],
           ["<b>hex(number)</b>", "Formats a number as hex string (e.g. <code>0x7FF...</code>)"],
-          ["<b>tick()</b>", "Returns <code>GetTickCount64()</code>"],
-          ["<b>loadstring(source)</b>", "Loads and compiles Lua source code"],
+          ["<b>tick()</b>", "Returns <code>GetTickCount64()</code> — milliseconds since system start"],
+          ["<b>loadstring(source)</b>", "Loads and compiles Lua source code. Returns <code>(function, nil)</code> on success or <code>(nil, error_message)</code> on failure."],
         ]
       )}
+
+      <h3>String Extensions</h3>
+      <p>Appended to Lua's built-in <code>string</code> library:</p>
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>string.regex(text, pattern)</b>", "<code>string, string</code>", "Returns <code>true</code> if the pattern is found (std::regex_search). Returns <code>false</code> on invalid patterns."],
+        ]
+      )}
+
+      <h3>Math Extensions</h3>
+      <p>Appended to Lua's built-in <code>math</code> library:</p>
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>math.ldexp(x, exp)</b>", "<code>float, int</code>", "Returns <code>x * 2^exp</code>"],
+          ["<b>math.frexp(x)</b>", "<code>float</code>", "Returns <code>mantissa, exponent</code> (decomposes <code>x</code> into fraction and power of two)"],
+        ]
+      )}
+
+      <h4>Example</h4>
+      ${toCodeblock(`-- string.regex
+if string.regex("hello123", "%d+") then
+    print("contains digits")
+end
+
+-- math.frexp / math.ldexp
+local m, e = math.frexp(12.5)
+print(m, e)             -- 0.78125, 4
+print(math.ldexp(m, e)) -- 12.5`)}
+    `,
+  },
+
+  "/base64": {
+    title: "base64",
+    intro: "Base64 encoding and decoding. Always available (no library gate).",
+    body: `
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>base64.Encode(data)</b>", "<code>string</code>", "Encodes a string to base64"],
+          ["<b>base64.Decode(data)</b>", "<code>string</code>", "Decodes a base64 string back to plaintext"],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`local encoded = base64.Encode("Hello, world!")
+print(encoded)  -- SGVsbG8sIHdvcmxkIQ==
+local decoded = base64.Decode(encoded)
+print(decoded)  -- Hello, world!`)}
+    `,
+  },
+
+  "/hash": {
+    title: "hash",
+    intro: "Cryptographic hash functions. Always available (no library gate).",
+    body: `
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>hash.Sha256(data)</b>", "<code>string</code>", "Returns SHA-256 hex digest"],
+          ["<b>hash.Sha3(data)</b>", "<code>string</code>", "Returns SHA-3 hex digest"],
+          ["<b>hash.Md5(data)</b>", "<code>string</code>", "Returns MD5 hex digest"],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`local sha = hash.Sha256("hello")
+print(sha)  -- 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824`)}
+    `,
+  },
+
+  "/compress": {
+    title: "compress",
+    intro: "LZ4 compression utilities. Always available (no library gate).",
+    body: `
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>compress.Compress(data)</b>", "<code>string</code>", "Compresses data using LZ4. First 4 bytes store original size (uint32)."],
+          ["<b>compress.Decompress(data)</b>", "<code>string</code>", "Decompresses LZ4-compressed data back to original."],
+        ]
+      )}
+
+      <h3>Example</h3>
+      ${toCodeblock(`local comp = compress.Compress("Hello, world!")
+local dec = compress.Decompress(comp)
+print(dec)  -- Hello, world!`)}
     `,
   },
 
@@ -750,10 +847,73 @@ end)`)}
           ["<b>imgui.GetWindowSize()</b>", ""],
           ["<b>imgui.GetCursorPos()</b>", ""],
           ["<b>imgui.SetCursorPos(x,y)</b>", ""],
+          ["<b>imgui.GetCursorScreenPos()</b>", ""],
+          ["<b>imgui.SetCursorScreenPos(x, y)</b>", ""],
+          ["<b>imgui.GetCursorStartPos()</b>", ""],
+          ["<b>imgui.GetContentRegionAvail()</b>", ""],
+          ["<b>imgui.GetWindowContentRegionMin()</b>", ""],
+          ["<b>imgui.GetWindowContentRegionMax()</b>", ""],
+          ["<b>imgui.GetContentAvail()</b>", ""],
+          ["<b>imgui.GetFrameHeight()</b>", ""],
+          ["<b>imgui.GetFrameHeightWithSpacing()</b>", ""],
           ["<b>imgui.SameLine(...)</b>", ""],
           ["<b>imgui.Spacing()</b>", ""],
           ["<b>imgui.Separator()</b>", ""],
           ["<b>imgui.SeparatorText(label)</b>", ""],
+        ]
+      )}
+
+      <h3>Indentation</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.Indent(w?)</b>", ""],
+          ["<b>imgui.Unindent(w?)</b>", ""],
+          ["<b>imgui.BeginIndent()</b>", ""],
+          ["<b>imgui.EndIndent()</b>", ""],
+        ]
+      )}
+
+      <h3>Groups</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.BeginGroup()</b>", ""],
+          ["<b>imgui.EndGroup()</b>", ""],
+        ]
+      )}
+
+      <h3>Item Width</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.PushItemWidth(width)</b>", ""],
+          ["<b>imgui.PopItemWidth()</b>", ""],
+        ]
+      )}
+
+      <h3>ID Stack</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.PushID(id)</b>", ""],
+          ["<b>imgui.PopID()</b>", ""],
+        ]
+      )}
+
+      <h3>Dummy</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.Dummy(w, h)</b>", "Adds an empty item with the specified size"],
+        ]
+      )}
+
+      <h3>Text Utilities</h3>
+      ${toTable(
+        ["Function", "Signature"],
+        [
+          ["<b>imgui.CalcTextSize(text)</b>", "Returns rendered <code>width, height</code> of text"],
         ]
       )}
 
@@ -799,6 +959,12 @@ end)`)}
           ["<b>imgui.IsItemActive()</b>", ""],
           ["<b>imgui.IsItemFocused()</b>", ""],
           ["<b>imgui.IsItemClicked(btn?)</b>", ""],
+          ["<b>imgui.IsAnyItemHovered()</b>", ""],
+          ["<b>imgui.IsAnyItemActive()</b>", ""],
+          ["<b>imgui.IsAnyItemFocused()</b>", ""],
+          ["<b>imgui.GetItemRectMin()</b>", ""],
+          ["<b>imgui.GetItemRectMax()</b>", ""],
+          ["<b>imgui.GetItemRectSize()</b>", ""],
           ["<b>imgui.IsWindowHovered(flags?)</b>", ""],
           ["<b>imgui.IsWindowFocused(flags?)</b>", ""],
         ]
@@ -886,8 +1052,16 @@ fflags.Set("FFlagEnableVR", "bool", true)`)}
           ["<b>:GetTags()</b>", "<code>table</code>", "Collection tags"],
           ["<b>:HasTag(tag)</b>", "<code>bool</code>", "Check tag"],
           ["<b>:RenameTag(oldName, newName)</b>", "", "Rename tag"],
+          ["<b>:GetPropertyChangedSignal(property)</b>", "<code>RBXScriptSignal</code>", "Returns a signal that fires when the given property changes"],
         ]
       )}
+
+      <h4>Example</h4>
+      ${toCodeblock(`local part = workspace.Part
+local sig = part:GetPropertyChangedSignal("Position")
+sig:Connect(function()
+    print("Position changed!")
+end)`)}
 
       <h3>Meta-Behavior</h3>
       <ul>
@@ -962,8 +1136,10 @@ local RunService = game:GetService("RunService")`)}
           ["DisplayName", "string", "RO"],
           ["Character", "Instance", "RO"],
           ["CameraMode", "int", "RW"],
+          ["NetworkPing", "float", "RO"],
         ]
       )}
+      <p><code>NetworkPing</code> returns the player's ping in ms. Only non-nil for <code>LocalPlayer</code>.</p>
 
       <h3>Players</h3>
       ${toTable(
@@ -1116,12 +1292,94 @@ local RunService = game:GetService("RunService")`)}
           ["Animator", "Instance", "RO"],
         ]
       )}
+
+      <h3>ProximityPrompt</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["HoldDuration", "float", "RW"],
+        ]
+      )}
+
+      <h3>GuiObject (base class for GUI elements)</h3>
+      <p>Inherited by <code>Frame</code>, <code>TextLabel</code>, <code>TextBox</code>, <code>TextButton</code>, <code>ImageLabel</code>, <code>ScreenGui</code>.</p>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Rotation", "float", "RW"],
+          ["Size", "UDim2", "RW"],
+          ["Position", "UDim2", "RW"],
+          ["BackgroundColor3", "Color3", "RW"],
+          ["BorderColor3", "Color3", "RW"],
+          ["Visible", "bool", "RW"],
+        ]
+      )}
+
+      <h3>ScreenGui</h3>
+      <p>Inherits all <code>GuiObject</code> properties.</p>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Enabled", "bool", "RW"],
+          ["DisplayOrder", "int", "RW"],
+          ["ResetOnSpawn", "bool", "RW"],
+          ["IgnoreGuiInset", "bool", "RW"],
+          ["AbsoluteSize", "Vector2", "RO"],
+          ["AbsolutePosition", "Vector2", "RO"],
+        ]
+      )}
+
+      <h3>TextLabel</h3>
+      <p>Inherits all <code>GuiObject</code> properties.</p>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Text", "string", "RW"],
+          ["TextColor3", "Color3", "RW"],
+        ]
+      )}
+
+      <h3>TextBox</h3>
+      <p>Inherits all <code>GuiObject</code> properties.</p>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Text", "string", "RW"],
+          ["PlaceholderText", "string", "RW"],
+          ["TextColor3", "Color3", "RW"],
+          ["PlaceholderColor3", "Color3", "RW"],
+        ]
+      )}
+
+      <h3>TextButton</h3>
+      <p>Inherits all <code>GuiObject</code> properties.</p>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Text", "string", "RW"],
+          ["TextColor3", "Color3", "RW"],
+        ]
+      )}
+
+      <h3>ImageLabel</h3>
+      <p>Inherits all <code>GuiObject</code> properties.</p>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["Image", "string", "RW"],
+          ["ImageColor3", "Color3", "RW"],
+          ["ImageTransparency", "float", "RW"],
+        ]
+      )}
+
+      <h3>Frame</h3>
+      <p>Inherits all <code>GuiObject</code> properties. No additional own properties.</p>
     `,
   },
 
   "/custom-types": {
     title: "Custom Types",
-    intro: "Vector3, Vector2, and Color3 types with Roblox-like semantics.",
+    intro: "Vector3, Vector2, Color3, UDim, and UDim2 types with Roblox-like semantics.",
     body: `
       <h3>Vector3</h3>
       ${toCodeblock(`Vector3.new()           -- (0, 0, 0)
@@ -1167,6 +1425,43 @@ Color3.fromHex(string)`)}
         ]
       )}
       <p><strong>Static constants:</strong> <code>.White</code>, <code>.Red</code>, <code>.Green</code>, <code>.Blue</code>, <code>.Yellow</code>, <code>.Black</code></p>
+
+      <h3>UDim</h3>
+      ${toCodeblock(`UDim.new()                -- UDim(0, 0)
+UDim.new(scale)           -- UDim(scale, 0)
+UDim.new(scale, offset)   -- UDim(scale, offset)`)}
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          [".Scale", "float", "RW"],
+          [".Offset", "int", "RW"],
+        ]
+      )}
+      <p><strong>Operators:</strong> <code>+</code>, <code>-</code>, <code>tostring</code></p>
+
+      <h3>UDim2</h3>
+      ${toCodeblock(`UDim2.new()                                          -- UDim2(0,0, 0,0)
+UDim2.new(UDim x, UDim y)                          -- UDim2
+UDim2.new(float xs, int xo, float ys, int yo)       -- UDim2
+UDim2.fromScale(float xs, float ys)                 -- UDim2
+UDim2.fromOffset(int xo, int yo)                    -- UDim2
+UDim2.Lerp(UDim2 a, UDim2 b, float alpha)          -- UDim2`)}
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          [".X", "UDim", "RW"],
+          [".Y", "UDim", "RW"],
+        ]
+      )}
+      <p><strong>Operators:</strong> <code>+</code>, <code>-</code>, <code>tostring</code></p>
+
+      <h4>Example</h4>
+      ${toCodeblock(`local u = UDim2.fromOffset(100, 50)
+local v = UDim2.new(0.5, 0, 0, 20)
+local result = u + v
+
+local udim = UDim.new(0.5, 10)
+print(udim.Scale, udim.Offset)`)}
     `,
   },
 
@@ -1217,6 +1512,13 @@ local result = signal:Wait()  -- yields coroutine`)}
         <li><code>pcall</code> and <code>xpcall</code> are overridden to support script interruption.</li>
         <li>Scripts can be interrupted mid-execution via a Lua instruction hook (every 10 instructions) that checks the stop flag.</li>
         <li>File operations are sandboxed; path traversal (<code>..</code>) is blocked.</li>
+        <li><code>print()</code> outputs with prefix <code>[print]</code>; <code>warn()</code> outputs with prefix <code>[warn]</code>.</li>
+        <li><code>tick()</code> returns <code>GetTickCount64()</code> — milliseconds since system start (not UNIX time).</li>
+        <li><code>loadstring</code> returns <code>(function, nil)</code> on success or <code>(nil, error_message)</code> on failure.</li>
+        <li>Instance property access via <code>__index</code> checks built-in properties first, then registered class properties, then falls back to child lookup by name.</li>
+        <li>Property writes respect read-only flags — silently fail on RO properties like <code>Address</code>, <code>FullName</code>, <code>RightVector</code>, <code>UpVector</code>, <code>ForwardVector</code>, etc.</li>
+        <li>Both <code>game</code> and <code>Game</code> globals resolve to the Roblox DataModel instance.</li>
+        <li>Compressed data from <code>compress.Compress</code> stores the original size in the first 4 bytes (uint32 little-endian).</li>
       </ul>
     `,
   },
