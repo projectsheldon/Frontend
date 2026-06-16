@@ -518,7 +518,7 @@ print(sha)  -- 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824`
       ${toTable(
         ["Function", "Signature", "Description"],
         [
-          ["<b>compress.Compress(data)</b>", "<code>string</code>", "Compresses data using LZ4. First 4 bytes store original size (uint32)."],
+          ["<b>compress.Compress(data)</b>", "<code>string</code>", "Compresses data using LZ4 (does NOT prepend original size). <code>Decompress</code> expects a 4-byte size header — functions are currently incompatible."],
           ["<b>compress.Decompress(data)</b>", "<code>string</code>", "Decompresses LZ4-compressed data back to original."],
         ]
       )}
@@ -539,7 +539,7 @@ print(dec)  -- Hello, world!`)}
         [
           ["<b>task.spawn(fn)</b>", "<code>function</code>", "Schedules <code>fn</code> to run asynchronously"],
           ["<b>task.delay(seconds, fn)</b>", "<code>number, function</code>", "Schedules <code>fn</code> after <code>seconds</code>"],
-          ["<b>task.wait(seconds)</b>", "<code>number</code>", "Busy-waits, returns actual elapsed time"],
+          ["<b>task.wait(seconds)</b>", "<code>number</code>", "Yields the coroutine, returns actual elapsed time. Must be called within a <code>task.spawn</code>'d or yielded coroutine (not from main thread)."],
         ]
       )}
 
@@ -589,6 +589,9 @@ memory.Write("int", base + 0x1234, 999)`)}
       ${toTable(
         ["Function", "Signature", "Description"],
         [
+          ["<b>TeleportPlace(placeId, jobId?)</b>", "<code>string, string?</code>", "Teleport to a Roblox place/server. Also accepts a table <code>{PlaceId, JobId}</code>. Returns <code>bool</code>."],
+          ["<b>GetServers(placeId?)</b>", "<code>string?</code>", "Fetches game server list. Returns table of servers with <code>JobId, PlaceId, UniverseId, GameName, Playing, MaxPlayers, Ping, Fps</code>. Defaults to current place."],
+          ["<b>GetUniverseId(placeId?)</b>", "<code>string?</code>", "Gets universe ID for a place. Defaults to current place."],
           ["<b>Register(eventType, fn)</b>", "<code>string, function</code>", "Register a callback for an event type"],
           ["<b>Unregister(eventType, fn)</b>", "<code>string, function</code>", "Unregister a callback"],
           ["<b>Raycast(pos, dir, distance, ignoreTransparent?)</b>", "<code>Vector3, Vector3, number, bool</code>", "Returns <code>(hit, instance, position, distance)</code>"],
@@ -615,7 +618,17 @@ local hit, inst, pos, dist = cheat.Raycast(
     Vector3.new(0, 5, 0),
     Vector3.new(0, -1, 0),
     500
-)`)}
+)
+
+-- Teleport to a place
+local ok = cheat.TeleportPlace("123456789")
+print("Teleport:", ok)
+
+-- Get servers for current place
+local servers = cheat.GetServers()
+for _, srv in ipairs(servers) do
+    print(srv.JobId, srv.Playing, "/", srv.MaxPlayers)
+end`)}
     `,
   },
 
@@ -719,7 +732,7 @@ file.delete("config.txt")`)}
       ${toTable(
         ["Function", "Signature", "Description"],
         [
-          ["<b>utility.WorldToScreen(worldPos)</b>", "<code>Vector3</code>", "Project world position to screen"],
+          ["<b>utility.WorldToScreen(worldPos)</b>", "<code>Vector3</code>", "Project world position to screen. Returns <code>(Vector2 screenPos, bool isOnScreen)</code>."],
           ["<b>utility.GetClipboard()</b>", "", "Get clipboard text"],
           ["<b>utility.SetClipboard(text)</b>", "<code>string</code>", "Set clipboard text"],
         ]
@@ -741,12 +754,12 @@ draw.Text("Player", pos.X, pos.Y, Color3.new(1, 1, 1))`)}
       ${toTable(
         ["Function", "Signature", "Description"],
         [
-          ["<b>entity.AddEntity(key, data)</b>", "<code>string, table</code>", "Add custom entity. <code>data</code> needs <code>Character</code>, <code>PrimaryPart</code>, <code>Name</code>"],
+          ["<b>entity.AddEntity(key, data)</b>", "<code>string, table</code>", "Add custom entity. <code>data</code> supports: <code>Character</code>, <code>PrimaryPart</code>, <code>Name</code>, <code>DisplayName</code>, <code>Team</code>, <code>TeamColor</code>, <code>DoTeamCheck</code>, <code>Humanoid</code>, <code>MaxHealth</code>, <code>Health</code>, <code>RemoveOnDeath</code>, <code>Bones</code>"],
           ["<b>entity.EditEntity(key, data)</b>", "<code>string, table</code>", "Edit entity data"],
           ["<b>entity.RemoveEntity(key)</b>", "<code>string</code>", "Remove entity"],
           ["<b>entity.Clear()</b>", "", "Remove all entities"],
-          ["<b>entity.GetEntity(key)</b>", "<code>string</code>", "Get entity data"],
-          ["<b>entity.GetPlayers(includeEnemies?, includeEntities?)</b>", "<code>bool?, bool?</code>", "Get players/entities data"],
+          ["<b>entity.GetEntity(key)</b>", "<code>string</code>", "Get entity data. Returns <code>Character</code>, <code>PrimaryPart</code>, <code>Name</code>, <code>DisplayName</code>, <code>Team</code>, <code>Humanoid</code>, <code>MaxHealth</code>, <code>Health</code>, <code>UserId</code>, <code>IsEntity</code>"],
+          ["<b>entity.GetPlayers(includeEnemies?, includeEntities?)</b>", "<code>bool?, bool?</code>", "Get players/entities data. Additionally returns: <code>IsAlive</code>, <code>IsCameraVisible</code>, <code>IsLocal</code>, <code>IsPreview</code>, <code>IsTargeted</code>, <code>IsFriend</code>, <code>IsWhitelisted</code>, <code>IsEnemy</code>, <code>RigType</code>"],
         ]
       )}
 
@@ -770,7 +783,7 @@ print(data.Name, data.Character)`)}
         [
           ["<b>draw.Text(text, x, y, color?, font?, alpha?)</b>", "<code>string, number, number, Color3?, string?, int?</code>"],
           ["<b>draw.TextOutlined(text, x, y, color?, font?, alpha?)</b>", "same"],
-          ["<b>draw.GetTextSize(text, font?)</b>", ""],
+          ["<b>draw.GetTextSize(text, font?)</b>", "", "Returns <code>(width, height)</code> as two float values"],
           ["<b>draw.Line(x1,y1,x2,y2, color?, thickness?, alpha?)</b>", ""],
           ["<b>draw.Rect(x,y,w,h, color?, thickness?, rounding?, alpha?)</b>", ""],
           ["<b>draw.RectFilled(x,y,w,h, color?, rounding?, alpha?)</b>", ""],
@@ -1001,7 +1014,7 @@ imgui.End()`)}
         [
           ["<b>fflags.Get(name, type, original?)</b>", "<code>string, string, bool?</code>", "Get an FFlag value"],
           ["<b>fflags.Set(name, type, value)</b>", "<code>string, string, any</code>", "Set an FFlag value"],
-          ["<b>fflags.GetAll()</b>", "", "Get all FFlags"],
+          ["<b>fflags.GetAll()</b>", "", "Get all FFlags. Returns a table of entries, each with <code>name</code>, <code>runtime</code>, and <code>original</code> fields."],
         ]
       )}
 
@@ -1041,7 +1054,7 @@ fflags.Set("FFlagEnableVR", "bool", true)`)}
           ["<b>:FindDescendants(name)</b>", "<code>table</code>", "Find all descendants by name"],
           ["<b>:FindDescendantsOfClass(className)</b>", "<code>table</code>", "Find all descendants of class"],
           ["<b>:GetChildren()</b>", "<code>table</code>", "Direct children"],
-          ["<b>:GetDecendants()</b>", "<code>table</code>", "All descendants"],
+          ["<b>:GetDescendants()</b>", "<code>table</code>", "All descendants"],
           ["<b>:Ancestors()</b>", "<code>table</code>", "All ancestors"],
           ["<b>:IsDescendantOf(ancestor)</b>", "<code>bool</code>", "Check ancestry"],
           ["<b>:IsA(className)</b>", "<code>bool</code>", "Check class"],
@@ -1067,6 +1080,8 @@ end)`)}
       <ul>
         <li><code>instance.PropertyName</code> first checks built-in properties, then registered class properties, then falls back to child lookup by name.</li>
         <li>Setting properties respects read-only flags.</li>
+        <li><code>instance.Changed</code> returns an <code>RBXScriptSignal</code> that fires when any registered class property changes. Usage: <code>instance.Changed:Connect(function(propertyName, newValue) ... end)</code>.</li>
+        <li><code>for k, v in pairs(instance) do ... end</code> iterates over built-in properties, class properties, and children.</li>
       </ul>
 
       <h3 style="margin-top:3rem">DataModel</h3>
@@ -1290,6 +1305,16 @@ local RunService = game:GetService("RunService")`)}
           ["Influence", "float", "RW"],
           ["Animation", "Instance", "RO"],
           ["Animator", "Instance", "RO"],
+        ]
+      )}
+
+      <h3>VehicleSeat</h3>
+      ${toTable(
+        ["Property", "Type", "Access"],
+        [
+          ["MaxSpeed", "float", "RW"],
+          ["Torque", "float", "RW"],
+          ["TurnSpeed", "float", "RW"],
         ]
       )}
 
@@ -1518,7 +1543,7 @@ local result = signal:Wait()  -- yields coroutine`)}
         <li>Instance property access via <code>__index</code> checks built-in properties first, then registered class properties, then falls back to child lookup by name.</li>
         <li>Property writes respect read-only flags — silently fail on RO properties like <code>Address</code>, <code>FullName</code>, <code>RightVector</code>, <code>UpVector</code>, <code>ForwardVector</code>, etc.</li>
         <li>Both <code>game</code> and <code>Game</code> globals resolve to the Roblox DataModel instance.</li>
-        <li>Compressed data from <code>compress.Compress</code> stores the original size in the first 4 bytes (uint32 little-endian).</li>
+        <li>Compressed data from <code>compress.Compress</code> does NOT store the original size, but <code>compress.Decompress</code> expects it. This is a known inconsistency — Compress and Decompress are currently incompatible.</li>
       </ul>
     `,
   },
