@@ -634,10 +634,8 @@ end`)}
 
   "/internet": {
     title: "internet",
-    intro: "HTTP networking functions. Requires the <code>Internet</code> library to be enabled.",
+    intro: "HTTP networking functions.",
     body: `
-      <div class="requires-badge"><strong>Requires:</strong> <code>Internet</code> library enabled</div>
-
       ${toTable(
         ["Function", "Signature", "Description"],
         [
@@ -1521,7 +1519,7 @@ local result = signal:Wait()  -- yields coroutine`)}
           ["<b>Memory</b>", "All <code>memory.*</code>"],
           ["<b>Clipboard</b>", "<code>utility.GetClipboard</code>, <code>utility.SetClipboard</code>"],
           ["<b>File_Management</b>", "All <code>file.*</code>"],
-          ["<b>Internet</b>", "All <code>internet.*</code>"],
+
           ["<b>Input</b>", "All <code>input.*</code>"],
         ]
       )}
