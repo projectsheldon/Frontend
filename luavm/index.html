@@ -98,9 +98,9 @@
   nav.sidebar { display: flex; flex-direction: column; gap: 1.5rem; font-size: 0.875rem; padding-right: 0.5rem; }
   .nav-group-heading { padding: 0 0.75rem 0.5rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted-2); display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; transition: color .15s; }
   .nav-group-heading:hover { color: var(--muted); }
-  .nav-group-heading .chevron { font-size: 1rem; transition: transform .2s; color: var(--muted-2); line-height: 1; display: inline-flex; }
+  .nav-group-heading .chevron { font-size: 1.2rem; transition: transform .2s; color: var(--muted-2); line-height: 1; display: inline-flex; }
   .nav-group-heading .chevron.open { transform: rotate(90deg); }
-  .nav-group-items { overflow: hidden; transition: max-height .25s ease; max-height: 0; }
+  .nav-group-items { overflow: hidden; transition: max-height .2s ease; max-height: 0; }
   .nav-group-items.open { max-height: 500px; }
   .nav-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
   .nav-link {
@@ -126,19 +126,41 @@
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
   article .intro { margin-top: 0.75rem; font-size: 1rem; color: var(--muted); line-height: 1.7; }
-  .btn-copy-all {
+  article { position: relative; }
+  .copy-dropdown { position: absolute; top: 0; right: 0; z-index: 10; transform: scale(0.8); transform-origin: top right; }
+  .copy-dropdown-btn {
     display: inline-flex; align-items: center; gap: 0.5rem;
     background: var(--gold-dim); border: 1px solid rgba(199,177,143,0.2);
     color: var(--gold); padding: 0.6rem 1.25rem; border-radius: 2rem;
     font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
-    cursor: pointer; transition: all .2s; margin-top: 1rem;
+    cursor: pointer; transition: border-radius .1s, background .2s, border-color .2s;
     font-family: 'Inter', sans-serif;
   }
-  .btn-copy-all:hover { background: rgba(199,177,143,0.25); border-color: var(--gold); }
+  .copy-dropdown-btn:hover { background: rgba(199,177,143,0.25); border-color: var(--gold); }
+  .copy-dropdown-btn .arrow { margin-left: 0.25rem; font-size: 0.6rem; transition: transform .2s; }
+  .copy-dropdown.open .copy-dropdown-btn { border-radius: 2rem 2rem 0 0; }
+  .copy-dropdown.open .arrow { transform: rotate(180deg); }
+  .copy-dropdown-menu {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+    background: rgba(10,10,10,0.98); border: 1px solid rgba(199,177,143,0.2);
+    border-top: none; border-radius: 0 0 1rem 1rem; overflow: hidden;
+    opacity: 0; transform: translateY(-4px); pointer-events: none;
+    transition: opacity .1s, transform .1s;
+    flex-direction: column;
+  }
+  .copy-dropdown.open .copy-dropdown-menu { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .copy-dropdown-item {
+    padding: 0.6rem 1.25rem; font-size: 0.75rem; font-weight: 600;
+    color: var(--muted); cursor: pointer; transition: all .15s;
+    display: flex; align-items: center; gap: 0.5rem;
+    font-family: 'Inter', sans-serif; background: none; border: none; width: 100%; text-align: left;
+  }
+  .copy-dropdown-item:hover { background: rgba(199,177,143,0.15); color: var(--gold); }
+  .copy-dropdown-item:last-child { border-radius: 0 0 1rem 1rem; }
   article .body { margin-top: 2rem; }
   article h2 {
     font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em;
-    margin: 2.5rem 0 1rem; color: var(--fg);
+    margin: 1.5rem 0 0.75rem; color: var(--fg);
     display: flex; align-items: center; gap: 0.75rem;
   }
   article h2::before {
@@ -171,12 +193,25 @@
     font-size: 0.8rem; color: var(--muted-2); width: fit-content;
   }
   .requires-badge code { color: var(--gold); font-size: 0.8rem; }
+  .codeblock-wrap { position: relative; margin-bottom: 1.25rem; }
+  .codeblock-wrap:hover .copy-code-btn { opacity: 1; }
+  .copy-code-btn {
+    position: absolute; top: 0.5rem; right: 0.5rem; z-index: 5;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--muted); padding: 0.3rem; border-radius: 0.4rem;
+    font-size: 0.65rem; font-weight: 600; cursor: pointer;
+    transition: background .15s;
+    font-family: 'Inter', sans-serif; line-height: 1; display: flex; align-items: center; transition: background .15s;
+  }
+  .copy-code-btn:active { transform: scale(0.85); }
+  .copy-code-btn svg { transition: transform .15s ease; }
+  .copy-code-btn.copied svg { transform: scale(1.2); }
+  .copy-code-btn:hover { background: rgba(255,255,255,0.15); color: white; }
   .codeblock {
     font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
     background: rgba(0,0,0,0.3); border: 1px solid var(--border);
     border-radius: 0.75rem; padding: 1.25rem; font-size: 0.85rem;
-    overflow-x: auto; white-space: pre; color: #e5e5e5; margin-bottom: 1.25rem;
-    line-height: 1.6;
+    overflow-x: auto; white-space: pre; color: #e5e5e5; line-height: 1.6;
   }
   .codeblock::-webkit-scrollbar { height: 4px; }
   .codeblock::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
@@ -351,29 +386,13 @@ const NAV_ICONS = {
 };
 
 const NAV = [
-  { items: [{ to: "/", label: "Overview" }] },
-  { items: [{ to: "/globals", label: "Global Functions" }] },
-  { items: [{ to: "/base64", label: "base64" }] },
-  { items: [{ to: "/hash", label: "hash" }] },
-  { items: [{ to: "/compress", label: "compress" }] },
-  { items: [{ to: "/gui", label: "gui" }] },
-  { items: [{ to: "/imgui", label: "imgui" }] },
-  { items: [{ to: "/draw", label: "draw" }] },
-  { items: [{ to: "/input", label: "input" }] },
-  { items: [{ to: "/file", label: "file" }] },
-  { items: [{ to: "/internet", label: "internet" }] },
-  { items: [{ to: "/utility", label: "utility" }] },
-  { items: [{ to: "/task", label: "task" }] },
-  { items: [{ to: "/memory", label: "memory" }] },
-  { items: [{ to: "/cheat", label: "cheat" }] },
-  { items: [{ to: "/fflags", label: "fflags" }] },
-  { items: [{ to: "/entity", label: "entity" }] },
-  { items: [{ to: "/instance", label: "Instance" }] },
-  { items: [{ to: "/class-properties", label: "Class Properties" }] },
-  { items: [{ to: "/custom-types", label: "Custom Types" }] },
-  { items: [{ to: "/signals", label: "RBXScriptSignal" }] },
-  { items: [{ to: "/library-gating", label: "Library Gating" }] },
-  { items: [{ to: "/notes", label: "Notes" }] },
+  { heading: "Getting Started", items: [{ to: "/", label: "Overview" }, { to: "/globals", label: "Global Functions" }] },
+  { heading: "Libraries", items: [{ to: "/base64", label: "base64" }, { to: "/hash", label: "hash" }, { to: "/compress", label: "compress" }] },
+  { heading: "Rendering", items: [{ to: "/gui", label: "gui" }, { to: "/imgui", label: "imgui" }, { to: "/draw", label: "draw" }] },
+  { heading: "System", items: [{ to: "/input", label: "input" }, { to: "/file", label: "file" }, { to: "/internet", label: "internet" }, { to: "/utility", label: "utility" }, { to: "/task", label: "task" }, { to: "/memory", label: "memory" }] },
+  { heading: "Exploitation", items: [{ to: "/cheat", label: "cheat" }, { to: "/fflags", label: "fflags" }, { to: "/entity", label: "entity" }] },
+  { heading: "Roblox Types", items: [{ to: "/instance", label: "Instance" }, { to: "/class-properties", label: "Class Properties" }, { to: "/custom-types", label: "Custom Types" }, { to: "/signals", label: "RBXScriptSignal" }] },
+  { heading: "Reference", items: [{ to: "/library-gating", label: "Library Gating" }, { to: "/notes", label: "Notes" }] },
 ];
 
 function toTable(headers, rows) {
@@ -383,7 +402,30 @@ function toTable(headers, rows) {
 }
 
 function toCodeblock(code) {
-  return `<div class="codeblock language-lua">${code}</div>`;
+  const id = "cb_" + Math.random().toString(36).slice(2, 8);
+  return `<div class="codeblock-wrap"><button class="copy-code-btn" onclick="copyCodeBlock('${id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button><div id="${id}" class="codeblock language-lua">${code}</div></div>`;
+}
+
+function copyCodeBlock(id) {
+  const el = document.getElementById(id);
+  const text = el.textContent.trim();
+  navigator.clipboard.writeText(text).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+  const btn = el.parentElement.querySelector('.copy-code-btn');
+  btn.classList.add('copied');
+  btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>';
+  setTimeout(() => {
+    btn.classList.remove('copied');
+    btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+  }, 1500);
 }
 
 const PAGES = {
@@ -391,36 +433,6 @@ const PAGES = {
     title: "Sheldon's Scripting Environment",
     intro: "A scripting environment made for letting users have more customizability over their product. (<- not ai)",
     body: `
-      <h2>Table of Contents</h2>
-      <ul>
-        <li><a href="#/globals" style="color:var(--primary)">Global Functions</a></li>
-        <li><a href="#/base64" style="color:var(--primary)">base64</a></li>
-        <li><a href="#/hash" style="color:var(--primary)">hash</a></li>
-        <li><a href="#/compress" style="color:var(--primary)">compress</a></li>
-        <li><a href="#/gui" style="color:var(--primary)">gui</a></li>
-        <li><a href="#/imgui" style="color:var(--primary)">imgui</a></li>
-        <li><a href="#/draw" style="color:var(--primary)">draw</a></li>
-        <li><a href="#/input" style="color:var(--primary)">input</a></li>
-        <li><a href="#/file" style="color:var(--primary)">file</a></li>
-        <li><a href="#/internet" style="color:var(--primary)">internet</a></li>
-        <li><a href="#/utility" style="color:var(--primary)">utility</a></li>
-        <li><a href="#/task" style="color:var(--primary)">task</a></li>
-        <li><a href="#/memory" style="color:var(--primary)">memory</a></li>
-        <li><a href="#/cheat" style="color:var(--primary)">cheat</a></li>
-        <li><a href="#/fflags" style="color:var(--primary)">fflags</a></li>
-        <li><a href="#/entity" style="color:var(--primary)">entity</a></li>
-        <li><a href="#/instance" style="color:var(--primary)">Instance</a></li>
-        <li><a href="#/class-properties" style="color:var(--primary)">Class Properties</a></li>
-        <li><a href="#/custom-types" style="color:var(--primary)">Custom Types</a></li>
-        <li><a href="#/signals" style="color:var(--primary)">RBXScriptSignal (Events)</a></li>
-        <li><a href="#/library-gating" style="color:var(--primary)">Library Gating</a></li>
-        <li><a href="#/notes" style="color:var(--primary)">Notes</a></li>
-      </ul>
-
-      <button class="btn-copy-all" onclick="copyAllAsText()">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-        Copy All as Text (for AI Agent)
-      </button>
     `,
   },
 
@@ -449,26 +461,11 @@ const PAGES = {
         ]
       )}
 
-      <h3>Math Extensions</h3>
-      <p>Appended to Lua's built-in <code>math</code> library:</p>
-      ${toTable(
-        ["Function", "Signature", "Description"],
-        [
-          ["<b>math.ldexp(x, exp)</b>", "<code>float, int</code>", "Returns <code>x * 2^exp</code>"],
-          ["<b>math.frexp(x)</b>", "<code>float</code>", "Returns <code>mantissa, exponent</code> (decomposes <code>x</code> into fraction and power of two)"],
-        ]
-      )}
-
       <h4>Example</h4>
       ${toCodeblock(`-- string.regex
 if string.regex("hello123", "%d+") then
     print("contains digits")
-end
-
--- math.frexp / math.ldexp
-local m, e = math.frexp(12.5)
-print(m, e)             -- 0.78125, 4
-print(math.ldexp(m, e)) -- 12.5`)}
+end`)}
     `,
   },
 
@@ -1563,15 +1560,47 @@ function flatNav() {
 
 function renderSidebar() {
   const path = currentPath();
-  document.getElementById("sidebar").innerHTML = NAV.map(group => {
+  const saved = JSON.parse(localStorage.getItem("luavm_collapsed") || "{}");
+  document.getElementById("sidebar").innerHTML = NAV.map((group, gi) => {
+    const key = `group_${gi}`;
+    const isOpen = saved[key] !== false;
     const items = group.items.map(item => {
       if (!item.to) return "";
       const active = path === item.to || (item.to !== "/" && path.startsWith(item.to + "/"));
       const icon = NAV_ICONS[item.to] ? ICONS[NAV_ICONS[item.to]] : "";
       return `<li><a href="#${item.to}" class="nav-link${active ? " active" : ""}">${icon}<span class="label">${item.label}</span></a></li>`;
     }).join("");
-    return `<ul class="nav-list">${items}</ul>`;
+    return `<div class="nav-group"><div class="nav-group-heading" data-group="${key}" onclick="toggleNavGroup('${key}')"><span class="chevron ${isOpen ? "open" : ""}">\u25B8</span>${group.heading}</div><div class="nav-group-items ${isOpen ? "open" : ""}"><ul class="nav-list">${items}</ul></div></div>`;
   }).join("");
+}
+
+function toggleNavGroup(key) {
+  const saved = JSON.parse(localStorage.getItem("luavm_collapsed") || "{}");
+  const wasOpen = saved[key] !== false;
+  saved[key] = wasOpen ? false : true;
+  localStorage.setItem("luavm_collapsed", JSON.stringify(saved));
+  const heading = document.querySelector(`[data-group="${key}"]`);
+  if(!heading) return;
+  const container = heading.nextElementSibling;
+  const chevron = heading.querySelector(".chevron");
+  if(wasOpen)
+  {
+    container.style.maxHeight = container.scrollHeight + "px";
+    container.offsetHeight; // force reflow
+    container.style.maxHeight = "0";
+    container.classList.remove("open");
+    chevron.classList.remove("open");
+  } else
+  {
+    container.style.maxHeight = container.scrollHeight + "px";
+    container.classList.add("open");
+    chevron.classList.add("open");
+    const onEnd = () => {
+      container.style.maxHeight = "";
+      container.removeEventListener("transitionend", onEnd);
+    };
+    container.addEventListener("transitionend", onEnd);
+  }
 }
 
 function getNavNeighbors(path) {
@@ -1592,11 +1621,25 @@ function renderMain() {
   const { prev, next } = getNavNeighbors(path);
   const pager = (prev || next) ? `
     <div class="pager">
-      ${prev ? `<a href="#${prev.to}"><span class="label-tiny">← Previous</span><span class="label-main">${prev.label}</span></a>` : `<div></div>`}
-      ${next ? `<a href="#${next.to}" class="right"><span class="label-tiny">Next →</span><span class="label-main">${next.label}</span></a>` : `<div></div>`}
+      ${prev ? `<a href="#${prev.to}"><span class="label-tiny">← Previous</span><span class="label-main">${prev.label}</span></a>` : `<a class="disabled" style="opacity:0.3;pointer-events:none"><span class="label-tiny">← Previous</span><span class="label-main">—</span></a>`}
+      ${next ? `<a href="#${next.to}" class="right"><span class="label-tiny">Next →</span><span class="label-main">${next.label}</span></a>` : `<a class="right disabled" style="opacity:0.3;pointer-events:none"><span class="label-tiny">Next →</span><span class="label-main">—</span></a>`}
     </div>` : "";
   document.getElementById("main").innerHTML = `
     <article>
+      ${path !== "/" ? `
+      <div class="copy-dropdown" id="copyDropdown">
+        <button class="copy-dropdown-btn" onclick="toggleCopyDropdown()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy All
+          <span class="arrow">&#9660;</span>
+        </button>
+        <div class="copy-dropdown-menu">
+          <button class="copy-dropdown-item" onclick="copyAll('text')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Plain Text</button>
+          <button class="copy-dropdown-item" onclick="copyAll('html')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> HTML</button>
+          <button class="copy-dropdown-item" onclick="copyAll('markdown')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Markdown</button>
+        </div>
+      </div>
+      ` : ""}
       <h1>${page.title}</h1>
       <p class="intro">${page.intro}</p>
       <div class="body">${page.body}</div>
@@ -1606,58 +1649,106 @@ function renderMain() {
   window.scrollTo({ top: 0 });
 }
 
-function stripHtml(html) {
-  const d = document.createElement('div');
-  d.innerHTML = html;
-  d.querySelectorAll('script,style').forEach(el => el.remove());
-  let text = d.textContent || '';
-  text = text.replace(/\s+/g, ' ').trim();
-  return text;
+function htmlToMarkdown(html) {
+  let md = html;
+  md = md.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/g, '### $1\n');
+  md = md.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/g, '#### $1\n');
+  md = md.replace(/<b>([\s\S]*?)<\/b>/g, '**$1**');
+  md = md.replace(/<code>([\s\S]*?)<\/code>/g, '`$1`');
+  md = md.replace(/<a[^>]*href="#([^"]*)"[^>]*>([\s\S]*?)<\/a>/g, '[$2]($1)');
+  md = md.replace(/<li>([\s\S]*?)<\/li>/g, '- $1\n');
+  md = md.replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1\n\n');
+  md = md.replace(/<br\s*\/?>/g, '\n');
+  md = md.replace(/<div[^>]*class="table-wrap">[\s\S]*?<table>/g, '');
+  md = md.replace(/<\/table>[\s\S]*?<\/div>/g, '');
+  md = md.replace(/<thead>[\s\S]*?<\/thead>/g, '');
+  md = md.replace(/<tbody>([\s\S]*?)<\/tbody>/g, '$1');
+  md = md.replace(/<tr[^>]*>([\s\S]*?)<\/tr>/g, '$1\n');
+  md = md.replace(/<th[^>]*>([\s\S]*?)<\/th>/g, '| $1 ');
+  md = md.replace(/<td[^>]*>([\s\S]*?)<\/td>/g, '| $1 ');
+  md = md.replace(/\| [\s\S]*? \|\n/g, match => {
+    const cols = match.split('|').filter(c => c.trim()).length;
+    return match + '|' + Array(cols).fill('---').join('|') + '|\n';
+  });
+  md = md.replace(/<div[^>]*class="codeblock[^"]*"[^>]*>/g, '```lua\n');
+  md = md.replace(/<\/div>\s*<\/div>/g, '```\n\n');
+  md = md.replace(/<div[^>]*>/g, '');
+  md = md.replace(/<\/div>/g, '');
+  md = md.replace(/\n{3,}/g, '\n\n');
+  md = md.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  md = md.trim();
+  return md;
 }
 
-function copyAllAsText() {
-  const lines = [];
+function copyAll(format) {
+  document.getElementById('copyDropdown').classList.remove('open');
   const ordered = flatNav();
-  lines.push('=== SHELDON LUA VM - FULL DOCUMENTATION ===');
-  lines.push('');
-  ordered.forEach(item => {
-    if (!item.to) return;
-    const page = PAGES[item.to];
-    if (!page) return;
-    lines.push('---');
-    lines.push(`# ${page.title}`);
+  let output;
+  if(format === 'html')
+  {
+    const parts = ['<!-- SHELDON LUA VM - FULL DOCUMENTATION -->'];
+    ordered.forEach(item => {
+      if (!item.to) return;
+      const page = PAGES[item.to];
+      if (!page) return;
+      parts.push(`<section id="${item.to}">`);
+      parts.push(`<h1>${page.title}</h1>`);
+      parts.push(`<p>${page.intro}</p>`);
+      parts.push(page.body);
+      parts.push('</section>');
+    });
+    output = parts.join('\n');
+  } else
+  {
+    const lines = [];
+    lines.push(format === 'markdown' ? '# SHELDON LUA VM - FULL DOCUMENTATION' : '=== SHELDON LUA VM - FULL DOCUMENTATION ===');
     lines.push('');
-    lines.push(stripHtml(page.intro));
-    lines.push('');
-    lines.push(stripHtml(page.body));
-    lines.push('');
-  });
-  lines.push('=== END OF DOCUMENTATION ===');
-  const text = lines.join('\n');
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.btn-copy-all');
-    if (btn) {
-      const orig = btn.innerHTML;
-      btn.innerHTML = 'Copied!';
-      setTimeout(() => btn.innerHTML = orig, 2000);
-    }
-  }).catch(() => {
+    ordered.forEach(item => {
+      if (!item.to) return;
+      const page = PAGES[item.to];
+      if (!page) return;
+      if(format === 'markdown')
+      {
+        lines.push('---');
+        lines.push(`# ${page.title}`);
+        lines.push('');
+        lines.push(page.intro);
+        lines.push('');
+        lines.push(htmlToMarkdown(page.body));
+        lines.push('');
+      } else
+      {
+        const d = document.createElement('div');
+        d.innerHTML = page.intro + page.body;
+        d.querySelectorAll('script,style').forEach(el => el.remove());
+        let text = (d.textContent || '').replace(/\s+/g, ' ').trim();
+        lines.push('---');
+        lines.push(`# ${page.title}`);
+        lines.push('');
+        lines.push(text);
+        lines.push('');
+      }
+    });
+    lines.push(format === 'markdown' ? '# END OF DOCUMENTATION' : '=== END OF DOCUMENTATION ===');
+    output = lines.join('\n');
+  }
+  navigator.clipboard.writeText(output).catch(() => {
     const ta = document.createElement('textarea');
-    ta.value = text;
+    ta.value = output;
     ta.style.position = 'fixed';
     ta.style.left = '-9999px';
     document.body.appendChild(ta);
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    const btn = document.querySelector('.btn-copy-all');
-    if (btn) {
-      const orig = btn.innerHTML;
-      btn.innerHTML = 'Copied!';
-      setTimeout(() => btn.innerHTML = orig, 2000);
-    }
   });
 }
+
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('copyDropdown');
+  if(dd && !dd.contains(e.target)) dd.classList.remove('open');
+});
+function toggleCopyDropdown() { document.getElementById('copyDropdown').classList.toggle('open'); }
 
 function render() { renderSidebar(); renderMain(); if (typeof hljs !== 'undefined') { if (typeof hljsDefineLuau !== 'undefined') hljs.registerLanguage('luau', hljsDefineLuau); document.querySelectorAll('.codeblock').forEach(el => hljs.highlightElement(el)); } }
 window.addEventListener("hashchange", render);
