@@ -96,9 +96,9 @@
   aside::-webkit-scrollbar { width: 4px; }
   aside::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
   nav.sidebar { display: flex; flex-direction: column; gap: 1.5rem; font-size: 0.875rem; padding-right: 0.5rem; }
-  .nav-group-heading { padding: 0 0.75rem 0.5rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted-2); display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; transition: color .15s; }
+  .nav-group-heading { padding: 0 0.75rem 0.5rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted-2); display: flex; align-items: center; gap: 0.5rem; user-select: none; transition: color .15s; }
   .nav-group-heading:hover { color: var(--muted); }
-  .nav-group-heading .chevron { font-size: 1.2rem; transition: transform .2s; color: var(--muted-2); line-height: 1; display: inline-flex; }
+  .nav-group-heading .chevron { font-size: 1.2rem; transition: transform .2s; color: var(--muted-2); line-height: 1; display: inline-flex; cursor: pointer; }
   .nav-group-heading .chevron.open { transform: rotate(90deg); }
   .nav-group-items { overflow: hidden; transition: max-height .2s ease; max-height: 0; }
   .nav-group-items.open { max-height: 500px; }
@@ -243,7 +243,21 @@
   th, td { padding: 0.65rem 1rem; vertical-align: top; }
   td { color: #d4d4d4; }
   td:first-child { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; font-size: 0.85em; white-space: nowrap; color: #e5e5e5; }
-  td:nth-child(2) { color: var(--muted); }
+  td:first-child b.fn { color: #61afef; font-weight: 500; }
+  td:first-child .hl-opt { color: #5c6370; }
+  td:first-child .hl-num { color: #d19a66; }
+  td:first-child .hl-kw { color: #c678dd; }
+  td:first-child .hl-type { color: #e5c07b; }
+  td:first-child .hl-str { color: #98c379; }
+  td:first-child .hl-ident { color: #56b6c2; font-weight: 500; }
+  td:nth-child(2) { color: var(--muted); white-space: nowrap; }
+  td:nth-child(2) code { color: #c3e88d; }
+  code .hl-opt { color: #5c6370; }
+  code .hl-num { color: #d19a66; }
+  code .hl-type { color: #e5c07b; }
+  code .hl-kw { color: #c678dd; }
+  code .hl-str { color: #98c379; }
+  td:nth-child(2) code { color: #c3e88d; }
 
   .pager { margin-top: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .pager a {
@@ -395,9 +409,25 @@ const NAV = [
   { heading: "Reference", items: [{ to: "/library-gating", label: "Library Gating" }, { to: "/notes", label: "Notes" }] },
 ];
 
+function highlightLua(text) {
+  text = text.replace(/\?/g, '<span class="hl-opt">?</span>');
+  text = text.replace(/\b(0x[a-fA-F0-9]+)\b/g, '<span class="hl-num">$1</span>');
+  text = text.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="hl-num">$1</span>');
+  const keywords = /\b(function|local|if|then|else|elseif|end|for|while|do|repeat|until|return|break|continue|nil|true|false|and|or|not|in)\b/g;
+  text = text.replace(keywords, '<span class="hl-kw">$1</span>');
+  const types = /\b(string|number|int|float|bool|byte|short|ushort|int64|uint64|double|uint|uintptr|any|void|table|Color3|Vector3|Vector2|UDim|UDim2|CFrame|BrickColor|ColorSequence|NumberRange|NumberSequence|Rect|Ray|Region3|Region3int16|Enum|Axis|Angle|PhysicalProperties|RBXScriptSignal|RBXScriptConnection|Instance|Font|Content)\b/g;
+  text = text.replace(types, '<span class="hl-type">$1</span>');
+  return text;
+}
+
 function toTable(headers, rows) {
   const h = headers.map(h => `<th>${h}</th>`).join("");
-  const r = rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("");
+  const r = rows.map(r => `<tr>${r.map(c => {
+    c = c.replace(/<b>([a-zA-Z_.]+)\(([\s\S]*?)\)<\/b>/g, (m, fn, params) => `<b class="fn">${fn}</b>(${highlightLua(params)})`);
+    c = c.replace(/<b>([\s\S]*?)<\/b>/g, '<b class="hl-ident">$1</b>');
+    c = c.replace(/<code>([\s\S]*?)<\/code>/g, (m, inner) => `<code>${highlightLua(inner)}</code>`);
+    return `<td>${c}</td>`;
+  }).join("")}</tr>`).join("");
   return `<div class="table-wrap"><table><thead><tr>${h}</tr></thead><tbody>${r}</tbody></table></div>`;
 }
 
@@ -778,7 +808,7 @@ print(data.Name, data.Character)`)}
         [
           ["<b>draw.Text(text, x, y, color?, font?, alpha?)</b>", "<code>string, number, number, Color3?, string?, int?</code>"],
           ["<b>draw.TextOutlined(text, x, y, color?, font?, alpha?)</b>", "same"],
-          ["<b>draw.GetTextSize(text, font?)</b>", "", "Returns <code>(width, height)</code> as two float values"],
+          ["<b>draw.GetTextSize(text, font?)</b>", "<code>string, string?</code>"],
           ["<b>draw.Line(x1,y1,x2,y2, color?, thickness?, alpha?)</b>", ""],
           ["<b>draw.Rect(x,y,w,h, color?, thickness?, rounding?, alpha?)</b>", ""],
           ["<b>draw.RectFilled(x,y,w,h, color?, rounding?, alpha?)</b>", ""],
@@ -795,6 +825,7 @@ print(data.Name, data.Character)`)}
           ["<b>draw.DeltaTime()</b>", ""],
         ]
       )}
+      <p style="margin-top: -0.75rem"><code>draw.GetTextSize</code> returns <code>width, height</code> as two float values.</p>
 
       <h3>Example</h3>
       ${toCodeblock(`-- Draw overlay text and shapes
@@ -1570,7 +1601,7 @@ function renderSidebar() {
       const icon = NAV_ICONS[item.to] ? ICONS[NAV_ICONS[item.to]] : "";
       return `<li><a href="#${item.to}" class="nav-link${active ? " active" : ""}">${icon}<span class="label">${item.label}</span></a></li>`;
     }).join("");
-    return `<div class="nav-group"><div class="nav-group-heading" data-group="${key}" onclick="toggleNavGroup('${key}')"><span class="chevron ${isOpen ? "open" : ""}">\u25B8</span>${group.heading}</div><div class="nav-group-items ${isOpen ? "open" : ""}"><ul class="nav-list">${items}</ul></div></div>`;
+    return `<div class="nav-group"><div class="nav-group-heading" data-group="${key}"><span class="chevron ${isOpen ? "open" : ""}" onclick="toggleNavGroup('${key}')">\u25B8</span>${group.heading}</div><div class="nav-group-items ${isOpen ? "open" : ""}"><ul class="nav-list">${items}</ul></div></div>`;
   }).join("");
 }
 
@@ -1626,7 +1657,6 @@ function renderMain() {
     </div>` : "";
   document.getElementById("main").innerHTML = `
     <article>
-      ${path !== "/" ? `
       <div class="copy-dropdown" id="copyDropdown">
         <button class="copy-dropdown-btn" onclick="toggleCopyDropdown()">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
@@ -1639,7 +1669,6 @@ function renderMain() {
           <button class="copy-dropdown-item" onclick="copyAll('markdown')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Markdown</button>
         </div>
       </div>
-      ` : ""}
       <h1>${page.title}</h1>
       <p class="intro">${page.intro}</p>
       <div class="body">${page.body}</div>
