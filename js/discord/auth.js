@@ -40,6 +40,10 @@ export async function CheckAuthStatus()
     }
     catch(error)
     {
+        if(token)
+        {
+            return true;
+        }
         UpdateUI();
         return false;
     }
