@@ -11,20 +11,20 @@
     <link rel="icon" href="./favicon/favicon.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             background-color: #050505;
             color: white;
             font-family: 'Inter', sans-serif;
-            overflow: hidden;
             height: 100vh;
+            overflow: hidden;
         }
 
         .bg-mesh {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 1) 0%, rgba(5, 5, 5, 1) 100%);
             z-index: -2;
         }
@@ -35,47 +35,61 @@
             filter: blur(80px);
             opacity: 0.12;
             z-index: -1;
-            animation: float 20s infinite alternate;
+            animation: orbFloat 20s infinite alternate ease-in-out;
         }
 
-        @keyframes float {
+        @keyframes orbFloat {
             0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
+            100% { transform: translate(60px, 40px); }
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
+            from { opacity: 0; transform: translateY(40px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes glitch {
-            0%, 90%, 100% { transform: translate(0); }
-            92% { transform: translate(-3px, 1px); }
-            94% { transform: translate(3px, -1px); }
-            96% { transform: translate(-2px, -1px); }
-            98% { transform: translate(2px, 1px); }
+            0%, 85%, 100% { transform: translate(0); clip-path: inset(0); }
+            86% { transform: translate(-4px, 2px); clip-path: inset(20% 0 60% 0); }
+            88% { transform: translate(4px, -1px); clip-path: inset(50% 0 10% 0); }
+            90% { transform: translate(-2px, -2px); clip-path: inset(10% 0 70% 0); }
+            92% { transform: translate(2px, 1px); clip-path: inset(70% 0 5% 0); }
+            94% { transform: translate(-1px, 3px); clip-path: inset(30% 0 40% 0); }
+            96% { transform: translate(3px, -2px); clip-path: inset(5% 0 80% 0); }
+            98% { transform: translate(0); clip-path: inset(0); }
+        }
+
+        @keyframes glitch-slice {
+            0%, 90%, 100% { opacity: 0; }
+            92% { opacity: 1; transform: translate(8px, -4px); }
+            94% { opacity: 0; }
+            96% { opacity: 1; transform: translate(-6px, 3px); }
+            98% { opacity: 0; }
         }
 
         @keyframes scanline {
-            0% { top: -10%; }
-            100% { top: 110%; }
+            0% { top: -5%; }
+            100% { top: 105%; }
         }
 
-        .hero-animate {
-            animation: fadeInUp 0.8s ease-out forwards;
-            opacity: 0;
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(199, 177, 143, 0.1); }
+            50% { border-color: rgba(199, 177, 143, 0.25); }
         }
 
-        .hero-animate-delay-1 { animation-delay: 0.2s; }
-        .hero-animate-delay-2 { animation-delay: 0.4s; }
-        .hero-animate-delay-3 { animation-delay: 0.6s; }
+        @keyframes number-drip {
+            0% { transform: translateY(-100%); opacity: 0; }
+            30% { opacity: 1; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
 
-        .glitch-text {
-            animation: glitch 3s infinite;
-            background: linear-gradient(to bottom, #fff 40%, #666 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        #particle-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+            pointer-events: none;
         }
 
         .scanline {
@@ -83,104 +97,232 @@
             left: 0;
             width: 100%;
             height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(199, 177, 143, 0.15), transparent);
-            z-index: 0;
-            animation: scanline 4s linear infinite;
+            background: linear-gradient(90deg, transparent, rgba(199, 177, 143, 0.12), transparent);
+            z-index: 1;
+            animation: scanline 3s linear infinite;
             pointer-events: none;
         }
 
-        .glass-btn {
+        .hero-animate {
+            animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            opacity: 0;
+        }
+        .hero-animate-delay-1 { animation-delay: 0.15s; }
+        .hero-animate-delay-2 { animation-delay: 0.3s; }
+        .hero-animate-delay-3 { animation-delay: 0.5s; }
+        .hero-animate-delay-4 { animation-delay: 0.7s; }
+
+        .glass-nav {
             background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             transition: all 0.3s ease;
         }
 
-        .glass-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(199, 177, 143, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 40px rgba(199, 177, 143, 0.15);
+        .glitch-number {
+            position: relative;
+            display: inline-block;
+            animation: glitch 4s infinite;
+            background: linear-gradient(to bottom, #fff 35%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .code-bg {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            opacity: 0.03;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            line-height: 1.4;
-            color: #c7b18f;
-            overflow: hidden;
+        .glitch-ghost {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             pointer-events: none;
-            white-space: pre;
-            user-select: none;
+            animation: glitch-slice 3s infinite;
+            background: linear-gradient(to bottom, #c7b18f 35%, #ff6b6b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: pulse-border 3s infinite;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(199, 177, 143, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 24px 48px -12px rgba(199, 177, 143, 0.2);
+        }
+
+        .btn-home {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-home::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-home:hover::before { left: 100%; }
+
+        .btn-home:hover {
+            background: rgba(199, 177, 143, 0.08);
+            border-color: rgba(199, 177, 143, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px -8px rgba(199, 177, 143, 0.2);
+        }
+
+        .btn-home:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-back {
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .logo-box {
+            transition: transform 0.3s ease;
+        }
+        .logo-box:hover { transform: rotate(10deg) scale(1.05); }
+
+        @media (max-width: 640px) {
+            .glitch-number { font-size: 6rem !important; }
+            .glass-card { padding: 2rem 1.5rem !important; }
         }
     </style>
 </head>
 
-<body class="antialiased flex items-center justify-center">
+<body>
     <div class="bg-mesh"></div>
-    <div class="orb w-[30rem] h-[30rem] bg-[#c7b18f]" style="top: -15%; left: -10%;"></div>
-    <div class="orb w-[35rem] h-[35rem] bg-[#1a1a1a]" style="bottom: -20%; right: -10%; animation-delay: -7s;"></div>
+    <div class="orb w-[32rem] h-[32rem] bg-[#c7b18f]" style="top: -15%; left: -8%;"></div>
+    <div class="orb w-[38rem] h-[38rem] bg-[#2a2a2a]" style="bottom: -22%; right: -12%; animation-delay: -8s;"></div>
+    <div class="orb w-[20rem] h-[20rem] bg-[#5865F2]" style="top: 50%; right: 20%; animation-delay: -4s; opacity: 0.06;"></div>
     <div class="scanline"></div>
+    <canvas id="particle-canvas"></canvas>
 
-    <div class="code-bg" id="codeBg"></div>
-
-    <div class="relative z-10 flex flex-col items-center text-center px-6">
-        <div class="hero-animate mb-6">
-            <span class="text-[0.65rem] font-black text-[#c7b18f] uppercase tracking-[0.25em]">Error</span>
+    <nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center">
+        <div class="w-full max-w-[1100px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between">
+            <div class="flex items-center gap-3 z-10 shrink-0">
+                <a href="./" class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">
+                    <img src="./favicon/favicon.ico" alt="Sheldon" class="w-8 h-8 rounded-lg">
+                </a>
+                <a href="./" class="text-xl font-black tracking-tighter text-white hidden sm:block">SHELDON</a>
+            </div>
+            <div class="flex items-center gap-2 text-[0.65rem] font-bold uppercase tracking-[0.15em]">
+                <span class="text-neutral-600">404</span>
+                <span class="text-neutral-700">/</span>
+                <span class="text-[#c7b18f]">not_found</span>
+            </div>
         </div>
+    </nav>
 
-        <h1 class="glitch-text text-[8rem] md:text-[12rem] lg:text-[16rem] font-black leading-none hero-animate hero-animate-delay-1 tracking-tighter select-none">
-            404
-        </h1>
+    <div class="relative z-10 h-screen flex flex-col items-center justify-center px-6" style="margin-top: -3rem;">
+        <div class="glass-card rounded-[2.5rem] p-10 md:p-14 max-w-lg w-full text-center">
+            <div class="hero-animate mb-2">
+                <span class="text-[0.55rem] font-black text-[#c7b18f] uppercase tracking-[0.3em]">Error 404</span>
+            </div>
 
-        <p class="text-neutral-500 text-base md:text-lg font-medium mb-2 hero-animate hero-animate-delay-2 max-w-md">
-            This page does not exist.
-        </p>
+            <div class="hero-animate hero-animate-delay-1 relative inline-block mb-4">
+                <h1 class="glitch-number text-[7rem] md:text-[9rem] font-black leading-none tracking-tighter select-none">
+                    404
+                    <span class="glitch-ghost">404</span>
+                </h1>
+            </div>
 
-        <div class="flex flex-col sm:flex-row gap-4 mt-8 hero-animate hero-animate-delay-3">
-            <a href="./"
-               class="glass-btn px-8 py-3.5 rounded-2xl text-[0.65rem] font-black uppercase tracking-[0.2em] text-white transition-all">
-                ← Back Home
-            </a>
-            <a href="javascript:history.back()"
-               class="glass-btn px-8 py-3.5 rounded-2xl text-[0.65rem] font-black uppercase tracking-[0.2em] text-neutral-400 transition-all">
-                Go Back
-            </a>
+            <p class="text-neutral-500 text-sm md:text-base font-medium mb-1 hero-animate hero-animate-delay-2">
+                This page doesn't exist.
+            </p>
+            <p class="text-neutral-700 text-xs font-semibold hero-animate hero-animate-delay-2 mb-10">
+                It might have been moved, renamed, or never existed at all.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-3 justify-center hero-animate hero-animate-delay-3">
+                <a href="./"
+                   class="btn-home px-7 py-3.5 rounded-xl text-[0.6rem] font-black uppercase tracking-[0.2em] text-white flex items-center justify-center gap-2">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Home
+                </a>
+                <a href="javascript:history.back()"
+                   class="btn-back px-7 py-3.5 rounded-xl text-[0.6rem] font-black uppercase tracking-[0.2em] text-neutral-400 flex items-center justify-center gap-2">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Go Back
+                </a>
+            </div>
         </div>
     </div>
 
     <script>
-        const lines = [
-            "SHELDON // 404",
-            "SHELDON // 404",
-            "mov eax, 0x404",
-            "jmp NotFound",
-            "syscall",
-            "404: nop",
-            "db 'not found'",
-            "xor eax, eax",
-            "push 0x404",
-            "ret",
-            ".data:",
-            "  msg db '404', 0",
-            "SHELDON v4.0.4",
-            "ERR_NO_PAGE",
-            "segfault @ 0x404",
-            "page_not_found:",
-            "  jmp home",
-            "panic: 0x404",
-        ];
+        const canvas = document.getElementById('particle-canvas');
+        let ctx = null;
+        let particles = [];
+        const particleCount = 120;
 
-        const bg = document.getElementById('codeBg');
-        for (let i = 0; i < 30; i++) {
-            const line = lines[i % lines.length];
-            const padding = '\u00A0'.repeat(Math.floor(Math.random() * 40));
-            bg.textContent += padding + line + '\n';
+        function resize() {
+            if (!canvas) return;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-        bg.textContent = bg.textContent.repeat(8);
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() { this.init(); }
+            init() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.2;
+                this.vy = (Math.random() - 0.5) * 0.2;
+                this.size = Math.random() * 1.8 + 0.2;
+                this.opacity = Math.random() * 0.35 + 0.05;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.init();
+            }
+            draw() {
+                ctx.fillStyle = `rgba(199, 177, 143, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            if (!canvas) return;
+            ctx = canvas.getContext('2d');
+            for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+            animate();
+        }
+
+        function animate() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+        window.onload = initParticles;
     </script>
 </body>
 
