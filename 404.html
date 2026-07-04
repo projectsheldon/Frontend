@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>404 — Project Sheldon</title>
+    <script src="https://cdn.tailwindcss.com?warn=false"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="./favicon/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #050505;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .bg-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 1) 0%, rgba(5, 5, 5, 1) 100%);
+            z-index: -2;
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.12;
+            z-index: -1;
+            animation: float 20s infinite alternate;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            92% { transform: translate(-3px, 1px); }
+            94% { transform: translate(3px, -1px); }
+            96% { transform: translate(-2px, -1px); }
+            98% { transform: translate(2px, 1px); }
+        }
+
+        @keyframes scanline {
+            0% { top: -10%; }
+            100% { top: 110%; }
+        }
+
+        .hero-animate {
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        .hero-animate-delay-1 { animation-delay: 0.2s; }
+        .hero-animate-delay-2 { animation-delay: 0.4s; }
+        .hero-animate-delay-3 { animation-delay: 0.6s; }
+
+        .glitch-text {
+            animation: glitch 3s infinite;
+            background: linear-gradient(to bottom, #fff 40%, #666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .scanline {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(199, 177, 143, 0.15), transparent);
+            z-index: 0;
+            animation: scanline 4s linear infinite;
+            pointer-events: none;
+        }
+
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(199, 177, 143, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(199, 177, 143, 0.15);
+        }
+
+        .code-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.03;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            line-height: 1.4;
+            color: #c7b18f;
+            overflow: hidden;
+            pointer-events: none;
+            white-space: pre;
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body class="antialiased flex items-center justify-center">
+    <div class="bg-mesh"></div>
+    <div class="orb w-[30rem] h-[30rem] bg-[#c7b18f]" style="top: -15%; left: -10%;"></div>
+    <div class="orb w-[35rem] h-[35rem] bg-[#1a1a1a]" style="bottom: -20%; right: -10%; animation-delay: -7s;"></div>
+    <div class="scanline"></div>
+
+    <div class="code-bg" id="codeBg"></div>
+
+    <div class="relative z-10 flex flex-col items-center text-center px-6">
+        <div class="hero-animate mb-6">
+            <span class="text-[0.65rem] font-black text-[#c7b18f] uppercase tracking-[0.25em]">Error</span>
+        </div>
+
+        <h1 class="glitch-text text-[8rem] md:text-[12rem] lg:text-[16rem] font-black leading-none hero-animate hero-animate-delay-1 tracking-tighter select-none">
+            404
+        </h1>
+
+        <p class="text-neutral-500 text-base md:text-lg font-medium mb-2 hero-animate hero-animate-delay-2 max-w-md">
+            This page does not exist.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 mt-8 hero-animate hero-animate-delay-3">
+            <a href="./"
+               class="glass-btn px-8 py-3.5 rounded-2xl text-[0.65rem] font-black uppercase tracking-[0.2em] text-white transition-all">
+                ← Back Home
+            </a>
+            <a href="javascript:history.back()"
+               class="glass-btn px-8 py-3.5 rounded-2xl text-[0.65rem] font-black uppercase tracking-[0.2em] text-neutral-400 transition-all">
+                Go Back
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const lines = [
+            "SHELDON // 404",
+            "SHELDON // 404",
+            "mov eax, 0x404",
+            "jmp NotFound",
+            "syscall",
+            "404: nop",
+            "db 'not found'",
+            "xor eax, eax",
+            "push 0x404",
+            "ret",
+            ".data:",
+            "  msg db '404', 0",
+            "SHELDON v4.0.4",
+            "ERR_NO_PAGE",
+            "segfault @ 0x404",
+            "page_not_found:",
+            "  jmp home",
+            "panic: 0x404",
+        ];
+
+        const bg = document.getElementById('codeBg');
+        for (let i = 0; i < 30; i++) {
+            const line = lines[i % lines.length];
+            const padding = '\u00A0'.repeat(Math.floor(Math.random() * 40));
+            bg.textContent += padding + line + '\n';
+        }
+        bg.textContent = bg.textContent.repeat(8);
+    </script>
+</body>
+
+</html>
