@@ -341,20 +341,6 @@
             box-shadow: 0 10px 40px rgba(199, 177, 143, 0.3);
         }
 
-        .download-spinner {
-            border: 2px solid rgba(0, 0, 0, 0.2);
-            border-top-color: #000;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            animation: downloadSpin 0.8s linear infinite;
-            display: inline-block;
-        }
-
-        @keyframes downloadSpin {
-            to { transform: rotate(360deg); }
-        }
-
         .btn-secondary {
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
@@ -901,128 +887,79 @@
     </script>
     <script src="./js/util/notify.js"></script>
 
-<!-- Download progress modal -->
+<!-- Download URL modal -->
 <style>
-    #download-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        background: rgba(0,0,0,0.85);
-        backdrop-filter: blur(8px);
-        display: none;
-        align-items: center;
-        justify-content: center;
+    #download-modal {
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+        display: none; align-items: center; justify-content: center;
         font-family: 'Inter', sans-serif;
     }
-    #download-overlay.show {
-        display: flex;
-    }
-    #download-overlay .modal-box {
-        background: #111;
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 24px;
-        padding: 2.5rem;
-        max-width: 420px;
-        width: 90%;
+    #download-modal.show { display: flex; }
+    #download-modal .modal-box {
+        background: #111; border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 24px; padding: 2rem; max-width: 460px; width: 90%;
         text-align: center;
     }
-    #download-overlay .modal-title {
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: #fff;
-        margin-bottom: 0.25rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+    #download-modal .modal-title {
+        font-size: 1rem; font-weight: 800; color: #fff;
+        margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;
     }
-    #download-overlay .modal-sub {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: #666;
-        margin-bottom: 1.5rem;
+    #download-modal .modal-sub {
+        font-size: 0.7rem; font-weight: 500; color: #666; margin-bottom: 1.25rem;
     }
-    #download-overlay .progress-track {
-        width: 100%;
-        height: 6px;
-        background: rgba(255,255,255,0.08);
-        border-radius: 99px;
-        overflow: hidden;
-        margin-bottom: 0.75rem;
+    #download-modal .url-wrap {
+        display: flex; gap: 0.5rem; margin-bottom: 1rem;
     }
-    #download-overlay .progress-fill {
-        height: 100%;
-        width: 0%;
-        background: linear-gradient(90deg, #c7b18f, #e8d5b0);
-        border-radius: 99px;
-        transition: width 0.3s ease;
+    #download-modal .url-wrap input {
+        flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px; padding: 0.75rem 1rem; color: #ccc; font-size: 0.75rem;
+        font-family: 'Inter', sans-serif; outline: none;
     }
-    #download-overlay .progress-text {
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: #999;
-        letter-spacing: 0.05em;
+    #download-modal .url-wrap input:focus { border-color: rgba(199,177,143,0.3); }
+    #download-modal .url-wrap button {
+        background: rgba(199,177,143,0.12); border: 1px solid rgba(199,177,143,0.2);
+        color: #c7b18f; border-radius: 12px; padding: 0 1rem;
+        font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+        cursor: pointer; transition: all 0.2s; white-space: nowrap;
     }
-    #download-overlay .modal-icon {
-        width: 48px;
-        height: 48px;
-        margin: 0 auto 1rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    #download-modal .url-wrap button:hover {
+        background: rgba(199,177,143,0.2); border-color: rgba(199,177,143,0.35); color: #fff;
     }
-    #download-overlay .modal-icon.downloading {
-        background: rgba(199,177,143,0.15);
-        animation: pulseOverlay 1.2s ease-in-out infinite;
+    #download-modal .url-wrap button.copied {
+        background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.25); color: #22c55e;
     }
-    #download-overlay .modal-icon.done {
-        background: rgba(34,197,94,0.15);
+    #download-modal .close-btn {
+        padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+        color: #666; font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s;
     }
-    #download-overlay .modal-icon.error {
-        background: rgba(239,68,68,0.15);
+    #download-modal .close-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    #download-modal .error-msg { color: #ef4444; font-size: 0.75rem; font-weight: 500; margin-bottom: 1rem; }
+    #download-modal .loader {
+        border: 2px solid rgba(255,255,255,0.06); border-top-color: #c7b18f;
+        border-radius: 50%; width: 24px; height: 24px;
+        animation: modalSpin 0.8s linear infinite; margin: 1rem auto;
     }
-    @keyframes pulseOverlay {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.08); }
-    }
-    #download-overlay .close-btn {
-        margin-top: 1.25rem;
-        padding: 0.6rem 1.5rem;
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 12px;
-        color: #aaa;
-        font-size: 0.65rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: none;
-    }
-    #download-overlay .close-btn:hover {
-        background: rgba(255,255,255,0.1);
-        color: #fff;
-    }
-    #download-overlay .close-btn.show {
-        display: inline-block;
-    }
+    @keyframes modalSpin { to { transform: rotate(360deg); } }
 </style>
-<div id="download-overlay">
+<div id="download-modal">
     <div class="modal-box">
-        <div class="modal-icon downloading" id="dl-icon">
-            <svg width="24" height="24" fill="none" stroke="#c7b18f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="dl-svg">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+        <div id="dl-loader" class="loader"></div>
+        <div class="modal-title" id="dl-title">Getting link...</div>
+        <div class="modal-sub" id="dl-sub">Fetching latest download</div>
+        <div id="dl-content" style="display:none;">
+            <div class="modal-title">Download</div>
+            <div class="modal-sub">Copy the link to download</div>
+            <div class="url-wrap">
+                <input type="text" id="dl-url" readonly>
+                <button id="dl-copy">Copy</button>
+            </div>
+            <button class="close-btn" id="dl-close-modal">Close</button>
         </div>
-        <div class="modal-title" id="dl-title">Downloading...</div>
-        <div class="modal-sub" id="dl-sub">Preparing download</div>
-        <div class="progress-track">
-            <div class="progress-fill" id="dl-fill"></div>
-        </div>
-        <div class="progress-text" id="dl-pct">0%</div>
-        <button class="close-btn" id="dl-close">Close</button>
+        <div id="dl-error" class="error-msg" style="display:none;"></div>
+        <button class="close-btn" id="dl-close-error" style="display:none;">Close</button>
     </div>
 </div>
 
