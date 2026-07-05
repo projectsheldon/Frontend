@@ -375,11 +375,9 @@ const DiscordAuth = {
                                 '<p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0;">Please try again.</p>';
                         }
                     }
-                    setTimeout(() => {
-                        window._discordLoginPopupOpen = false;
-                        o.style.opacity = '0';
-                        setTimeout(() => o.remove(), 200);
-                    }, 3000);
+                    window._discordLoginPopupOpen = false;
+                    o.style.opacity = '0';
+                    setTimeout(() => o.remove(), 200);
                 }
 
                 resolve();
@@ -424,7 +422,7 @@ const DiscordAuth = {
                         return;
                     }
                 } catch(e) {}
-            }, 2000);
+            }, 800);
 
             const fallbackTimer = setTimeout(() =>
             {
