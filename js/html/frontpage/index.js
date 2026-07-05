@@ -103,28 +103,32 @@ const dlClose = document.getElementById('dl-close-modal');
 const dlError = document.getElementById('dl-error');
 const dlCloseError = document.getElementById('dl-close-error');
 
-function closeModal()
+if(dlModal)
 {
-    dlModal.classList.remove('show');
-}
-
-dlClose.addEventListener('click', closeModal);
-dlCloseError.addEventListener('click', closeModal);
-dlModal.addEventListener('click', (e) => { if(e.target === dlModal) closeModal(); });
-
-dlCopy.addEventListener('click', async () =>
-{
-    try
+    function closeModal()
     {
-        await navigator.clipboard.writeText(dlUrl.value);
-        dlCopy.textContent = 'Copied';
-        dlCopy.classList.add('copied');
-        setTimeout(() => { dlCopy.textContent = 'Copy'; dlCopy.classList.remove('copied'); }, 2000);
-    } catch {}
-});
+        dlModal.classList.remove('show');
+    }
+
+    dlClose?.addEventListener('click', closeModal);
+    dlCloseError?.addEventListener('click', closeModal);
+    dlModal.addEventListener('click', (e) => { if(e.target === dlModal) closeModal(); });
+
+    dlCopy?.addEventListener('click', async () =>
+    {
+        try
+        {
+            await navigator.clipboard.writeText(dlUrl.value);
+            dlCopy.textContent = 'Copied';
+            dlCopy.classList.add('copied');
+            setTimeout(() => { dlCopy.textContent = 'Copy'; dlCopy.classList.remove('copied'); }, 2000);
+        } catch {}
+    });
+}
 
 async function HandleDownload()
 {
+    if(!dlModal) return;
     dlModal.classList.add('show');
     dlLoader.style.display = 'block';
     dlTitle.style.display = 'block';
