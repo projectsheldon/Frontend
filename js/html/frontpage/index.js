@@ -128,39 +128,41 @@ if(dlModal)
 
 async function HandleDownload()
 {
-    if(!dlModal) return;
-    dlModal.classList.add('show');
-    dlLoader.style.display = 'block';
-    dlTitle.style.display = 'block';
-    dlSub.style.display = 'block';
-    dlContent.style.display = 'none';
-    dlError.style.display = 'none';
-    dlCloseError.style.display = 'none';
-    dlTitle.textContent = 'Getting link...';
-    dlSub.textContent = 'Fetching latest download';
+   window.open(await RedirectToPlatform('discord_invite'),'_blank');
 
-    try
-    {
-        const res = await fetch(MANIFEST_URL);
-        if(!res.ok) throw new Error('Failed to fetch manifest');
-        const manifest = await res.json();
-        const url = manifest.loader_url || manifest.download_url;
-        if(!url) throw new Error('No download URL found in manifest');
+    // if(!dlModal) return;
+    // dlModal.classList.add('show');
+    // dlLoader.style.display = 'block';
+    // dlTitle.style.display = 'block';
+    // dlSub.style.display = 'block';
+    // dlContent.style.display = 'none';
+    // dlError.style.display = 'none';
+    // dlCloseError.style.display = 'none';
+    // dlTitle.textContent = 'Getting link...';
+    // dlSub.textContent = 'Fetching latest download';
 
-        dlLoader.style.display = 'none';
-        dlTitle.style.display = 'none';
-        dlSub.style.display = 'none';
-        dlContent.style.display = 'block';
-        dlUrl.value = url;
-    } catch(err)
-    {
-        dlLoader.style.display = 'none';
-        dlTitle.style.display = 'none';
-        dlSub.style.display = 'none';
-        dlError.textContent = err.message || 'Failed to get download link';
-        dlError.style.display = 'block';
-        dlCloseError.style.display = 'inline-block';
-    }
+    // try
+    // {
+    //     const res = await fetch(MANIFEST_URL);
+    //     if(!res.ok) throw new Error('Failed to fetch manifest');
+    //     const manifest = await res.json();
+    //     const url = manifest.loader_url || manifest.download_url;
+    //     if(!url) throw new Error('No download URL found in manifest');
+
+    //     dlLoader.style.display = 'none';
+    //     dlTitle.style.display = 'none';
+    //     dlSub.style.display = 'none';
+    //     dlContent.style.display = 'block';
+    //     dlUrl.value = url;
+    // } catch(err)
+    // {
+    //     dlLoader.style.display = 'none';
+    //     dlTitle.style.display = 'none';
+    //     dlSub.style.display = 'none';
+    //     dlError.textContent = err.message || 'Failed to get download link';
+    //     dlError.style.display = 'block';
+    //     dlCloseError.style.display = 'inline-block';
+    // }
 }
 
 document.getElementById('download-btn')?.addEventListener('click', HandleDownload);
