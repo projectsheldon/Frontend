@@ -21,7 +21,7 @@ window.escapeHtml = function(str)
     return str.replace(/[&<>"'\/]/g, c => map[c]);
 }
 
-window.copyKey = function(btn, val)
+function copyKey(btn, val)
 {
     const el = document.createElement('textarea');
     el.value = val;
@@ -39,6 +39,7 @@ window.copyKey = function(btn, val)
         btn.classList.remove('success');
     }, 2000);
 }
+window.copyKey = copyKey;
 
 function render()
 {
@@ -50,17 +51,39 @@ function render()
         list.innerHTML = '<p class="text-neutral-500">No licenses found.</p>';
         return;
     }
-    list.innerHTML = keys.map(item => `
-        <div class="license-item">
-            <div style="min-width: 0;">
-                <div class="key-text truncate">${window.escapeHtml(item.key)}</div>
-                <span class="tier-label">${window.escapeHtml(item.tier || item.product || 'License')}</span>
-            </div>
-            <div class="copy-btn" title="Copy Key" onclick="copyKey(this, '${window.escapeHtml(item.key)}')">
-                ${copyIcon}
-            </div>
-        </div>
-    `).join('');
+    // Build via createElement + textContent + dataset so no user-controlled value
+    // ever reaches HTML/JS parsing. This closes the &#x27; → ' entity-decode XSS that
+    // would fire if we interpolated into onclick="..." even with escapeHtml.
+    list.innerHTML = '';
+    keys.forEach(item => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'license-item';
+
+        const info = document.createElement('div');
+        info.style.minWidth = '0';
+
+        const keyText = document.createElement('div');
+        keyText.className = 'key-text truncate';
+        keyText.textContent = item.key;
+
+        const tier = document.createElement('span');
+        tier.className = 'tier-label';
+        tier.textContent = item.tier || item.product || 'License';
+
+        info.appendChild(keyText);
+        info.appendChild(tier);
+
+        const copyBtn = document.createElement('div');
+        copyBtn.className = 'copy-btn';
+        copyBtn.title = 'Copy Key';
+        copyBtn.dataset.key = item.key;
+        copyBtn.innerHTML = copyIcon;
+        copyBtn.addEventListener('click', function() { copyKey(this, this.dataset.key); });
+
+        wrapper.appendChild(info);
+        wrapper.appendChild(copyBtn);
+        list.appendChild(wrapper);
+    });
 }
 
 async function loadLicenses()

@@ -68,6 +68,8 @@ function ShowLoginForm()
 
     window.addEventListener('message', async function handleLogin(event)
     {
+        // Reject cross-origin messages so an attacker window can't plant a session token.
+        if(event.origin !== window.location.origin) return;
         if(event.data && event.data.type === 'discord_session')
         {
             window.DiscordAuth.SetSessionToken(event.data.token);

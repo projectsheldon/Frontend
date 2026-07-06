@@ -936,6 +936,22 @@
         import Api from "../js/util/backend.js";
         import { DiscordAuth } from "../js/discord/auth.js";
 
+        // HTML-escape values before dropping into innerHTML templates. Guards against a
+        // compromised backend (or previously-injected data) returning a username / license
+        // key / product string containing HTML or a single-quote breakout for onclick=.
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;'
+            }[c]));
+        }
+
+        function getDiscordAvatar(discordId, avatar) {
+            const safeId = String(discordId || '').replace(/[^0-9]/g, '');
+            const safeAvatar = String(avatar || '').replace(/[^A-Za-z0-9_]/g, '');
+            if (safeAvatar && safeId) return `https://cdn.discordapp.com/avatars/${safeId}/${safeAvatar}.png?size=64`;
+            return `https://cdn.discordapp.com/embed/avatars/0.png?size=64`;
+        }
+
         const SESSION_KEY = 'reseller_ok';
 
         async function getApiUrl() {
@@ -965,13 +981,6 @@
             if (s.notVerified) s.notVerified.classList.toggle('hidden', state !== 'notVerified');
             if (s.deleted) s.deleted.classList.toggle('hidden', state !== 'deleted');
             if (s.dashboard) s.dashboard.classList.toggle('hidden', state !== 'dashboard');
-        }
-
-        function getDiscordAvatar(discordId, avatar) {
-            if (avatar) {
-                return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.png?size=64`;
-            }
-            return `https://cdn.discordapp.com/embed/avatars/0.png?size=64`;
         }
 
         window.addEventListener('beforeunload', () => {
@@ -1133,9 +1142,9 @@
                 
                 tbody.innerHTML = data.resellers.map(r => `
                     <tr>
-                        <td><img src="${getDiscordAvatar(r.discord_id, r.discord_avatar)}" alt="Avatar" class="w-10 h-10 rounded-full object-cover"></td>
-                        <td class="text-white">${r.discord_username || 'Unknown'}</td>
-                        <td class="text-neutral-400">${r.verified_at ? new Date(r.verified_at).toLocaleDateString() : 'N/A'}</td>
+                        <td><img src="${esc(getDiscordAvatar(r.discord_id, r.discord_avatar))}" alt="Avatar" class="w-10 h-10 rounded-full object-cover"></td>
+                        <td class="text-white">${esc(r.discord_username || 'Unknown')}</td>
+                        <td class="text-neutral-400">${r.verified_at ? esc(new Date(r.verified_at).toLocaleDateString()) : 'N/A'}</td>
                     </tr>
                 `).join('');
             } catch (err) {
@@ -1196,7 +1205,9 @@
                 
                 if (data.ok && data.licenses && data.licenses.length > 0) {
                     if (listEl) {
-                        // Styles copied directly from admin licenses explorer - no modifications
+                        // Build via DOM API rather than string-interpolation into innerHTML so a
+                        // license key or product name containing `'`, `<`, or HTML entities can't
+                        // break out of the onclick= attribute (the &#x27;-decode XSS class).
                         listEl.innerHTML = `
                             <table class="licenses-table">
                                 <thead>
@@ -1207,31 +1218,43 @@
                                         <th style="width: 20%;">Actions <button onclick="copyAllLicenses()" class="text-[10px] uppercase tracking-wider text-neutral-500 hover:text-white transition ml-2" title="Copy all as key : product">Copy All</button></th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    ${data.licenses.map(lic => `
-                                        <tr>
-                                            <td>${lic.key}</td>
-                                            <td class="capitalize">${lic.product}</td>
-                                            <td>${new Date(lic.created_at).toLocaleDateString()}</td>
-                                            <td>
-                                                <div class="flex gap-2">
-                                                    <button class="copy-btn" onclick="copyLicense('${lic.key}', '${lic.product}', this)" title="Copy">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                                        </svg>
-                                                    </button>
-                                                    <button class="copy-btn" onclick="showAssignModal('${lic.key}')" title="Assign">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
+                                <tbody></tbody>
                             </table>
                         `;
+                        const tbody = listEl.querySelector('tbody');
+                        const iconCopy = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+                        const iconAssign = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>';
+                        data.licenses.forEach(lic => {
+                            const tr = document.createElement('tr');
+                            const tdKey = document.createElement('td');
+                            tdKey.textContent = lic.key;
+                            const tdProduct = document.createElement('td');
+                            tdProduct.className = 'capitalize';
+                            tdProduct.textContent = lic.product;
+                            const tdDate = document.createElement('td');
+                            tdDate.textContent = new Date(lic.created_at).toLocaleDateString();
+                            const tdActions = document.createElement('td');
+                            const wrap = document.createElement('div');
+                            wrap.className = 'flex gap-2';
+                            const copyBtn = document.createElement('button');
+                            copyBtn.className = 'copy-btn';
+                            copyBtn.title = 'Copy';
+                            copyBtn.innerHTML = iconCopy;
+                            copyBtn.addEventListener('click', function() { copyLicense(lic.key, lic.product, this); });
+                            const assignBtn = document.createElement('button');
+                            assignBtn.className = 'copy-btn';
+                            assignBtn.title = 'Assign';
+                            assignBtn.innerHTML = iconAssign;
+                            assignBtn.addEventListener('click', function() { showAssignModal(lic.key); });
+                            wrap.appendChild(copyBtn);
+                            wrap.appendChild(assignBtn);
+                            tdActions.appendChild(wrap);
+                            tr.appendChild(tdKey);
+                            tr.appendChild(tdProduct);
+                            tr.appendChild(tdDate);
+                            tr.appendChild(tdActions);
+                            tbody.appendChild(tr);
+                        });
                     }
                 } else {
                     if (emptyEl) emptyEl.classList.remove('hidden');
@@ -2162,7 +2185,9 @@
             if (token) {
                 try {
                     let apiUrl = await getApiUrl();
-                    const response = await fetch(`${apiUrl}/discord/me?token=${encodeURIComponent(token)}`);
+                    const response = await fetch(`${apiUrl}/discord/me`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
                     const data = await response.json();
                     if (data.success && data.loggedIn) {
                         loadResellers();
@@ -2180,11 +2205,12 @@
 
         // Listen for Discord OAuth callback from popup
         window.addEventListener('message', async function(event) {
+            if (event.origin !== window.location.origin) return;
             if (event.data && event.data.type === 'discord_session') {
                 DiscordAuth.SetSessionToken(event.data.token);
                 const token = event.data.token;
                 const apiUrl = await getApiUrl();
-                
+
                 try {
                     const res = await fetch(`${apiUrl}/resellers/is-reseller`, {
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -2194,7 +2220,7 @@
                         setResellerSession();
                     }
                 } catch (err) {}
-                
+
                 window.location.reload();
             }
         });
@@ -2215,6 +2241,7 @@
 
         // Listen for Discord OAuth callback
         window.addEventListener('message', function(event) {
+            if (event.origin !== window.location.origin) return;
             if (event.data && event.data.type === 'discord_session') {
                 DiscordAuth.SetSessionToken(event.data.token);
                 window.location.reload();
@@ -2266,7 +2293,9 @@
             if (token) {
                 try {
                     let apiUrl = await getApiUrl();
-                    const response = await fetch(`${apiUrl}/discord/me?token=${encodeURIComponent(token)}`);
+                    const response = await fetch(`${apiUrl}/discord/me`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
                     const data = await response.json();
                     if (data.success && data.loggedIn) {
                         loadResellers();

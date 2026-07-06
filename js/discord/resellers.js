@@ -34,10 +34,27 @@ function showState(state) {
 }
 
 function getDiscordAvatar(discordId, avatar) {
-    if (avatar) {
-        return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.png?size=64`;
+    // Sanitise both inputs — Discord IDs are numeric, avatar hashes are hex — before
+    // interpolating into a URL, so a compromised backend can't inject `../` traversal
+    // or query strings into the CDN URL.
+    const safeId = String(discordId || '').replace(/[^0-9]/g, '');
+    const safeAvatar = String(avatar || '').replace(/[^A-Za-z0-9_]/g, '');
+    if (safeAvatar && safeId) {
+        return `https://cdn.discordapp.com/avatars/${safeId}/${safeAvatar}.png?size=64`;
     }
     return `https://cdn.discordapp.com/embed/avatars/0.png?size=64`;
+}
+
+// HTML-escape any string that will be interpolated into innerHTML. Prevents stored XSS
+// via reseller.discord_username / license.key / license.product coming back from the API.
+function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;'
+    }[c]));
+}
+
+function adminAuthHeaders(adminKey) {
+    return adminKey ? { 'X-Admin-Key': adminKey } : {};
 }
 
 export async function loadResellers() {
@@ -106,10 +123,10 @@ async function loadPublicResellers(apiUrl) {
         
         container.innerHTML = data.resellers.map(r => `
             <div class="glass-card p-4 rounded-2xl flex items-center gap-3">
-                <img src="${getDiscordAvatar(r.discord_id, r.discord_avatar)}" alt="Avatar" 
+                <img src="${esc(getDiscordAvatar(r.discord_id, r.discord_avatar))}" alt="Avatar"
                     class="w-12 h-12 rounded-full object-cover">
                 <div>
-                    <p class="text-white font-bold">${r.discord_username || 'Unknown'}</p>
+                    <p class="text-white font-bold">${esc(r.discord_username || 'Unknown')}</p>
                     <p class="text-neutral-500 text-xs">Verified Reseller</p>
                 </div>
             </div>
@@ -136,16 +153,21 @@ async function loadVerifiedResellers(apiUrl) {
             return;
         }
         
-        tbody.innerHTML = data.resellers.map(r => `
+        // Discord IDs are numeric; scrub to that alphabet before dropping into an inline handler
+        // string so a compromised backend response can't inject JS via r.discord_id.
+        tbody.innerHTML = data.resellers.map(r => {
+            const safeId = String(r.discord_id || '').replace(/[^0-9]/g, '');
+            return `
             <tr>
-                <td><img src="${getDiscordAvatar(r.discord_id, r.discord_avatar)}" alt="Avatar" class="w-10 h-10 rounded-full object-cover"></td>
-                <td class="text-white">${r.discord_username || 'Unknown'}</td>
-                <td class="text-neutral-400">${r.verified_at ? new Date(r.verified_at).toLocaleDateString() : 'N/A'}</td>
+                <td><img src="${esc(getDiscordAvatar(r.discord_id, r.discord_avatar))}" alt="Avatar" class="w-10 h-10 rounded-full object-cover"></td>
+                <td class="text-white">${esc(r.discord_username || 'Unknown')}</td>
+                <td class="text-neutral-400">${r.verified_at ? esc(new Date(r.verified_at).toLocaleDateString()) : 'N/A'}</td>
                 <td>
-                    ${adminKey ? `<button onclick="ResellersModule.unverify('${r.discord_id}')" class="text-xs font-bold text-red-400 hover:text-red-300">Unverify</button>` : ''}
+                    ${adminKey ? `<button onclick="ResellersModule.unverify('${safeId}')" class="text-xs font-bold text-red-400 hover:text-red-300">Unverify</button>` : ''}
                 </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
     } catch (err) {
         tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-red-400">Failed to load</td></tr>';
     }
@@ -163,24 +185,29 @@ async function loadUnverifiedResellers(apiUrl) {
     }
     
     try {
-        const response = await fetch(`${apiUrl}/resellers/unverified?apiKey=${adminKey}`);
+        const response = await fetch(`${apiUrl}/resellers/unverified`, {
+            headers: adminAuthHeaders(adminKey)
+        });
         const data = await response.json();
-        
+
         if (!data.ok || !data.resellers || data.resellers.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-neutral-500">No unverified resellers</td></tr>';
             return;
         }
-        
-        tbody.innerHTML = data.resellers.map(r => `
+
+        tbody.innerHTML = data.resellers.map(r => {
+            const safeId = String(r.discord_id || '').replace(/[^0-9]/g, '');
+            return `
             <tr>
-                <td><img src="${getDiscordAvatar(r.discord_id, r.discord_avatar)}" alt="Avatar" class="w-10 h-10 rounded-full object-cover"></td>
-                <td class="text-white">${r.discord_username || 'Unknown'}</td>
-                <td class="text-neutral-400">${r.created_at ? new Date(r.created_at).toLocaleDateString() : 'N/A'}</td>
+                <td><img src="${esc(getDiscordAvatar(r.discord_id, r.discord_avatar))}" alt="Avatar" class="w-10 h-10 rounded-full object-cover"></td>
+                <td class="text-white">${esc(r.discord_username || 'Unknown')}</td>
+                <td class="text-neutral-400">${r.created_at ? esc(new Date(r.created_at).toLocaleDateString()) : 'N/A'}</td>
                 <td>
-                    <button onclick="ResellersModule.verify('${r.discord_id}')" class="text-xs font-bold text-green-400 hover:text-green-300">Verify</button>
+                    <button onclick="ResellersModule.verify('${safeId}')" class="text-xs font-bold text-green-400 hover:text-green-300">Verify</button>
                 </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
     } catch (err) {
         tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-red-400">Failed to load</td></tr>';
     }
@@ -198,33 +225,36 @@ async function loadDeletedResellers(apiUrl) {
     }
     
     try {
-        const response = await fetch(`${apiUrl}/resellers/deleted?apiKey=${adminKey}`);
+        const response = await fetch(`${apiUrl}/resellers/deleted`, {
+            headers: adminAuthHeaders(adminKey)
+        });
         const data = await response.json();
-        
+
         if (!data.ok || !data.resellers || data.resellers.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-neutral-500">No deleted resellers</td></tr>';
             return;
         }
-        
+
         tbody.innerHTML = data.resellers.map(r => {
             const threeDays = 3 * 24 * 60 * 60 * 1000;
             const timeSince = Date.now() - r.deleted_at;
             const hoursLeft = Math.max(0, Math.ceil((threeDays - timeSince) / (60 * 60 * 1000)));
             const daysLeft = Math.floor(hoursLeft / 24);
             const remainingHours = hoursLeft % 24;
-            
+
             let timeLeftStr = '';
             if (daysLeft > 0) timeLeftStr += `${daysLeft}d `;
             if (remainingHours > 0) timeLeftStr += `${remainingHours}h`;
-            
+
+            const safeId = String(r.discord_id || '').replace(/[^0-9]/g, '');
             return `
             <tr>
-                <td><img src="${getDiscordAvatar(r.discord_id, r.discord_avatar)}" alt="Avatar" class="w-10 h-10 rounded-full object-cover"></td>
-                <td class="text-white">${r.discord_username || 'Unknown'}</td>
-                <td class="text-neutral-400">${r.deleted_at ? new Date(r.deleted_at).toLocaleDateString() : 'N/A'}</td>
-                <td class="text-neutral-400">${timeLeftStr}</td>
+                <td><img src="${esc(getDiscordAvatar(r.discord_id, r.discord_avatar))}" alt="Avatar" class="w-10 h-10 rounded-full object-cover"></td>
+                <td class="text-white">${esc(r.discord_username || 'Unknown')}</td>
+                <td class="text-neutral-400">${r.deleted_at ? esc(new Date(r.deleted_at).toLocaleDateString()) : 'N/A'}</td>
+                <td class="text-neutral-400">${esc(timeLeftStr)}</td>
                 <td>
-                    <button onclick="ResellersModule.removeCooldown('${r.discord_id}')" class="text-xs font-bold text-yellow-400 hover:text-yellow-300">Remove Cooldown</button>
+                    <button onclick="ResellersModule.removeCooldown('${safeId}')" class="text-xs font-bold text-yellow-400 hover:text-yellow-300">Remove Cooldown</button>
                 </td>
             </tr>
         `}).join('');
@@ -272,9 +302,9 @@ export async function verify(discordId) {
     }
     
     try {
-        const response = await fetch(`${apiUrl}/resellers/verify?apiKey=${adminKey}`, {
+        const response = await fetch(`${apiUrl}/resellers/verify`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...adminAuthHeaders(adminKey) },
             body: JSON.stringify({ discord_id: discordId })
         });
         const data = await response.json();
@@ -301,9 +331,9 @@ export async function unverify(discordId) {
     }
     
     try {
-        const response = await fetch(`${apiUrl}/resellers/unverify?apiKey=${adminKey}`, {
+        const response = await fetch(`${apiUrl}/resellers/unverify`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...adminAuthHeaders(adminKey) },
             body: JSON.stringify({ discord_id: discordId })
         });
         const data = await response.json();
@@ -337,9 +367,9 @@ export async function createReseller() {
     }
     
     try {
-        const response = await fetch(`${apiUrl}/resellers/create?apiKey=${adminKey}`, {
+        const response = await fetch(`${apiUrl}/resellers/create`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...adminAuthHeaders(adminKey) },
             body: JSON.stringify({ discord_id: discordId })
         });
         const data = await response.json();
@@ -375,9 +405,9 @@ export async function removeCooldown(discordId) {
     }
     
     try {
-        const response = await fetch(`${apiUrl}/resellers/remove-cooldown?apiKey=${adminKey}`, {
+        const response = await fetch(`${apiUrl}/resellers/remove-cooldown`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...adminAuthHeaders(adminKey) },
             body: JSON.stringify({ discord_id: discordId })
         });
         const data = await response.json();

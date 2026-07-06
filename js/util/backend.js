@@ -1,5 +1,26 @@
 const TEN_MINUTES = 10 * 60 * 1000;
 
+// Allow-list of backend origins that this static site is permitted to talk to.
+// Any URL loaded from localStorage cache OR from the /config/backend response is
+// validated against this list — so a compromised localStorage entry can't redirect
+// every fetch (including the Discord session token in the Authorization header) to
+// an attacker's host. Add localhost variants for dev.
+const ALLOWED_BACKEND_ORIGINS = new Set([
+    'https://backend.projectsheldon.me',
+    'http://localhost:3350',
+    'http://127.0.0.1:3350'
+]);
+
+function isAllowedBackendUrl(candidate) {
+    if (typeof candidate !== 'string' || candidate.length === 0) return false;
+    try {
+        const u = new URL(candidate);
+        return ALLOWED_BACKEND_ORIGINS.has(u.origin);
+    } catch (e) {
+        return false;
+    }
+}
+
 (function migrateOldCache() {
     try {
         const old = localStorage.getItem('cache_backend_url');
@@ -8,6 +29,10 @@ const TEN_MINUTES = 10 * 60 * 1000;
             if (typeof parsed.data === 'string' && parsed.data.endsWith('/')) {
                 parsed.data = parsed.data.replace(/\/+$/, '');
                 localStorage.setItem('cache_backend_url', JSON.stringify(parsed));
+            }
+            // Purge if the cached URL isn't in the allow-list (defence against a poisoned cache).
+            if (typeof parsed.data === 'string' && !isAllowedBackendUrl(parsed.data)) {
+                localStorage.removeItem('cache_backend_url');
             }
         }
     } catch (e) {}
@@ -45,32 +70,35 @@ const Api = {
     async _fetchBackendUrl()
     {
         const cached = Cache.get('backend_url');
-        if (cached) {
+        if (cached && isAllowedBackendUrl(cached)) {
             this._backendUrl = stripTrailingSlash(cached);
             return this._backendUrl;
         }
+        // Cache is unusable — clear it so we don't keep falling through.
+        Cache.remove('backend_url');
 
         const remoteServer = stripTrailingSlash('https://backend.projectsheldon.me');
         const localServer = stripTrailingSlash('http://localhost:3350');
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const fallbackUrl = isLocalhost ? localServer : remoteServer;
 
         try
         {
-            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const fallbackUrl = isLocalhost ? localServer : remoteServer;
-
             const response = await fetch(`${fallbackUrl}/config/backend`);
             if(response.ok)
             {
                 const data = await response.json();
-                this._backendUrl = stripTrailingSlash(isLocalhost ? data.localhost : data.server);
+                const candidate = stripTrailingSlash(isLocalhost ? data.localhost : data.server);
+                // Only trust the config-backend response if it points at an allow-listed origin;
+                // otherwise the fallback wins.
+                this._backendUrl = isAllowedBackendUrl(candidate) ? candidate : fallbackUrl;
             } else
             {
                 this._backendUrl = fallbackUrl;
             }
         } catch(e)
         {
-            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            this._backendUrl = isLocalhost ? localServer : remoteServer;
+            this._backendUrl = fallbackUrl;
         }
 
         Cache.set('backend_url', this._backendUrl);

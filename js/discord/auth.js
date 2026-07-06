@@ -40,10 +40,9 @@ export async function CheckAuthStatus()
     }
     catch(error)
     {
-        if(token)
-        {
-            return true;
-        }
+        // Network error: do NOT assume the token is valid. Returning `true` here previously
+        // let a planted token survive validation just because the backend was unreachable,
+        // which cements a session-fixation attack whenever the network flaps.
         UpdateUI();
         return false;
     }
@@ -166,7 +165,12 @@ const DiscordAuth = {
         const response = await fetch(`${apiUrl}/discord/login`);
         const data = await response.json();
 
-        window.location.href = data.url;
+        // Only follow the URL if it actually points at Discord's OAuth endpoint. Guards
+        // against a compromised backend response (or a cache-poisoned Api.GetApiUrl)
+        // returning `javascript:...` or an off-domain phishing URL.
+        if (typeof data.url === 'string' && /^https:\/\/discord\.com\//i.test(data.url)) {
+            window.location.href = data.url;
+        }
     },
     async Logout()
     {
@@ -268,6 +272,14 @@ const DiscordAuth = {
         const redirectUri = encodeURIComponent(`${apiUrl.replace(/\/+$/, '')}/discord/callback`);
         const scope = "identify";
         const origin = window.location.origin;
+
+        // Mint a login nonce and stash it in localStorage. The hash-token receiver below
+        // requires this flag to exist before accepting `#discord_token=…`. Without it,
+        // an attacker-sent link like `?…#discord_token=THEIR_TOKEN` can't plant a session
+        // (session fixation). Cleared after use or on TTL.
+        try {
+            localStorage.setItem('discord_login_pending', String(Date.now()));
+        } catch(e) {}
 
         let authCode = '';
         try
@@ -445,6 +457,21 @@ window.DiscordAuth = DiscordAuth;
     const hash = window.location.hash;
     if(hash.startsWith('#discord_token='))
     {
+        // Only accept a hash-delivered token if we recently opened the OAuth popup
+        // ourselves. Without this pairing, anyone can craft
+        //   https://projectsheldon.github.io/#discord_token=ATTACKER
+        // send the victim, and they end up using the attacker's Discord session.
+        // Nonce TTL: 15 min — plenty for a real OAuth round-trip.
+        const pending = (() => { try { return Number(localStorage.getItem('discord_login_pending')) || 0; } catch(e) { return 0; } })();
+        const NONCE_TTL_MS = 15 * 60 * 1000;
+        const nonceValid = pending > 0 && (Date.now() - pending) < NONCE_TTL_MS;
+        // Always clear the flag; a single hash-token consumes it.
+        try { localStorage.removeItem('discord_login_pending'); } catch(e) {}
+
+        if(!nonceValid) {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+            return;
+        }
         const token = decodeURIComponent(hash.substring('#discord_token='.length));
         if(token)
         {
@@ -462,6 +489,7 @@ window.DiscordAuth = DiscordAuth;
         const err = decodeURIComponent(hash.substring('#discord_error='.length));
         history.replaceState(null, '', window.location.pathname + window.location.search);
         try { localStorage.setItem('discord_error', err); } catch(e) {}
+        try { localStorage.removeItem('discord_login_pending'); } catch(e) {}
         setTimeout(() =>
         {
             if(typeof Notify !== 'undefined') Notify('Login cancelled', 'warning', 3000);

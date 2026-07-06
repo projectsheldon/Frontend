@@ -7,7 +7,9 @@ export async function RedirectToPlatform(platform, newTab = true)
     if(link)
     {
         if(newTab)
-            window.open(link, '_blank');
+            // noopener kills reverse-tabnabbing; noreferrer stops the target from learning
+            // the current URL (which might contain license material like ?showKeys=).
+            window.open(link, '_blank', 'noopener,noreferrer');
         else
             window.location.href = link;
     }

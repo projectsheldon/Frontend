@@ -8,6 +8,9 @@ let userMenu = null;
 
 window.addEventListener('message', function(event)
 {
+    // Only accept messages from our own origin — the OAuth-callback popup — so third-party
+    // pages can't plant a session token by postMessage from an attacker-controlled window.
+    if(event.origin !== window.location.origin) return;
     if(event.data && event.data.type === 'discord_session')
     {
         window.DiscordAuth.SetSessionToken(event.data.token);
