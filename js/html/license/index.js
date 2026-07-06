@@ -128,12 +128,23 @@ async function loadLicenses()
             if(data.ok && data.license)
             {
                 keys = [ { key: data.license.key, tier: data.license.product } ];
+                if(data.source === 'usage_reward' && data.usage)
+                {
+                    sessionStorage.setItem('usage_reward', '1');
+                    sessionStorage.setItem('usage_seconds', String(data.usage.seconds || 0));
+                    sessionStorage.setItem('usage_threshold', String(data.usage.threshold_seconds || 0));
+                }
             } else if(data.ok && data.new_balance !== undefined)
             {
                 const added = (typeof data.added === 'number' && !isNaN(data.added)) ? data.added : 0;
                 const oldBalance = data.new_balance - added;
                 sessionStorage.setItem('balance_added', String(added));
                 sessionStorage.setItem('balance_old', String(Math.max(0, oldBalance)));
+                if(data.usage)
+                {
+                    sessionStorage.setItem('usage_seconds', String(data.usage.seconds || 0));
+                    sessionStorage.setItem('usage_threshold', String(data.usage.threshold_seconds || 0));
+                }
                 if(data.capped)
                 {
                     list.innerHTML = '<p class="text-neutral-500">Max balance of 3.0 reached. Spend some balance first!</p>';
@@ -217,6 +228,36 @@ async function loadLicenses()
     render();
 }
 
+function renderUsageProgress() {
+    const seconds = parseFloat(sessionStorage.getItem('usage_seconds') || '0');
+    const threshold = parseFloat(sessionStorage.getItem('usage_threshold') || '0');
+    if (!threshold || threshold <= 0) return;
+    const list = document.getElementById('license-list');
+    if (!list) return;
+
+    const pct = Math.min(100, Math.round((seconds / threshold) * 100));
+    const hours = (seconds / 3600).toFixed(1);
+    const thresholdHours = Math.round(threshold / 3600);
+    const rewarded = sessionStorage.getItem('usage_reward') === '1';
+    const remaining = Math.max(0, thresholdHours - Math.floor(seconds / 3600));
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-top:20px;padding:16px 18px;background:rgba(199,177,143,0.05);border:1px solid rgba(199,177,143,0.2);border-radius:12px;text-align:left';
+    wrap.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.4);margin-bottom:8px">
+            <span>Weekly usage</span>
+            <span style="color:#c7b18f;font-weight:700">${window.escapeHtml(hours + ' / ' + thresholdHours + ' h')}</span>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#c7b18f,#e2c9a1);border-radius:3px;transition:width 0.5s ease"></div>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px;text-align:center">
+            ${rewarded ? "Free key claimed. Counter reset — play another " + thresholdHours + " h this week for the next." : (remaining > 0 ? "Play " + remaining + " more hour" + (remaining === 1 ? "" : "s") + " this week to earn a free key without watching an ad." : "Threshold met! Your next ad grants a free key.")}
+        </div>
+    `;
+    list.appendChild(wrap);
+}
+
 // Confetti on license success
 function triggerConfetti() {
   if (typeof confetti !== 'undefined') {
@@ -251,6 +292,7 @@ render = function() {
 const originalLoadLicenses = loadLicenses;
 loadLicenses = async function() {
   await originalLoadLicenses.apply(this, arguments);
+  renderUsageProgress();
   if (keys.length > 0) {
     setTimeout(triggerConfetti, 800);
   }
