@@ -159,6 +159,49 @@ async function LoadLicenses()
     }
 }
 
+async function loadWeeklyProgress(token)
+{
+    const slot = document.getElementById('weekly-progress-slot');
+    if(!slot || !token) return;
+    try
+    {
+        const res = await fetch(`${await Api.GetApiUrl()}/workink/usage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionToken: token })
+        });
+        const data = await res.json();
+        if(!data.ok || !data.threshold_seconds) { slot.innerHTML = ''; return; }
+
+        const seconds = Math.max(0, Number(data.seconds) || 0);
+        const threshold = data.threshold_seconds;
+        const pct = Math.min(100, Math.round((seconds / threshold) * 100));
+        const hours = (seconds / 3600).toFixed(1);
+        const thresholdHours = Math.round(threshold / 3600);
+        const remaining = Math.max(0, thresholdHours - Math.floor(seconds / 3600));
+        const note = pct >= 100
+            ? 'Milestone reached — a free key is ready!'
+            : `Play ${remaining} more h this week for a free key.`;
+
+        slot.innerHTML = `
+            <div style="margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                    <span style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.5); font-weight:700;">Weekly usage</span>
+                    <span style="font-size:12px; color:#c7b18f; font-weight:700;">${hours} / ${thresholdHours}h</span>
+                </div>
+                <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                    <div style="height:100%; width:${pct}%; background:linear-gradient(90deg,#c7b18f,#e6d3b5); border-radius:3px;"></div>
+                </div>
+                <div style="font-size:10px; color:rgba(255,255,255,0.35); margin-top:6px;">${note}</div>
+            </div>
+        `;
+    }
+    catch(e)
+    {
+        if(slot) slot.innerHTML = '';
+    }
+}
+
 function RenderLicenses(menu, licenses, token)
 {
     if(licenses.length > 0)
@@ -182,11 +225,13 @@ function RenderLicenses(menu, licenses, token)
         `).join('');
 
         menu.innerHTML = `
+            <div id="weekly-progress-slot"></div>
             <div class="text-white font-bold text-sm mb-2">Your Licenses</div>
             <div id="licenses-scroll-rect" style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
                 ${licensesHtml}
             </div>
         `;
+        loadWeeklyProgress(token);
 
         document.querySelectorAll('.copy-license-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -233,11 +278,13 @@ function RenderLicenses(menu, licenses, token)
     else
     {
         menu.innerHTML = `
+            <div id="weekly-progress-slot"></div>
             <div class="text-white font-bold text-sm mb-2">Your Licenses</div>
             <div id="licenses-scroll-rect" style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
                 <div class="text-neutral-400 text-xs text-center py-4">No licenses found</div>
             </div>
         `;
+        loadWeeklyProgress(token);
     }
 }
 
