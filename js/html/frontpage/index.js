@@ -92,8 +92,6 @@ async function LoadProducts()
 }
 document.addEventListener('DOMContentLoaded', LoadProducts);
 
-const MANIFEST_URL = 'https://raw.githubusercontent.com/projectsheldon/sheldon-binaries/refs/heads/main/manifest.json';
-
 const dlModal = document.getElementById('download-modal');
 const dlLoader = document.getElementById('dl-loader');
 const dlTitle = document.getElementById('dl-title');
@@ -128,43 +126,82 @@ if(dlModal)
     });
 }
 
+function triggerDownload(url)
+{
+    // Best-effort auto-start. Popup blockers may stop this after the await, but the modal
+    // still shows the copyable link as a fallback.
+    try
+    {
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    } catch(e) {}
+}
+
 async function HandleDownload()
 {
-   window.open(await RedirectToPlatform('discord_invite'),'_blank');
+    const loggedIn = !!(window.DiscordAuth && window.DiscordAuth.currentUser);
 
-    // if(!dlModal) return;
-    // dlModal.classList.add('show');
-    // dlLoader.style.display = 'block';
-    // dlTitle.style.display = 'block';
-    // dlSub.style.display = 'block';
-    // dlContent.style.display = 'none';
-    // dlError.style.display = 'none';
-    // dlCloseError.style.display = 'none';
-    // dlTitle.textContent = 'Getting link...';
-    // dlSub.textContent = 'Fetching latest download';
+    // Logged-out visitors just get the Discord invite. The download link is never fetched
+    // (or exposed) unless there is a valid session.
+    if(!loggedIn)
+    {
+        RedirectToPlatform('discord_invite');
+        return;
+    }
 
-    // try
-    // {
-    //     const res = await fetch(MANIFEST_URL);
-    //     if(!res.ok) throw new Error('Failed to fetch manifest');
-    //     const manifest = await res.json();
-    //     const url = manifest.loader_url || manifest.download_url;
-    //     if(!url) throw new Error('No download URL found in manifest');
+    if(!dlModal) return;
 
-    //     dlLoader.style.display = 'none';
-    //     dlTitle.style.display = 'none';
-    //     dlSub.style.display = 'none';
-    //     dlContent.style.display = 'block';
-    //     dlUrl.value = url;
-    // } catch(err)
-    // {
-    //     dlLoader.style.display = 'none';
-    //     dlTitle.style.display = 'none';
-    //     dlSub.style.display = 'none';
-    //     dlError.textContent = err.message || 'Failed to get download link';
-    //     dlError.style.display = 'block';
-    //     dlCloseError.style.display = 'inline-block';
-    // }
+    dlModal.classList.add('show');
+    dlLoader.style.display = 'block';
+    dlTitle.style.display = 'block';
+    dlSub.style.display = 'block';
+    dlContent.style.display = 'none';
+    dlError.style.display = 'none';
+    dlCloseError.style.display = 'none';
+    dlTitle.textContent = 'Getting link...';
+    dlSub.textContent = 'Fetching latest download';
+
+    try
+    {
+        const token = window.DiscordAuth?.GetSessionToken?.();
+        const apiUrl = await Api.GetApiUrl();
+
+        // Auth-gated: the server only returns the URL for a valid Discord session.
+        const res = await fetch(`${apiUrl}/download/url`, {
+            mode: 'cors',
+            credentials: 'include',
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined
+        });
+
+        if(res.status === 401) throw new Error('Please log in again to download.');
+        if(!res.ok) throw new Error('Failed to get download link');
+
+        const data = await res.json();
+        const url = data && data.ok ? data.url : null;
+        if(!url) throw new Error('No download link available');
+
+        dlLoader.style.display = 'none';
+        dlTitle.style.display = 'none';
+        dlSub.style.display = 'none';
+        dlContent.style.display = 'block';
+        dlUrl.value = url;
+
+        triggerDownload(url);
+    } catch(err)
+    {
+        dlLoader.style.display = 'none';
+        dlTitle.style.display = 'none';
+        dlSub.style.display = 'none';
+        dlError.textContent = err.message || 'Failed to get download link';
+        dlError.style.display = 'block';
+        dlCloseError.style.display = 'inline-block';
+    }
 }
 
 document.getElementById('download-btn')?.addEventListener('click', HandleDownload);

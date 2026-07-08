@@ -52,6 +52,15 @@ function UpdateUI(loggedIn, user = null)
     const discordBtn = document.getElementById('discord-login-btn');
     const userProfileTrigger = document.getElementById('user-profile-trigger');
 
+    // Hero call-to-action: logged-in users see a Download button (fetches the link from the
+    // server on demand); logged-out users keep the "Join Discord" invite. The button's click
+    // behaviour reads login state at click time, so we only need to swap the label here.
+    const downloadBtn = document.getElementById('download-btn');
+    if(downloadBtn)
+    {
+        downloadBtn.textContent = loggedIn ? 'Download' : 'join discord';
+    }
+
     if(loggedIn)
     {
         if(userProfileTrigger)
@@ -320,7 +329,7 @@ const DiscordAuth = {
                         const code = input.value.trim().toUpperCase();
                         try
                         {
-                            const res = await fetch(`${apiUrl}/discord/poll-auth?code=${code}`);
+                            const res = await fetch(`${apiUrl}/discord/poll-auth?code=${encodeURIComponent(code)}`);
                             const data = await res.json();
                             if(data.ok && data.status === 'success')
                             {
@@ -333,6 +342,14 @@ const DiscordAuth = {
                             else if(data.status === 'pending')
                             {
                                 if(typeof Notify !== 'undefined') Notify('Code not ready yet. Try again.', 'info', 2000);
+                            }
+                            else if(data.status === 'rate_limited')
+                            {
+                                if(typeof Notify !== 'undefined') Notify('Too many attempts — wait a moment and try again.', 'warning', 3000);
+                            }
+                            else if(data.status === 'expired')
+                            {
+                                if(typeof Notify !== 'undefined') Notify('That code expired. Start login again.', 'error', 3000);
                             }
                             else
                             {
@@ -362,46 +379,97 @@ const DiscordAuth = {
     {
         await new Promise(resolve =>
         {
-            function completeAuth(token, error)
+            // We only tear the overlay down once the backend CONFIRMS a real session. Any
+            // other outcome (cancelled, expired, unconfirmed, timed out) keeps the overlay
+            // open so the user can retry or finish via the code — we never auto-dismiss or
+            // navigate them away.
+            let settled = false;
+            let verifying = false;
+
+            function cleanup()
             {
                 clearInterval(pollInterval);
                 clearTimeout(fallbackTimer);
                 window._resolveAuthPoll = null;
+            }
 
-                if(token) DiscordAuth.SetSessionToken(token);
-
+            function removeOverlay(delay)
+            {
+                window._discordLoginPopupOpen = false;
                 const o = document.querySelector('#discord-app-overlay');
-                if(o)
+                if(!o) return;
+                if(delay > 0) { o.style.opacity = '0'; setTimeout(() => o.remove(), delay); }
+                else o.remove();
+            }
+
+            // Not logged in: keep the overlay up with a retry/close so the user is never stuck.
+            function keepOpen(title, sub)
+            {
+                if(settled) return;
+                cleanup();
+                const modal = document.querySelector('#discord-app-modal');
+                if(!modal) { resolve(); return; }
+                modal.innerHTML =
+                    '<h3 style="color:#ef4444;font-size:18px;margin:0 0 8px;">' + title + '</h3>' +
+                    '<p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0 0 20px;">' + sub + '</p>' +
+                    '<div style="display:flex;gap:12px;">' +
+                        '<button id="discord-retry-btn" style="flex:1;background:#5865F2;color:white;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:bold;cursor:pointer;">Try Again</button>' +
+                        '<button id="discord-cancel-btn" style="flex:1;background:rgba(255,255,255,0.1);color:white;border:none;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer;">Close</button>' +
+                    '</div>';
+                const retry = document.getElementById('discord-retry-btn');
+                const cancel = document.getElementById('discord-cancel-btn');
+                if(retry) retry.onclick = () => { removeOverlay(0); resolve(); DiscordAuth.LoginPopup(); };
+                if(cancel) cancel.onclick = () => { removeOverlay(0); resolve(); };
+            }
+
+            // Confirm the session with /discord/me before closing. If it doesn't check out,
+            // keep the overlay open rather than closing on a token we can't trust.
+            async function tryFinish(token)
+            {
+                if(settled || verifying) return;
+                verifying = true;
+                try
                 {
+                    if(token) DiscordAuth.SetSessionToken(token);
+
+                    let loggedIn = false;
+                    try { loggedIn = await CheckAuthStatus(); } catch(e) { loggedIn = false; }
+
+                    if(!loggedIn)
+                    {
+                        if(token) DiscordAuth.DeleteSessionToken();
+                        keepOpen('Login failed', 'We could not confirm your login. Please try again.');
+                        return;
+                    }
+
+                    settled = true;
+                    cleanup();
                     const modal = document.querySelector('#discord-app-modal');
                     if(modal)
                     {
-                        if(token)
-                        {
-                            modal.innerHTML = '<h3 style="color:#22c55e;font-size:18px;margin:0 0 8px;">Login Successful!</h3>' +
-                                '<p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0;">You are now logged in.</p>';
-                        }
-                        else
-                        {
-                            modal.innerHTML = '<h3 style="color:#ef4444;font-size:18px;margin:0 0 8px;">' + (error || 'Login Cancelled') + '</h3>' +
-                                '<p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0;">Please try again.</p>';
-                        }
+                        modal.innerHTML = '<h3 style="color:#22c55e;font-size:18px;margin:0 0 8px;">Login Successful!</h3>' +
+                            '<p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0;">You are now logged in.</p>';
                     }
-                    window._discordLoginPopupOpen = false;
-                    o.style.opacity = '0';
-                    setTimeout(() => o.remove(), 200);
+                    removeOverlay(700);
+                    resolve();
                 }
-
-                resolve();
+                finally { verifying = false; }
             }
 
-            window._resolveAuthPoll = completeAuth;
+            // Resolver used by the manual code-entry Submit button.
+            window._resolveAuthPoll = function(token, error)
+            {
+                if(token) tryFinish(token);
+                else keepOpen('Login Cancelled', error || 'You are not logged in yet. Try again.');
+            };
 
             const pollInterval = setInterval(async () =>
             {
+                if(settled || verifying) return;
+
                 if(DiscordAuth.GetSessionToken())
                 {
-                    completeAuth(DiscordAuth.GetSessionToken());
+                    await tryFinish(DiscordAuth.GetSessionToken());
                     return;
                 }
 
@@ -409,18 +477,11 @@ const DiscordAuth = {
                 {
                     try
                     {
-                        const res = await fetch(`${apiUrl}/discord/poll-auth?code=${authCode}`);
+                        const res = await fetch(`${apiUrl}/discord/poll-auth?code=${encodeURIComponent(authCode)}`);
                         const data = await res.json();
-                        if(data.ok && data.status === 'success')
-                        {
-                            completeAuth(data.token);
-                            return;
-                        }
-                        if(data.ok && data.status === 'error')
-                        {
-                            completeAuth(null, 'Login cancelled');
-                            return;
-                        }
+                        if(data.ok && data.status === 'success') { await tryFinish(data.token); return; }
+                        if(data.ok && data.status === 'error') { keepOpen('Login Cancelled', 'You cancelled the Discord authorization.'); return; }
+                        if(data.status === 'expired') { keepOpen('Code expired', 'That login code expired. Please try again.'); return; }
                     } catch(e) {}
                 }
 
@@ -430,20 +491,18 @@ const DiscordAuth = {
                     if(err)
                     {
                         localStorage.removeItem('discord_error');
-                        completeAuth(null, 'Login cancelled');
+                        keepOpen('Login Cancelled', 'You cancelled the Discord authorization.');
                         return;
                     }
                 } catch(e) {}
             }, 800);
 
+            // Safety net: after the code's server-side lifetime, stop polling but KEEP the
+            // overlay with a retry. We deliberately do NOT redirect the user anywhere.
             const fallbackTimer = setTimeout(() =>
             {
-                clearInterval(pollInterval);
-                window._discordLoginPopupOpen = false;
-                const o = document.querySelector('#discord-app-overlay');
-                if(o) { o.style.opacity = '0'; setTimeout(() => o.remove(), 200); }
-                window.location.href = fallbackOauthUrl;
-            }, 120000);
+                keepOpen('Still waiting…', 'Finish in the Discord app, or try again.');
+            }, 300000);
         });
 
         CheckAuthStatus();
