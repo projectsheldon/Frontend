@@ -335,10 +335,7 @@ async function ShowBalanceCheckout()
                     ${isOnCooldown
                         ? `<button id="purchase-balance-btn" class="btn-action" style="max-width: 300px; padding-top: 17px; padding-bottom: 17px; opacity: 0.4; cursor: not-allowed;" disabled>
                             COOLDOWN — ${formatCooldown(cooldownRemaining)}
-                           </button>
-                           <span style="font-size: 12px; color: #ef4444; font-weight: 700;">
-                            You have been rate limited. Please wait ${formatCooldown(cooldownRemaining)} before purchasing again.
-                           </span>`
+                           </button>`
                         : `<button id="purchase-balance-btn" class="btn-action" style="max-width: 300px; padding-top: 17px; padding-bottom: 17px; ${canAfford ? '' : 'opacity: 0.5; cursor: not-allowed;'}" ${canAfford ? '' : 'disabled'}>
                             ${canAfford ? `PURCHASE KEY${qty > 1 ? 'S' : ''}` : 'Insufficient Balance'}
                            </button>`
@@ -370,9 +367,7 @@ async function ShowBalanceCheckout()
                         return;
                     }
                     const btn = document.getElementById('purchase-balance-btn');
-                    const msg = document.querySelector('#payment-form span[style*="color: #ef4444"]');
                     if(btn) btn.textContent = `COOLDOWN — ${formatCooldown(remaining)}`;
-                    if(msg) msg.textContent = `You have been rate limited. Please wait ${formatCooldown(remaining)} before purchasing again.`;
                 }, 1000);
             }
             else
