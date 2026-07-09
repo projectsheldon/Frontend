@@ -962,23 +962,39 @@
         animation: modalSpin 0.8s linear infinite; margin: 1rem auto;
     }
     @keyframes modalSpin { to { transform: rotate(360deg); } }
+    #download-modal #dl-progress-wrap {
+        display: none; height: 6px; background: rgba(255,255,255,0.08);
+        border-radius: 3px; overflow: hidden; margin: 0.75rem 0 0.25rem;
+    }
+    #download-modal #dl-progress-bar {
+        height: 100%; width: 0%; border-radius: 3px;
+        background: linear-gradient(90deg,#c7b18f,#e6d3b5); transition: width 0.2s ease;
+    }
+    #download-modal #dl-actions, #download-modal #dl-error-actions {
+        display: none; gap: 0.5rem; justify-content: center; margin-top: 0.25rem;
+    }
+    #download-modal .close-btn.accent {
+        background: rgba(199,177,143,0.15); border-color: rgba(199,177,143,0.25); color: #c7b18f;
+    }
+    #download-modal .close-btn.accent:hover {
+        background: rgba(199,177,143,0.25); color: #fff;
+    }
 </style>
 <div id="download-modal">
     <div class="modal-box">
         <div id="dl-loader" class="loader"></div>
-        <div class="modal-title" id="dl-title">Getting link...</div>
-        <div class="modal-sub" id="dl-sub">Fetching latest download</div>
-        <div id="dl-content" style="display:none;">
-            <div class="modal-title">Download</div>
-            <div class="modal-sub">Copy the link to download</div>
-            <div class="url-wrap">
-                <input type="text" id="dl-url" readonly>
-                <button id="dl-copy">Copy</button>
-            </div>
+        <div class="modal-title" id="dl-title">Preparing…</div>
+        <div class="modal-sub" id="dl-sub">Starting</div>
+        <div id="dl-progress-wrap"><div id="dl-progress-bar"></div></div>
+        <div id="dl-actions">
+            <button class="close-btn accent" id="dl-save-again">Save file</button>
             <button class="close-btn" id="dl-close-modal">Close</button>
         </div>
         <div id="dl-error" class="error-msg" style="display:none;"></div>
-        <button class="close-btn" id="dl-close-error" style="display:none;">Close</button>
+        <div id="dl-error-actions">
+            <button class="close-btn accent" id="dl-fallback">Download .7z</button>
+            <button class="close-btn" id="dl-close-error">Close</button>
+        </div>
     </div>
 </div>
 
