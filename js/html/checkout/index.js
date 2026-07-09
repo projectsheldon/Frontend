@@ -240,10 +240,31 @@ function SetupTicketButton()
     });
 }
 
+function renderBalanceState(message, action)
+{
+    const paymentForm = document.getElementById('payment-form');
+    if(!paymentForm) return;
+
+    let btn = '';
+    if(action === 'login') btn = '<button id="balance-login-btn" class="btn-action" style="max-width:300px;padding-top:15px;padding-bottom:15px;">Log in with Discord</button>';
+    else if(action === 'retry') btn = '<button id="balance-retry-btn" class="btn-action" style="max-width:300px;padding-top:15px;padding-bottom:15px;">Try Again</button>';
+
+    paymentForm.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;width:100%;text-align:center;gap:22px;">
+            <div style="font-size:15px;color:rgba(255,255,255,0.7);max-width:82%;line-height:1.45;">${message}</div>
+            ${btn}
+        </div>`;
+
+    const loginBtn = document.getElementById('balance-login-btn');
+    if(loginBtn) loginBtn.addEventListener('click', () => { try { window.DiscordAuth.LoginPopup(); } catch(e) {} });
+    const retryBtn = document.getElementById('balance-retry-btn');
+    if(retryBtn) retryBtn.addEventListener('click', () => { ShowBalanceCheckout(); });
+}
+
 async function ShowBalanceCheckout()
 {
     const authToken = DiscordAuth.GetSessionToken();
-    if(!authToken) return;
+    if(!authToken) { renderBalanceState('Please log in to redeem your balance for a key.', 'login'); return; }
 
     const apiUrl = await Api.GetApiUrl();
     const authHeaders = { 'Authorization': `Bearer ${authToken}` };
@@ -256,7 +277,7 @@ async function ShowBalanceCheckout()
         });
         const data = await response.json();
 
-        if(!data.ok) return;
+        if(!data || !data.ok) { renderBalanceState('Your session may have expired. Please log in again.', 'login'); return; }
 
         const balance = data.balance || 0;
         const adRewardBalance = data.ad_reward_balance || 0.1;
@@ -428,5 +449,6 @@ async function ShowBalanceCheckout()
     catch(error)
     {
         console.error('Failed to load balance:', error);
+        renderBalanceState('Couldn\'t load your balance. Check your connection and try again.', 'retry');
     }
 }
