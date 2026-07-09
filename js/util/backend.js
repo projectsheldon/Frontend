@@ -1,3 +1,5 @@
+import "./clearance.js"; // installs a window.fetch guard that auto-recovers backend calls from Cloudflare challenges
+
 const TEN_MINUTES = 10 * 60 * 1000;
 
 // Allow-list of backend origins that this static site is permitted to talk to.
