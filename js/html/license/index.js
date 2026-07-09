@@ -86,6 +86,41 @@ function render()
     });
 }
 
+function renderRateLimited(list, message, until)
+{
+    function fmt(ms)
+    {
+        const s = Math.max(0, Math.ceil(ms / 1000));
+        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+        if(h > 0) return h + 'h ' + m + 'm';
+        if(m > 0) return m + 'm ' + sec + 's';
+        return sec + 's';
+    }
+    function paint()
+    {
+        const remaining = until ? (until - Date.now()) : 0;
+        const countdown = (until && remaining > 0)
+            ? '<div style="font-size:34px;font-weight:800;color:#e8b04b;letter-spacing:-0.02em;margin:10px 0 2px;">' + fmt(remaining) + '</div>'
+              + '<div style="font-size:12px;color:rgba(255,255,255,0.4);">until you can earn again</div>'
+            : '';
+        list.innerHTML =
+            '<div style="text-align:center;padding:8px 4px;">'
+          +   '<div style="font-size:18px;font-weight:800;color:#e8b04b;margin-bottom:8px;">Daily limit reached</div>'
+          +   '<div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;max-width:340px;margin:0 auto;">' + window.escapeHtml(message) + '</div>'
+          +   countdown
+          + '</div>';
+    }
+    paint();
+    if(until)
+    {
+        const iv = setInterval(() =>
+        {
+            if(Date.now() >= until) { clearInterval(iv); paint(); return; }
+            paint();
+        }, 1000);
+    }
+}
+
 async function loadLicenses()
 {
     const urlParams = new URLSearchParams(window.location.search);
@@ -159,6 +194,11 @@ async function loadLicenses()
                 if(data.message === "Not logged in" || data.message === "Invalid session")
                 {
                     list.innerHTML = '<p class="text-neutral-500">Please log in with Discord first to claim your free license.</p>';
+                    return;
+                }
+                if(response.status === 429 || data.rate_limited_until)
+                {
+                    renderRateLimited(list, data.message || 'You have reached your daily balance limit. Come back later.', data.rate_limited_until || 0);
                     return;
                 }
                 if(data.message)
