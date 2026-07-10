@@ -454,7 +454,33 @@ async function claimWorkinkToken()
     try
     {
         const apiUrl = await Api.GetApiUrl();
-        const discordId = window.DiscordAuth?.currentUser?.id || null;
+
+        // Resolve the real Discord id: use the already-loaded profile, else wait briefly for
+        // the topbar's auth check to populate it, else ask /discord/me directly (authoritative
+        // — it's derived from this same session, so it can never mismatch). The token's ~7-min
+        // lifetime leaves plenty of room for this quick lookup.
+        let discordId = window.DiscordAuth?.currentUser?.id || null;
+        if(!discordId)
+        {
+            const startedAt = Date.now();
+            while(!discordId && Date.now() - startedAt < 3000)
+            {
+                await new Promise(r => setTimeout(r, 150));
+                discordId = window.DiscordAuth?.currentUser?.id || null;
+            }
+        }
+        if(!discordId)
+        {
+            try
+            {
+                const meRes = await fetch(`${apiUrl}/discord/me`, {
+                    headers: { Authorization: 'Bearer ' + sessionToken },
+                    credentials: 'include'
+                });
+                const meData = await meRes.json();
+                if(meData && meData.success && meData.user && meData.user.id) discordId = String(meData.user.id);
+            } catch(e) {}
+        }
 
         // Form-urlencoded = a CORS simple request (no preflight), so it works behind the
         // Cloudflare challenge — same reason the /license page was switched over.
