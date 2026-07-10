@@ -377,6 +377,7 @@ const ICONS = {
   internet: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>',
   utility: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
   task: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>',
+  tween: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
   memory: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="4" x2="9" y2="7"/><line x1="15" y1="4" x2="15" y2="7"/><line x1="9" y1="17" x2="9" y2="20"/><line x1="15" y1="17" x2="15" y2="20"/></svg>',
   cheat: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
   fflags: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
@@ -403,6 +404,7 @@ const NAV_ICONS = {
   "/internet": "internet",
   "/utility": "utility",
   "/task": "task",
+  "/tween": "tween",
   "/memory": "memory",
   "/cheat": "cheat",
   "/fflags": "fflags",
@@ -419,7 +421,7 @@ const NAV = [
   { heading: "Getting Started", items: [{ to: "/", label: "Overview" }, { to: "/globals", label: "Global Functions" }] },
   { heading: "Libraries", items: [{ to: "/base64", label: "base64" }, { to: "/hash", label: "hash" }, { to: "/compress", label: "compress" }] },
   { heading: "Rendering", items: [{ to: "/gui", label: "gui" }, { to: "/imgui", label: "imgui" }, { to: "/draw", label: "draw" }] },
-  { heading: "System", items: [{ to: "/input", label: "input" }, { to: "/file", label: "file" }, { to: "/internet", label: "internet" }, { to: "/utility", label: "utility" }, { to: "/task", label: "task" }, { to: "/memory", label: "memory" }] },
+  { heading: "System", items: [{ to: "/input", label: "input" }, { to: "/file", label: "file" }, { to: "/internet", label: "internet" }, { to: "/utility", label: "utility" }, { to: "/task", label: "task" }, { to: "/tween", label: "tween" }, { to: "/memory", label: "memory" }] },
   { heading: "Exploitation", items: [{ to: "/cheat", label: "cheat" }, { to: "/fflags", label: "fflags" }, { to: "/entity", label: "entity" }] },
   { heading: "Roblox Types", items: [{ to: "/instance", label: "Instance" }, { to: "/class-properties", label: "Class Properties" }, { to: "/custom-types", label: "Custom Types" }, { to: "/signals", label: "RBXScriptSignal" }] },
   { heading: "Reference", items: [{ to: "/library-gating", label: "Library Gating" }, { to: "/notes", label: "Notes" }] },
@@ -593,6 +595,79 @@ end)
 
 local elapsed = task.wait(1)
 print("Waited", elapsed, "seconds")`)}
+    `,
+  },
+
+  "/tween": {
+    title: "tween",
+    intro: "Interpolate instance properties smoothly over time. Modelled on Roblox's TweenService.",
+    body: `
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>tween.Info(time, delayTime?, style?)</b>", "<code>number, number?, string?</code>", "Builds a TweenInfo table. <code>style</code> defaults to <code>\"Linear\"</code>, <code>delayTime</code> to <code>0</code>. You can also pass a raw table <code>{time=..., delayTime=..., style=...}</code> anywhere info is expected."],
+          ["<b>tween.Create(instance, info, props)</b>", "<code>Instance, table, table</code>", "Creates a tween that will interpolate each property in <code>props</code> from its current value to the target value. Returns a tween object."],
+        ]
+      )}
+
+      <h3>Tween Object</h3>
+      ${toTable(
+        ["Method", "Signature", "Description"],
+        [
+          ["<b>tween:Play(waitForFinish?)</b>", "<code>bool?</code>", "Starts the tween. When <code>waitForFinish</code> is <code>true</code>, blocks the calling coroutine until every property has finished tweening; otherwise returns immediately. Both <code>tween:Play(...)</code> and <code>tween.Play(...)</code> syntaxes are accepted."],
+          ["<b>tween:Cancel()</b>", "", "Snaps every property back to the value it had when the tween was created. Does not stop already-scheduled ticks — for that, let the tween finish or overwrite the property."],
+        ]
+      )}
+
+      <h3>Easing Styles</h3>
+      <p><code>Linear</code>, <code>Bounce</code>, <code>Elastic</code>, <code>Exponential</code>, <code>Cubic</code>. Also exposed as <code>tween.EasingStyle.Linear</code> etc. for readability. Pass either the string or the constant.</p>
+
+      <h3>Supported Property Types</h3>
+      <ul>
+        <li><code>number</code> — e.g. <code>Transparency</code>, <code>Reflectance</code>, <code>WalkSpeed</code></li>
+        <li><code>Vector3</code> — e.g. <code>Position</code>, <code>Size</code>, <code>LinearVelocity</code>, <code>AngularVelocity</code></li>
+        <li><code>Color3</code> — e.g. <code>Color</code></li>
+      </ul>
+      <p>The property must be registered for the instance's class (see <a href="#/class-properties">Class Properties</a>) and must not be read-only. Unsupported properties raise an error at <code>tween.Create</code> time.</p>
+
+      <h3>Example — Move a part</h3>
+      ${toCodeblock(`local part = workspace.Part
+local info = tween.Info(1.5, 0, "Cubic")
+
+local t = tween.Create(part, info, {
+    Position = Vector3.new(0, 20, 0),
+    Transparency = 0.5,
+})
+
+t:Play()`)}
+
+      <h3>Example — Wait until finished</h3>
+      ${toCodeblock(`local part = workspace.Part
+
+local t = tween.Create(part, { time = 2, style = "Bounce" }, {
+    Position = part.Position + Vector3.new(0, 15, 0),
+})
+
+t:Play(true)
+print("Tween finished — running follow-up code")`)}
+
+      <h3>Example — Chained tweens</h3>
+      ${toCodeblock(`task.spawn(function()
+    local part = workspace.Part
+    local up   = tween.Create(part, tween.Info(1, 0, "Cubic"),  { Position = part.Position + Vector3.new(0, 10, 0) })
+    local down = tween.Create(part, tween.Info(1, 0, "Bounce"), { Position = part.Position })
+
+    up:Play(true)
+    down:Play(true)
+end)`)}
+
+      <h3>Notes</h3>
+      <ul>
+        <li>Each property tweens independently. Passing multiple properties runs them in parallel on the same schedule.</li>
+        <li><code>tween:Play(true)</code> blocks the calling coroutine — use <code>task.spawn</code> if you don't want to freeze your main script.</li>
+        <li>Tweens write directly to memory. Physics-driven properties (<code>Position</code>, <code>CFrame</code>, velocities) update visually but the engine may resimulate them next physics step; combine with anchoring or velocity-zeroing for full control.</li>
+        <li>Tween ticks run on a dedicated background thread and continue even if the script yields.</li>
+      </ul>
     `,
   },
 
