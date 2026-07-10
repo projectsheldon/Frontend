@@ -121,6 +121,22 @@ function renderRateLimited(list, message, until)
     }
 }
 
+function getFingerprint()
+{
+    try
+    {
+        let fp = localStorage.getItem('sheldon_fp');
+        if(!fp)
+        {
+            fp = (window.crypto && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : (Date.now().toString(36) + Math.random().toString(36).slice(2));
+            localStorage.setItem('sheldon_fp', fp);
+        }
+        return fp;
+    } catch(e) { return null; }
+}
+
 async function loadLicenses()
 {
     const urlParams = new URLSearchParams(window.location.search);
@@ -154,10 +170,22 @@ async function loadLicenses()
             }
 
             const apiUrl = await Api.GetApiUrl();
+
+            // Send as application/x-www-form-urlencoded — a CORS "simple request" that needs
+            // NO preflight. The JSON body forced an OPTIONS preflight, and the browser can't
+            // attach the Cloudflare clearance cookie to a preflight, so behind a VPN the
+            // preflight got challenged and blocked ("No Access-Control-Allow-Origin"). As a
+            // simple request it carries the clearance cookie and clearance.js can recover it.
+            const genBody = new URLSearchParams();
+            genBody.set('token', token);
+            if(discordId) genBody.set('discordId', discordId);
+            genBody.set('sessionToken', sessionToken);
+            const fp = getFingerprint();
+            if(fp) genBody.set('fingerprint', fp);
+
             const response = await fetch(`${apiUrl}/workink/generate`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: token, discordId: discordId, sessionToken: sessionToken })
+                body: genBody
             });
             const data = await response.json();
             if(data.ok && data.license)
