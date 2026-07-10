@@ -340,18 +340,28 @@ function claimFingerprint()
     } catch(e) { return null; }
 }
 
-// Resolve once the user is logged in (session token + profile loaded), or null on timeout.
+// Resolve with the session token as soon as one exists, or null on timeout. We read
+// localStorage DIRECTLY rather than waiting for window.DiscordAuth.currentUser — that flag
+// is only set after CheckAuthStatus()'s /discord/me round-trip, which can lag behind
+// Cloudflare, wrongly making a logged-in user look logged-out and delaying (or expiring) the
+// claim. The backend validates the session token itself, so the presence of the token is all
+// we need to fire immediately; discordId is optional (the server derives it from the session).
 function waitForLogin(timeoutMs)
 {
+    const readToken = () =>
+    {
+        try { const t = localStorage.getItem('discord_session'); if(t) return t; } catch(e) {}
+        try { return window.DiscordAuth?.GetSessionToken?.() || null; } catch(e) { return null; }
+    };
     return new Promise(resolve =>
     {
         const start = Date.now();
         (function check()
         {
-            const st = window.DiscordAuth?.GetSessionToken?.();
-            if(st && window.DiscordAuth?.currentUser) return resolve(st);
+            const t = readToken();
+            if(t) return resolve(t);
             if(Date.now() - start > timeoutMs) return resolve(null);
-            setTimeout(check, 300);
+            setTimeout(check, 200);
         })();
     });
 }
