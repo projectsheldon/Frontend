@@ -57,6 +57,25 @@
             z-index: -2;
         }
 
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -1;
+            animation: float 20s infinite alternate;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+
         .glass-nav {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(12px);
@@ -365,6 +384,8 @@
 
 <body class="antialiased">
     <div class="bg-mesh"></div>
+    <div class="orb w-[30rem] h-[30rem] bg-[#c7b18f]" style="top: -10%; left: -15%;"></div>
+    <div class="orb w-[35rem] h-[35rem] bg-[#1a1a1a]" style="bottom: -20%; right: -10%; animation-delay: -7s;"></div>
 
     <nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center" style="height: 64px;">
         <div class="w-full max-w-[1100px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">

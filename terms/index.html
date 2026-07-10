@@ -43,6 +43,25 @@
             z-index: -2;
         }
 
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -1;
+            animation: float 20s infinite alternate;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+
         .glass-nav {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(12px);
@@ -191,6 +210,8 @@
 
 <body class="antialiased">
     <div class="bg-mesh"></div>
+    <div class="orb w-[30rem] h-[30rem] bg-[#c7b18f]" style="top: -10%; left: -15%;"></div>
+    <div class="orb w-[35rem] h-[35rem] bg-[#1a1a1a]" style="bottom: -20%; right: -10%; animation-delay: -7s;"></div>
 
     <nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center">
         <div
@@ -248,64 +269,79 @@
             </div>
 
             <div class="tos-card space-y-10">
-                <!-- 01. Liability & Bans -->
+                <!-- 01. Agreement -->
                 <section>
                     <h2 class="text-xl font-bold mb-4">
                         <span class="section-number">01.</span>
+                        <span class="section-title"> Agreement</span>
+                    </h2>
+                    <div class="section-content space-y-3 pl-8">
+                        <p>By downloading, purchasing, or using Project Sheldon, you confirm that you have read and agree to these Terms of Service.</p>
+                        <p>If you do not agree with any part of these terms, do not download or use the software.</p>
+                    </div>
+                </section>
+
+                <hr class="section-divider">
+
+                <!-- 02. Liability & Bans -->
+                <section>
+                    <h2 class="text-xl font-bold mb-4">
+                        <span class="section-number">02.</span>
                         <span class="section-title"> Liability & Bans</span>
                     </h2>
                     <div class="section-content space-y-3 pl-8">
-                        <p>By downloading or purchasing Sheldon, you acknowledge that you are using this software entirely at your own risk.</p>
-                        <p>I am NOT responsible for any administrative actions taken against your game account, such as: suspensions, bans, or account deletions.</p>
+                        <p>Sheldon is provided "as is", without any warranty of any kind. You use it entirely at your own risk.</p>
+                        <p>I am not responsible for any action taken against your game account — including suspensions, bans, or deletions — or for any other loss or damage resulting from your use of the software.</p>
                     </div>
                 </section>
 
                 <hr class="section-divider">
 
                
+                <!-- 03. Privacy & Data -->
                 <section>
                     <h2 class="text-xl font-bold mb-4">
-                        <span class="section-number">02.</span>
-                        <span class="section-title"> Privacy & Telemetry</span>
+                        <span class="section-number">03.</span>
+                        <span class="section-title"> Privacy & Data</span>
                     </h2>
                     <div class="section-content space-y-3 pl-8">
-                        <p>Project Sheldon is designed with user privacy in mind. We explicitly state the following:</p>
+                        <p>I respect your privacy. I do not collect telemetry, usage data, screenshots, or any other personal information.</p>
                         <ul class="space-y-3 pl-4">
-                            <li><strong class="text-white">Telemetry:</strong> I do not collect usage, screenshots or any stuff like that.</li>
-                            <li><strong class="text-white">Hardware ID:</strong> Only for the purpose of license verification (binding your key to your PC).</li>
+                            <li><strong class="text-white">Hardware ID:</strong> The only identifier I use is your HWID, and only to bind your license to your device for verification. It is never sold or shared with anyone.</li>
                         </ul>
                     </div>
                 </section>
 
                 <hr class="section-divider">
 
-                <!-- 03. Refund Policy -->
+                <!-- 04. Payments & Refunds -->
                 <section>
                     <h2 class="text-xl font-bold mb-4">
-                        <span class="section-number">03.</span>
-                        <span class="section-title"> Refund Policy</span>
+                        <span class="section-number">04.</span>
+                        <span class="section-title"> Payments & Refunds</span>
                     </h2>
                     <div class="section-content space-y-3 pl-8">
-                        <p>Due to the nature of digital licenses, refunds are not guaranteed.</p>
-                        <p>Refund requests are handled manually by me. Attempting to buy a license and then refund it is prohibited.</p>
+                        <p>Every purchase grants you a personal license to use Sheldon. Because licenses are digital and delivered instantly, refunds are not guaranteed and are reviewed manually by me on a case-by-case basis.</p>
+                        <p>Purchasing a license with the intent to refund or reverse the payment (chargeback) is prohibited and will result in a permanent ban with no refund.</p>
                     </div>
                 </section>
 
                 <hr class="section-divider">
 
-                <!-- 04. Prohibited Actions -->
+                <!-- 05. Prohibited Use -->
                 <section>
                     <h2 class="text-xl font-bold mb-4">
-                        <span class="section-number">04.</span>
-                        <span class="section-title"> Prohibited Actions</span>
+                        <span class="section-number">05.</span>
+                        <span class="section-title"> Prohibited Use</span>
                     </h2>
                     <div class="section-content space-y-3 pl-8">
-                        <p>You may not crack, decompile or bypass Sheldon. Doing so will result in a termination of your access to Sheldon.</p>
+                        <p>You may not crack, decompile, reverse-engineer, or bypass Sheldon or its licensing system.</p>
+                        <p>Violating these terms will result in immediate termination of your access, without a refund.</p>
                     </div>
                 </section>
             </div>
 
-            <p class="text-center text-neutral-600 text-xs mt-12">Last updated: April 6, 2026</p>
+            <p class="text-center text-neutral-600 text-xs mt-12">Last updated: July 10, 2026</p>
         </div>
     </main>
 
