@@ -84,6 +84,14 @@ export function installBackendFetchGuard()
         // when credentials are included. Preserve an explicit choice if the caller set one.
         if (init.credentials === undefined) init.credentials = 'include';
 
+        // Only auto-retry idempotent methods. A non-idempotent request (POST) may have already
+        // reached the backend and had a side effect before the response was lost — retrying it
+        // would double-submit. For /workink/generate that means the token gets consumed twice
+        // and the 2nd try returns "expired or invalid"; for purchases it'd double-charge. So we
+        // still run the clearance pass (sets cf_clearance for the NEXT request) but do not retry.
+        const method = (init.method || 'GET').toUpperCase();
+        const canRetry = method === 'GET' || method === 'HEAD';
+
         try
         {
             return await orig(input, init);
@@ -92,9 +100,9 @@ export function installBackendFetchGuard()
         {
             // Opaque failure — most often a Cloudflare challenge (the 403 challenge response
             // has no CORS headers, so the browser surfaces it as "Failed to fetch"), sometimes
-            // a transient network blip. Solve/clear once, then retry a couple of times;
-            // Cloudflare clears the client after evaluating it.
+            // a transient network blip. Clear once so the client is evaluated/cleared.
             try { await runClearance(); } catch (e) {}
+            if (!canRetry) throw err;
             for (let attempt = 0; attempt < 2; attempt++)
             {
                 try { return await orig(input, init); }
