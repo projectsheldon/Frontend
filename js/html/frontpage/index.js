@@ -437,6 +437,9 @@ async function claimWorkinkToken()
     {
         try { token = sessionStorage.getItem('pending_workink_token'); } catch(e) {}
     }
+    // The WorkInk destination URL has a trailing space after `?token=`, so the token arrives
+    // as " <uuid>" — the leading space becomes %20 server-side and work.ink rejects it. Trim.
+    if(token) token = token.trim();
     if(!token) return;
 
     let sessionToken = await waitForLogin(4000);

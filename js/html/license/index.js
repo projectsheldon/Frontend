@@ -142,7 +142,9 @@ async function loadLicenses()
     const urlParams = new URLSearchParams(window.location.search);
     const list = document.getElementById('license-list');
 
-    const token = urlParams.get('token');
+    // Trim: the WorkInk destination URL has a trailing space after `?token=`, so the token
+    // arrives as " <uuid>" — untrimmed, the leading space becomes %20 and work.ink rejects it.
+    const token = (urlParams.get('token') || '').trim();
     if(token)
     {
         try
