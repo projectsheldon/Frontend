@@ -1059,6 +1059,10 @@ end)`)}
           ["<b>imgui.Checkbox(text, v)</b>", ""],
           ["<b>imgui.Slider(title, v, min, max)</b>", ""],
           ["<b>imgui.SliderInt(title, v, min, max)</b>", ""],
+          ["<b>imgui.DragFloat(title, v, speed?, min?, max?, format?, disabled?)</b>", "returns <code>changed, value</code>"],
+          ["<b>imgui.DragInt(title, v, speed?, min?, max?, format?, disabled?)</b>", "returns <code>changed, value</code>"],
+          ["<b>imgui.DragFloat2(title, x, y, speed?, min?, max?, format?, disabled?)</b>", "labeled row, returns <code>changed, x, y</code>"],
+          ["<b>imgui.DragFloat3(title, x, y, z, speed?, min?, max?, format?, disabled?)</b>", "labeled row, returns <code>changed, x, y, z</code>"],
           ["<b>imgui.InputText(title, v, placeholder, w?, flags?)</b>", ""],
           ["<b>imgui.MultilineInput(title, v, placeholder, w?, flags?)</b>", ""],
           ["<b>imgui.WidgetsText(text, color?, alpha?)</b>", ""],
@@ -1072,6 +1076,16 @@ end)`)}
           ["<b>imgui.Shimmer(w, h)</b>", ""],
         ]
       )}
+
+      <h3>Drag Widgets</h3>
+      <p><code>DragFloat</code> / <code>DragInt</code> are draggable numeric fields. Drag horizontally to change the value; click without dragging to type a value directly. Hold <code>Ctrl</code> while dragging for finer steps (0.1×), <code>Shift</code> for coarser (10×).</p>
+      <ul>
+        <li><code>speed</code> — value change per pixel dragged (default <code>1</code>).</li>
+        <li><code>min</code>, <code>max</code> — clamp range. Leave both <code>0</code> (or equal) for an <b>unbounded</b> field.</li>
+        <li><code>format</code> — printf-style, may include a suffix, e.g. <code>"%.2f studs"</code> or <code>"%d rounds"</code>.</li>
+        <li><code>disabled</code> — when <code>true</code>, the field is dimmed and ignores input.</li>
+        <li><code>DragFloat2</code> / <code>DragFloat3</code> render a labeled property row with 2 / 3 boxes sharing one row's width — ideal for Vector2 / Vector3.</li>
+      </ul>
 
       <h3>Tabs</h3>
       ${toTable(
@@ -1121,6 +1135,16 @@ imgui.Text("Hello, world!")
 if imgui.Button("Click Me") then
     print("Button clicked!")
 end
+
+-- Drag widgets return (changed, newValue). Reassign to persist.
+local changed, speed = imgui.DragFloat("Speed", speed, 0.5, 0, 100, "%.1f")
+if changed then print("Speed is now", speed) end
+
+-- Vector3 as a labeled 3-box row
+local moved, px, py, pz = imgui.DragFloat3("Position", px, py, pz, 0.25)
+
+-- A disabled (read-only looking) field
+imgui.DragFloat("Locked", 42, 1, 0, 0, "%.2f", true)
 imgui.End()`)}
     `,
   },
