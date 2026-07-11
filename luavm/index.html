@@ -500,6 +500,7 @@ const PAGES = {
           ["<b>hex(number)</b>", "Formats a number as hex string (e.g. <code>0x7FF...</code>)"],
           ["<b>tick()</b>", "Returns <code>GetTickCount64()</code> — milliseconds since system start"],
           ["<b>loadstring(source)</b>", "Loads and compiles Lua source code. Returns <code>(function, nil)</code> on success or <code>(nil, error_message)</code> on failure."],
+          ["<b>type(v)</b>", "Overrides Lua's built-in <code>type()</code>. Behaves normally for all Lua values, and additionally recognizes Roblox Luau GC addresses returned by <code>cheat.getgc()</code>/<code>cheat.rawget()</code> — for a number that points at a live GC object it returns <code>\"table\"</code>, <code>\"string\"</code>, <code>\"function\"</code>, <code>\"userdata\"</code>, or <code>\"thread\"</code> depending on the object's type."],
         ]
       )}
 
@@ -516,6 +517,15 @@ const PAGES = {
       ${toCodeblock(`-- string.regex
 if string.regex("hello123", "%d+") then
     print("contains digits")
+end
+
+-- type() also recognizes external Roblox GC addresses
+local gc = cheat.getgc()
+for _, t in next, gc do
+    if type(t) == "table" then
+        -- t is a number (Roblox table's memory address), but
+        -- type() reports "table" because it dereferences the GC header.
+    end
 end`)}
     `,
   },
@@ -716,6 +726,9 @@ memory.Write("int", base + 0x1234, 999)`)}
           ["<b>Register(eventType, fn)</b>", "<code>string, function</code>", "Register a callback for an event type"],
           ["<b>Unregister(eventType, fn)</b>", "<code>string, function</code>", "Unregister a callback"],
           ["<b>Raycast(pos, dir, distance, ignoreTransparent?)</b>", "<code>Vector3, Vector3, number, bool</code>", "Returns <code>(hit, instance, position, distance)</code>"],
+          ["<b>getgc(includeAll?)</b>", "<code>bool?</code>", "Enumerates the target process's Luau GC and returns an array of object addresses (as <code>number</code>). Default returns tables only; pass <code>true</code> to include strings, functions, userdata, and threads."],
+          ["<b>rawget(addr, key | true)</b>", "<code>number, string | bool</code>", "Reads a field on the external table at <code>addr</code>. 2nd arg: pass a <code>string</code> key to fetch a single field, or pass <code>true</code> to dump the whole table as a Lua table. Missing keys return <code>nil</code>. Returned GC-typed values (tables/functions/userdata) come back as their raw address <code>number</code>; call <code>rawget</code> recursively on them to dive deeper."],
+          ["<b>rawset(addr, key, value)</b>", "<code>number, string, any</code>", "Writes an <b>existing</b> field on the external table at <code>addr</code>. Accepts <code>nil</code>, <code>bool</code>, <code>number</code>, or an address for GC-typed values (the tt is inferred from the GC object's header). Returns <code>true</code> on success, <code>false</code> if the key doesn't already exist. Cannot create new keys and does not issue a GC write barrier."],
         ]
       )}
 
@@ -749,7 +762,21 @@ print("Teleport:", ok)
 local servers = cheat.GetServers()
 for _, srv in ipairs(servers) do
     print(srv.JobId, srv.Playing, "/", srv.MaxPlayers)
-end`)}
+end
+
+-- GC enumeration + rawget / rawset (Roblox Luau)
+--   Find every weapon config and give it unlimited ammo.
+for _, t in next, cheat.getgc() do
+    if type(t) == "table"
+       and cheat.rawget(t, "MaxAmmo") ~= nil then
+        cheat.rawset(t, "MaxAmmo",     math.huge)
+        cheat.rawset(t, "CurrentAmmo", math.huge)
+    end
+end
+
+-- Dump every field on a table (debugging).
+local dump = cheat.rawget(someAddr, true)
+for k, v in pairs(dump) do print(k, "=", v) end`)}
     `,
   },
 
