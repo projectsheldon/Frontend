@@ -173,7 +173,7 @@ function SetupTicketButton()
         const originalText = createBtn.innerHTML;
         
         createBtn.disabled = true;
-        createBtn.innerHTML = '<div class="download-spinner" style="border-top-color: #000;"></div> Creating...';
+        createBtn.innerHTML = '<div class="install-spinner" style="border-top-color: #000;"></div> Creating...';
         if(statusEl) { statusEl.style.display = 'none'; }
 
         try

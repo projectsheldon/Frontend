@@ -52,13 +52,13 @@ function UpdateUI(loggedIn, user = null)
     const discordBtn = document.getElementById('discord-login-btn');
     const userProfileTrigger = document.getElementById('user-profile-trigger');
 
-    // Hero call-to-action: logged-in users see a Download button (fetches the link from the
-    // server on demand); logged-out users keep the "Join Discord" invite. The button's click
-    // behaviour reads login state at click time, so we only need to swap the label here.
-    const downloadBtn = document.getElementById('download-btn');
-    if(downloadBtn)
+    // Hero call-to-action: logged-in users see the "Install" button (fetches the link from
+    // the server on demand); logged-out users keep the "Join Discord" invite. The button's
+    // click behaviour reads login state at click time, so we only need to swap the label here.
+    const heroCta = document.getElementById('hero-cta');
+    if(heroCta)
     {
-        downloadBtn.textContent = loggedIn ? 'Download' : 'join discord';
+        heroCta.textContent = loggedIn ? 'Download' : 'join discord';
     }
 
     if(loggedIn)

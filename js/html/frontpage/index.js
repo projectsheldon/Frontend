@@ -1,6 +1,5 @@
 import Api from "../../util/backend.js";
 import { Product, ProductsManager } from "../../payment/products/manager.js";
-import { extractArchive, buildDeliverable, saveBlob } from "../../util/installer.js";
 
 // Only run tab logic on homepage
 const isHomepage = window.location.pathname === '/' || window.location.pathname.endsWith('/index.html');
@@ -93,187 +92,29 @@ async function LoadProducts()
 }
 document.addEventListener('DOMContentLoaded', LoadProducts);
 
-const dlModal = document.getElementById('download-modal');
-const dlLoader = document.getElementById('dl-loader');
-const dlTitle = document.getElementById('dl-title');
-const dlSub = document.getElementById('dl-sub');
-const dlProgressWrap = document.getElementById('dl-progress-wrap');
-const dlProgressBar = document.getElementById('dl-progress-bar');
-const dlActions = document.getElementById('dl-actions');
-const dlSaveAgain = document.getElementById('dl-save-again');
-const dlClose = document.getElementById('dl-close-modal');
-const dlError = document.getElementById('dl-error');
-const dlErrorActions = document.getElementById('dl-error-actions');
-const dlFallback = document.getElementById('dl-fallback');
-const dlCloseError = document.getElementById('dl-close-error');
-
-let _lastDeliverable = null;   // { blob, name } — retained so "Save file" can re-save
-let _installing = false;       // guards against overlapping installs
-
-function dlClearState()
-{
-    dlLoader.style.display = 'none';
-    dlTitle.style.display = 'none';
-    dlSub.style.display = 'none';
-    if(dlProgressWrap) dlProgressWrap.style.display = 'none';
-    if(dlActions) dlActions.style.display = 'none';
-    dlError.style.display = 'none';
-    if(dlErrorActions) dlErrorActions.style.display = 'none';
-}
-
-function dlShowLoading(title, sub)
-{
-    dlClearState();
-    dlModal.classList.add('show');
-    dlLoader.style.display = 'block';
-    dlTitle.style.display = 'block';
-    dlSub.style.display = 'block';
-    dlTitle.textContent = title;
-    dlSub.textContent = sub;
-}
-
-function dlSetProgress(pct)
-{
-    dlTitle.textContent = 'Downloading…';
-    dlSub.textContent = pct + '%';
-    if(dlProgressWrap) dlProgressWrap.style.display = 'block';
-    if(dlProgressBar) dlProgressBar.style.width = pct + '%';
-}
-
-function dlShowDone(name)
-{
-    dlClearState();
-    dlTitle.style.display = 'block';
-    dlSub.style.display = 'block';
-    dlTitle.textContent = 'Installer ready ✓';
-    dlSub.textContent = 'Saved "' + name + '" to your downloads. If it didn\'t start, tap Save file.';
-    if(dlActions) dlActions.style.display = 'flex';
-}
-
-function dlShowError(msg)
-{
-    dlClearState();
-    dlError.textContent = msg;
-    dlError.style.display = 'block';
-    if(dlErrorActions) dlErrorActions.style.display = 'flex';
-}
-
-if(dlModal)
-{
-    const closeModal = () => dlModal.classList.remove('show');
-    dlClose?.addEventListener('click', closeModal);
-    dlCloseError?.addEventListener('click', closeModal);
-    dlModal.addEventListener('click', (e) => { if(e.target === dlModal) closeModal(); });
-
-    dlSaveAgain?.addEventListener('click', () =>
-    {
-        if(_lastDeliverable) saveBlob(_lastDeliverable.blob, _lastDeliverable.name);
-    });
-
-    // Last resort: if in-browser install fails, hand over the raw .7z link (same auth gate)
-    // so the user is never stuck with no way to get the file.
-    dlFallback?.addEventListener('click', async () =>
-    {
-        try
-        {
-            const token = window.DiscordAuth?.GetSessionToken?.();
-            const apiUrl = await Api.GetApiUrl();
-            const res = await fetch(`${apiUrl}/download/url`, {
-                mode: 'cors', credentials: 'include',
-                headers: token ? { Authorization: `Bearer ${token}` } : undefined
-            });
-            const data = await res.json().catch(() => null);
-            if(data && data.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
-        } catch(e) {}
-    });
-}
-
-async function readWithProgress(res, onPct)
-{
-    const total = Number(res.headers.get('Content-Length')) || 0;
-    if(!res.body || !total)
-    {
-        const buf = new Uint8Array(await res.arrayBuffer());
-        onPct(100);
-        return buf;
-    }
-
-    const reader = res.body.getReader();
-    const chunks = [];
-    let received = 0;
-    while(true)
-    {
-        const { done, value } = await reader.read();
-        if(done) break;
-        chunks.push(value);
-        received += value.length;
-        onPct(Math.min(99, Math.floor((received / total) * 100)));
-    }
-
-    const out = new Uint8Array(received);
-    let pos = 0;
-    for(const c of chunks) { out.set(c, pos); pos += c.length; }
-    onPct(100);
-    return out;
-}
-
-async function HandleDownload()
+// Everything file-transfer-related lives in ./install.js and is imported ONLY after a
+// logged-in click. Logged-out visitors (and anonymous crawlers) never fetch that module,
+// so the static page has no modal DOM, no libarchive, and no blob-save code path to
+// fingerprint.
+document.getElementById('hero-cta')?.addEventListener('click', async () =>
 {
     const loggedIn = !!(window.DiscordAuth && window.DiscordAuth.currentUser);
-
-    // Logged-out visitors just get the Discord invite. Nothing about the download is fetched
-    // or exposed without a valid session.
     if(!loggedIn)
     {
         RedirectToPlatform('discord_invite');
         return;
     }
 
-    if(!dlModal || _installing) return;
-    _installing = true;
-    _lastDeliverable = null;
-
-    dlShowLoading('Preparing…', 'Starting secure download');
-
     try
     {
-        const token = window.DiscordAuth?.GetSessionToken?.();
-        const apiUrl = await Api.GetApiUrl();
-
-        // 1) Pull the raw installer bytes through the auth-gated proxy (CORS-enabled).
-        const res = await fetch(`${apiUrl}/download/bytes`, {
-            mode: 'cors',
-            credentials: 'include',
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined
-        });
-
-        if(res.status === 401) throw new Error('Please log in again to download.');
-        if(!res.ok) throw new Error('Download failed. Please try again.');
-
-        const bytes = await readWithProgress(res, dlSetProgress);
-
-        // 2) Extract the .7z fully client-side — the user needs no 7-Zip tool.
-        dlShowLoading('Extracting…', 'Unpacking the installer');
-        const files = await extractArchive(bytes);
-
-        // 3) Hand over ready-to-use files: the .exe directly, or a native .zip if several.
-        const deliverable = buildDeliverable(files);
-        _lastDeliverable = deliverable;
-        saveBlob(deliverable.blob, deliverable.name);
-
-        dlShowDone(deliverable.name);
+        const mod = await import('./install.js');
+        await mod.runInstall();
     }
-    catch(err)
+    catch(e)
     {
-        dlShowError((err && err.message) ? err.message : 'Installation failed. Please try again.');
+        if(typeof window.Notify === 'function') window.Notify('Could not start the installer. Please try again.', 'error', 5000);
     }
-    finally
-    {
-        _installing = false;
-    }
-}
-
-document.getElementById('download-btn')?.addEventListener('click', HandleDownload);
+});
 
 function getCachedServerCount() {
     try {

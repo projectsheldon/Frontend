@@ -43,18 +43,23 @@
     --gold: #c7b18f;
     --gold-dim: rgba(199,177,143,0.15);
   }
-  html, body { background: #050505; color: var(--fg); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-  body { position: relative; min-height: 100vh; overflow-x: hidden; }
+  body {
+    background-color: #050505;
+    color: white;
+    font-family: 'Inter', sans-serif;
+  }
   a { color: inherit; text-decoration: none; }
 
   .bg-mesh {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 1) 0%, rgba(5, 5, 5, 1) 100%);
     z-index: -2;
-    pointer-events: none;
   }
+
   .orb {
     position: fixed;
     border-radius: 50%;
@@ -63,9 +68,15 @@
     z-index: -1;
     animation: float 20s infinite alternate;
   }
+
   @keyframes float {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(50px, 50px); }
+    0% {
+      transform: translate(0, 0);
+    }
+
+    100% {
+      transform: translate(50px, 50px);
+    }
   }
 
   .glass-nav {
@@ -147,36 +158,103 @@
   }
   article .intro { margin-top: 0.75rem; font-size: 1rem; color: var(--muted); line-height: 1.7; }
   article { position: relative; }
-  .copy-dropdown { position: absolute; top: 0; right: 0; z-index: 10; transform: scale(0.8); transform-origin: top right; }
-  .copy-dropdown-btn {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    background: var(--gold-dim); border: 1px solid rgba(199,177,143,0.2);
-    color: var(--gold); padding: 0.6rem 1.25rem; border-radius: 2rem;
-    font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
-    cursor: pointer; transition: border-radius .1s, background .2s, border-color .2s;
+  .copy-split {
+    position: absolute; top: 0.25rem; right: 0; z-index: 10;
+    display: inline-flex; align-items: stretch;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.5rem;
     font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    color: var(--muted);
+    overflow: visible;
+    transition: background .15s, border-color .15s, color .15s;
   }
-  .copy-dropdown-btn:hover { background: rgba(199,177,143,0.25); border-color: var(--gold); }
-  .copy-dropdown-btn .arrow { margin-left: 0.25rem; font-size: 0.6rem; transition: transform .2s; }
-  .copy-dropdown.open .copy-dropdown-btn { border-radius: 2rem 2rem 0 0; }
-  .copy-dropdown.open .arrow { transform: rotate(180deg); }
-  .copy-dropdown-menu {
-    position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
-    background: rgba(10,10,10,0.98); border: 1px solid rgba(199,177,143,0.2);
-    border-top: none; border-radius: 0 0 1rem 1rem; overflow: hidden;
+  .copy-split:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.14);
+  }
+  .copy-split.copied {
+    background: rgba(152, 195, 121, 0.12);
+    border-color: rgba(152, 195, 121, 0.3);
+  }
+  .copy-split .split-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color .15s;
+  }
+  .copy-split .split-btn:hover { color: #fff; }
+  .copy-split .split-btn svg { opacity: 0.85; }
+  .copy-split.copied .split-primary { color: #98c379; }
+  .copy-split .split-divider {
+    width: 1px;
+    background: rgba(255,255,255,0.1);
+  }
+  .copy-split .split-more {
+    padding: 0.35rem 0.5rem;
+  }
+  .copy-split .split-more .chev {
+    display: inline-block;
+    transition: transform .15s;
+  }
+  .copy-split.open .split-more .chev { transform: rotate(180deg); }
+  .copy-more-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 50;
+    min-width: 16rem;
+    background: rgba(15,15,15,0.98);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.55rem;
+    padding: 0.3rem;
     opacity: 0; transform: translateY(-4px); pointer-events: none;
-    transition: opacity .1s, transform .1s;
-    flex-direction: column;
+    transition: opacity .12s, transform .12s;
+    display: flex; flex-direction: column; gap: 1px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.45);
   }
-  .copy-dropdown.open .copy-dropdown-menu { opacity: 1; transform: translateY(0); pointer-events: auto; }
-  .copy-dropdown-item {
-    padding: 0.6rem 1.25rem; font-size: 0.75rem; font-weight: 600;
-    color: var(--muted); cursor: pointer; transition: all .15s;
-    display: flex; align-items: center; gap: 0.5rem;
-    font-family: 'Inter', sans-serif; background: none; border: none; width: 100%; text-align: left;
+  .copy-split.open .copy-more-menu { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .copy-more-item {
+    padding: 0.55rem 0.7rem;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 0.35rem;
+    display: grid;
+    grid-template-columns: 1rem 1fr;
+    align-items: start;
+    column-gap: 0.65rem;
+    row-gap: 0.15rem;
+    font-family: 'Inter', sans-serif;
+    background: none; border: none;
+    width: 100%; text-align: left;
+    transition: background .12s, color .12s;
+    text-decoration: none;
+    line-height: 1.35;
   }
-  .copy-dropdown-item:hover { background: rgba(199,177,143,0.15); color: var(--gold); }
-  .copy-dropdown-item:last-child { border-radius: 0 0 1rem 1rem; }
+  .copy-more-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .copy-more-item svg {
+    opacity: 0.7;
+    grid-row: 1 / span 2;
+    margin-top: 0.2rem;
+  }
+  .copy-more-item .cm-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #d4d4d4;
+  }
+  .copy-more-item:hover .cm-title { color: #fff; }
+  .copy-more-item .cm-sub {
+    font-size: 0.7rem;
+    color: var(--muted-2);
+    font-weight: 400;
+  }
   article .body { margin-top: 2rem; }
   article h2 {
     font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em;
@@ -213,28 +291,127 @@
     font-size: 0.8rem; color: var(--muted-2); width: fit-content;
   }
   .requires-badge code { color: var(--gold); font-size: 0.8rem; }
-  .codeblock-wrap { position: relative; margin-bottom: 1.25rem; }
-  .codeblock-wrap:hover .copy-code-btn { opacity: 1; }
-  .copy-code-btn {
-    position: absolute; top: 0.5rem; right: 0.5rem; z-index: 5;
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
-    color: var(--muted); padding: 0.3rem; border-radius: 0.4rem;
-    font-size: 0.65rem; font-weight: 600; cursor: pointer;
-    transition: background .15s;
-    font-family: 'Inter', sans-serif; line-height: 1; display: flex; align-items: center; transition: background .15s;
+  .codeblock-wrap {
+    position: relative;
+    margin-bottom: 1.25rem;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    overflow: hidden;
   }
-  .copy-code-btn:active { transform: scale(0.85); }
-  .copy-code-btn svg { transition: transform .15s ease; }
-  .copy-code-btn.copied svg { transform: scale(1.2); }
-  .copy-code-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+  .copy-code-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 5;
+    background: rgba(20,20,20,0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--muted);
+    padding: 0.3rem 0.55rem;
+    border-radius: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: background .15s, border-color .15s, color .15s, opacity .15s;
+    text-transform: none;
+    letter-spacing: 0;
+    opacity: 0;
+  }
+  .codeblock-wrap:hover .copy-code-btn,
+  .copy-code-btn:focus-visible,
+  .copy-code-btn.copied {
+    opacity: 1;
+  }
+  .copy-code-btn:hover {
+    background: rgba(30,30,30,0.95);
+    border-color: rgba(255,255,255,0.14);
+    color: #fff;
+  }
+  .copy-code-btn:active { transform: scale(0.96); }
+  .copy-code-btn svg { transition: transform .15s ease; opacity: 0.85; }
+  .copy-code-btn.copied {
+    color: #98c379;
+    background: rgba(20,20,20,0.9);
+    border-color: rgba(152,195,121,0.35);
+  }
   .codeblock {
     font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
-    background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-    border-radius: 0.75rem; padding: 1.25rem; font-size: 0.85rem;
-    overflow-x: auto; white-space: pre; color: #e5e5e5; line-height: 1.6;
+    font-size: 0.85rem;
+    color: #d4d4d4;
+    line-height: 1.55;
+    overflow-x: auto;
+    background: transparent;
+    padding: 0.6rem 0;
   }
-  .codeblock::-webkit-scrollbar { height: 4px; }
+  .codeblock::-webkit-scrollbar { height: 6px; }
   .codeblock::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+  /* VSCode "Dark+ (default dark)" token palette */
+  .cb-code-line .vs-comment { color: #6A9955; font-style: italic; }
+  .cb-code-line .vs-string  { color: #CE9178; }
+  .cb-code-line .vs-number  { color: #B5CEA8; }
+  .cb-code-line .vs-kw      { color: #569CD6; }             /* local, function, and/or/not, self */
+  .cb-code-line .vs-kwc     { color: #C586C0; }             /* if/then/else/end/for/return/... */
+  .cb-code-line .vs-const   { color: #569CD6; }             /* true/false/nil */
+  .cb-code-line .vs-fn      { color: #DCDCAA; }             /* function names & calls */
+  .cb-code-line .vs-var     { color: #9CDCFE; }             /* variables, params, fields */
+  .cb-code-line .vs-type    { color: #4EC9B0; }             /* known types / library namespaces */
+  .cb-code-line .vs-vararg  { color: #569CD6; }             /* ... */
+  .cb-code-line .vs-op,
+  .cb-code-line .vs-punct   { color: #d4d4d4; }             /* operators & punctuation */
+  .cb-line {
+    display: flex;
+    align-items: stretch;
+    min-width: max-content;
+    padding: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .cb-line-highlight {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 0;
+    background: rgba(255,255,255,0.045);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 0;
+    will-change: transform, height;
+    transition:
+      transform 0.16s cubic-bezier(0.33, 1, 0.68, 1),
+      height 0.16s cubic-bezier(0.33, 1, 0.68, 1),
+      opacity 0.12s ease;
+  }
+  .codeblock-wrap.cbh-active .cb-line-highlight { opacity: 1; }
+  .cb-linenum {
+    flex: 0 0 auto;
+    width: 3rem;
+    padding: 0 0.9rem 0 0.6rem;
+    text-align: right;
+    color: rgba(255,255,255,0.22);
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    pointer-events: none;
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+  .cb-line:hover .cb-linenum { color: rgba(255,255,255,0.45); }
+  .cb-code-line {
+    flex: 1 1 auto;
+    padding-right: 1.25rem;
+    white-space: pre;
+    min-width: 0;
+  }
   .table-wrap {
     overflow-x: auto;
     border-radius: 0.75rem;
@@ -242,8 +419,13 @@
     background: rgba(255,255,255,0.02);
     border: 1px solid var(--border);
   }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
-  thead {}
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.875rem;
+    table-layout: fixed;
+  }
   thead th {
     background: rgba(255,255,255,0.03);
     color: var(--muted-2);
@@ -254,30 +436,63 @@
     letter-spacing: 0.08em;
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--border);
+    position: relative;
+    user-select: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   thead th:first-child { border-radius: 0.75rem 0 0 0; }
   thead th:last-child { border-radius: 0 0.75rem 0 0; }
+  thead th .col-resizer {
+    position: absolute;
+    right: -3px;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 2;
+  }
+  thead th .col-resizer::after {
+    content: '';
+    position: absolute;
+    right: 3px;
+    top: 20%;
+    bottom: 20%;
+    width: 1px;
+    background: rgba(255,255,255,0.08);
+    transition: background 0.15s, width 0.15s;
+  }
+  thead th .col-resizer:hover::after,
+  thead th .col-resizer.is-dragging::after {
+    background: var(--gold);
+    width: 2px;
+    right: 2px;
+  }
+  thead th:last-child .col-resizer { display: none; }
   tbody tr { transition: background .15s; }
   tbody tr:hover { background: rgba(255,255,255,0.03); }
   tbody tr + tr { border-top: 1px solid var(--border); }
   th, td { padding: 0.65rem 1rem; vertical-align: top; }
-  td { color: #d4d4d4; }
-  td:first-child { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; font-size: 0.85em; white-space: nowrap; color: #e5e5e5; }
-  td:first-child b.fn { color: #61afef; font-weight: 500; }
-  td:first-child .hl-opt { color: #5c6370; }
-  td:first-child .hl-num { color: #d19a66; }
-  td:first-child .hl-kw { color: #c678dd; }
-  td:first-child .hl-type { color: #e5c07b; }
-  td:first-child .hl-str { color: #98c379; }
-  td:first-child .hl-ident { color: #56b6c2; font-weight: 500; }
-  td:nth-child(2) { color: var(--muted); white-space: nowrap; }
-  td:nth-child(2) code { color: #c3e88d; }
-  code .hl-opt { color: #5c6370; }
-  code .hl-num { color: #d19a66; }
-  code .hl-type { color: #e5c07b; }
-  code .hl-kw { color: #c678dd; }
-  code .hl-str { color: #98c379; }
-  td:nth-child(2) code { color: #c3e88d; }
+  td {
+    color: #d4d4d4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  td.sig-cell {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.85em;
+    color: #e6e6e6;
+  }
+  td.sig-cell b { color: #e6e6e6; font-weight: 600; font-style: normal; }
+  td.type-cell {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.85em;
+    color: #e6e6e6;
+  }
+  td.type-cell code { color: #e6e6e6; background: none; padding: 0; }
+  td.desc-cell { white-space: normal; }
 
   .pager { margin-top: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .pager a {
@@ -304,7 +519,7 @@
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 </style>
 </head>
-<body>
+<body class="antialiased">
   <div class="bg-mesh"></div>
   <div class="orb w-[30rem] h-[30rem] bg-[#c7b18f]" style="top: -10%; left: -15%;"></div>
   <div class="orb w-[35rem] h-[35rem] bg-[#1a1a1a]" style="bottom: -20%; right: -10%; animation-delay: -7s;"></div>
@@ -430,36 +645,266 @@ const NAV = [
   { heading: "Reference", items: [{ to: "/library-gating", label: "Library Gating" }, { to: "/notes", label: "Notes" }] },
 ];
 
-function highlightLua(text) {
-  text = text.replace(/\?/g, '<span class="hl-opt">?</span>');
-  text = text.replace(/\b(0x[a-fA-F0-9]+)\b/g, '<span class="hl-num">$1</span>');
-  text = text.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="hl-num">$1</span>');
-  const keywords = /\b(function|local|if|then|else|elseif|end|for|while|do|repeat|until|return|break|continue|nil|true|false|and|or|not|in)\b/g;
-  text = text.replace(keywords, '<span class="hl-kw">$1</span>');
-  const types = /\b(string|number|int|float|bool|byte|short|ushort|int64|uint64|double|uint|uintptr|any|void|table|Color3|Vector3|Vector2|UDim|UDim2|CFrame|BrickColor|ColorSequence|NumberRange|NumberSequence|Rect|Ray|Region3|Region3int16|Enum|Axis|Angle|PhysicalProperties|RBXScriptSignal|RBXScriptConnection|Instance|Font|Content)\b/g;
-  text = text.replace(types, '<span class="hl-type">$1</span>');
-  return text;
+/* ============================================================
+   VSCode "Dark+ (default dark)" Lua tokenizer.
+   Emits <span class="vs-*"> tokens; colours live in CSS.
+   ============================================================ */
+const LUA_KW_CTRL = new Set(['if','then','else','elseif','end','for','while','do','repeat','until','return','break','continue','in','goto']);
+const LUA_KW_DECL = new Set(['local','function','and','or','not']);
+const LUA_CONSTS  = new Set(['true','false','nil']);
+const LUA_TYPESET = new Set([
+  'string','table','math','os','coroutine','utf8','bit32','debug',
+  'Color3','Vector3','Vector2','UDim','UDim2','CFrame','BrickColor','ColorSequence',
+  'NumberRange','NumberSequence','Rect','Ray','Region3','Region3int16','Enum','Axis',
+  'PhysicalProperties','RBXScriptSignal','RBXScriptConnection','Instance','Font','Content',
+  'base64','hash','compress','task','tween','memory','cheat','internet','input','file',
+  'utility','entity','draw','gui','imgui','fflags','workspace','game','Game'
+]);
+
+function tokenizeLua(code) {
+  const toks = [];
+  const n = code.length;
+  let i = 0;
+  const isIdStart = c => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_';
+  const isIdPart  = c => isIdStart(c) || (c >= '0' && c <= '9');
+  const isDigit   = c => c >= '0' && c <= '9';
+
+  // Level of a Lua long bracket starting at pos ('[' '='* '['), else -1.
+  const longLevel = pos => {
+    if (code[pos] !== '[') return -1;
+    let j = pos + 1, eq = 0;
+    while (code[j] === '=') { eq++; j++; }
+    return code[j] === '[' ? eq : -1;
+  };
+
+  while (i < n) {
+    const c = code[i];
+
+    // whitespace (may span newlines)
+    if (c === ' ' || c === '\t' || c === '\r' || c === '\n') {
+      let j = i;
+      while (j < n && (code[j] === ' ' || code[j] === '\t' || code[j] === '\r' || code[j] === '\n')) j++;
+      toks.push({ t: 'ws', v: code.slice(i, j) });
+      i = j; continue;
+    }
+
+    // comment (line, or --[[ block ]])
+    if (c === '-' && code[i + 1] === '-') {
+      const lvl = longLevel(i + 2);
+      if (lvl >= 0) {
+        const close = ']' + '='.repeat(lvl) + ']';
+        const end = code.indexOf(close, i + 2);
+        const stop = end === -1 ? n : end + close.length;
+        toks.push({ t: 'comment', v: code.slice(i, stop) });
+        i = stop; continue;
+      }
+      let j = i;
+      while (j < n && code[j] !== '\n') j++;
+      toks.push({ t: 'comment', v: code.slice(i, j) });
+      i = j; continue;
+    }
+
+    // long string [[ ]] / [=[ ]=]
+    const strLvl = longLevel(i);
+    if (strLvl >= 0) {
+      const close = ']' + '='.repeat(strLvl) + ']';
+      const end = code.indexOf(close, i);
+      const stop = end === -1 ? n : end + close.length;
+      toks.push({ t: 'string', v: code.slice(i, stop) });
+      i = stop; continue;
+    }
+
+    // quoted string
+    if (c === '"' || c === "'") {
+      let j = i + 1;
+      while (j < n) {
+        if (code[j] === '\\') { j += 2; continue; }
+        if (code[j] === '\n') break;
+        if (code[j] === c) { j++; break; }
+        j++;
+      }
+      toks.push({ t: 'string', v: code.slice(i, j) });
+      i = j; continue;
+    }
+
+    // number (hex, decimal, exponent)
+    if (isDigit(c) || (c === '.' && isDigit(code[i + 1]))) {
+      let j = i;
+      if (c === '0' && (code[i + 1] === 'x' || code[i + 1] === 'X')) {
+        j = i + 2;
+        while (j < n && /[0-9a-fA-F]/.test(code[j])) j++;
+      } else {
+        let seenDot = false;
+        while (j < n) {
+          const d = code[j];
+          if (isDigit(d)) { j++; continue; }
+          // one decimal point only, and never the '.' that begins a '..' concat
+          if (d === '.' && !seenDot && code[j + 1] !== '.') { seenDot = true; j++; continue; }
+          // exponent 'e'/'E' must be followed by a digit (optionally signed)
+          if ((d === 'e' || d === 'E') &&
+              (isDigit(code[j + 1]) || ((code[j + 1] === '+' || code[j + 1] === '-') && isDigit(code[j + 2])))) {
+            j++; if (code[j] === '+' || code[j] === '-') j++; continue;
+          }
+          break;
+        }
+      }
+      toks.push({ t: 'number', v: code.slice(i, j) });
+      i = j; continue;
+    }
+
+    // identifier / keyword
+    if (isIdStart(c)) {
+      let j = i;
+      while (j < n && isIdPart(code[j])) j++;
+      toks.push({ t: 'ident', v: code.slice(i, j) });
+      i = j; continue;
+    }
+
+    // vararg
+    if (c === '.' && code[i + 1] === '.' && code[i + 2] === '.') {
+      toks.push({ t: 'vararg', v: '...' }); i += 3; continue;
+    }
+
+    // multi-char operators
+    const two = code.substr(i, 2);
+    if (two === '==' || two === '~=' || two === '<=' || two === '>=' || two === '..' || two === '::') {
+      toks.push({ t: 'op', v: two }); i += 2; continue;
+    }
+    if ('+-*/%^#<>=~'.indexOf(c) !== -1) { toks.push({ t: 'op', v: c }); i++; continue; }
+    if (c === '.' || c === ':') { toks.push({ t: 'dot', v: c }); i++; continue; }
+    if ('(){}[];,'.indexOf(c) !== -1) { toks.push({ t: 'punct', v: c }); i++; continue; }
+
+    toks.push({ t: 'other', v: c }); i++;
+  }
+  return toks;
 }
 
-function toTable(headers, rows) {
-  const h = headers.map(h => `<th>${h}</th>`).join("");
-  const r = rows.map(r => `<tr>${r.map(c => {
-    c = c.replace(/<b>([a-zA-Z_.]+)\(([\s\S]*?)\)<\/b>/g, (m, fn, params) => `<b class="fn">${fn}</b>(${highlightLua(params)})`);
-    c = c.replace(/<b>([\s\S]*?)<\/b>/g, '<b class="hl-ident">$1</b>');
-    c = c.replace(/<code>([\s\S]*?)<\/code>/g, (m, inner) => `<code>${highlightLua(inner)}</code>`);
-    return `<td>${c}</td>`;
-  }).join("")}</tr>`).join("");
-  return `<div class="table-wrap"><table><thead><tr>${h}</tr></thead><tbody>${r}</tbody></table></div>`;
+// Nearest non-trivia token in a direction (dir = -1 | +1).
+function adjacentTok(toks, idx, dir) {
+  let k = idx + dir;
+  while (k >= 0 && k < toks.length && (toks[k].t === 'ws' || toks[k].t === 'comment')) k += dir;
+  return (k >= 0 && k < toks.length) ? toks[k] : null;
 }
+
+function classifyIdent(toks, idx) {
+  const w = toks[idx].v;
+  if (LUA_KW_CTRL.has(w)) return 'vs-kwc';
+  if (LUA_KW_DECL.has(w)) return 'vs-kw';
+  if (LUA_CONSTS.has(w))  return 'vs-const';
+  if (w === 'self')       return 'vs-kw';
+
+  const prev = adjacentTok(toks, idx, -1);
+  const next = adjacentTok(toks, idx, +1);
+  const isDef  = prev && prev.t === 'ident' && prev.v === 'function';
+  const isCall = next && ((next.t === 'punct' && (next.v === '(' || next.v === '{')) || next.t === 'string');
+  if (isDef || isCall)    return 'vs-fn';
+  if (LUA_TYPESET.has(w)) return 'vs-type';
+  return 'vs-var';
+}
+
+function tokenClass(toks, idx) {
+  switch (toks[idx].t) {
+    case 'comment': return 'vs-comment';
+    case 'string':  return 'vs-string';
+    case 'number':  return 'vs-number';
+    case 'vararg':  return 'vs-vararg';
+    case 'op':      return 'vs-op';
+    case 'punct':
+    case 'dot':     return 'vs-punct';
+    case 'ident':   return classifyIdent(toks, idx);
+    default:        return null;
+  }
+}
+
+// Render Lua source to an array of per-line HTML strings. Multi-line strings and
+// block comments are split at newlines but keep their colour on every line.
+function renderLuaLines(code) {
+  code = String(code).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const toks = tokenizeLua(code);
+  const lines = [''];
+  const emit = (seg, cls) => {
+    const parts = seg.split('\n');
+    for (let k = 0; k < parts.length; k++) {
+      if (k > 0) lines.push('');
+      if (parts[k] === '') continue;
+      const html = escapeHtml(parts[k]);
+      lines[lines.length - 1] += cls ? `<span class="${cls}">${html}</span>` : html;
+    }
+  };
+  for (let idx = 0; idx < toks.length; idx++) {
+    emit(toks[idx].v, toks[idx].t === 'ws' ? null : tokenClass(toks, idx));
+  }
+  return lines;
+}
+
+let __tableSeq = 0;
+
+function toTable(headers, rows) {
+  const tid = 'docstab_' + (++__tableSeq);
+  // Column headers rendered plain — resizers are injected by ResizableColumns.
+  const headerCells = headers.map(h => `<th><span class="th-label">${h}</span></th>`).join('');
+  // Column widths: split evenly; first column tends to be a bit wider for signatures/methods.
+  const widths = headers.length === 2
+    ? ['42%', '58%']
+    : headers.length === 3
+      ? ['36%', '22%', '42%']
+      : Array.from({length: headers.length}, () => (100 / headers.length).toFixed(3) + '%');
+  const colgroup = widths.map(w => `<col style="width:${w}">`).join('');
+
+  const r = rows.map(rowCells => {
+    const tds = rowCells.map((c, colIdx) => {
+      // Function signatures render in one neutral colour (just the name bolded);
+      // description <code> keeps the site's inline-code chip; type-column <code>
+      // inherits the plain cell colour (see CSS). No token colouring in tables.
+      let cls;
+      if (colIdx === 0) cls = 'sig-cell';
+      else if (colIdx === 1 && headers.length >= 3) cls = 'type-cell';
+      else cls = 'desc-cell';
+      return `<td class="${cls}">${c}</td>`;
+    }).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+
+  return `<div class="table-wrap"><table id="${tid}" data-resizable><colgroup>${colgroup}</colgroup><thead><tr>${headerCells}</tr></thead><tbody>${r}</tbody></table></div>`;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+const COPY_SVG = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+const CHECK_SVG = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>';
 
 function toCodeblock(code) {
   const id = "cb_" + Math.random().toString(36).slice(2, 8);
-  return `<div class="codeblock-wrap"><button class="copy-code-btn" onclick="copyCodeBlock('${id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button><div id="${id}" class="codeblock language-lua">${code}</div></div>`;
+  const raw = String(code).replace(/\r\n/g, '\n');
+  const rows = renderLuaLines(raw).map((h, i) =>
+    `<div class="cb-line"><span class="cb-linenum">${i + 1}</span><span class="cb-code-line">${h || '​'}</span></div>`
+  ).join('');
+  return `<div class="codeblock-wrap">
+    <div class="cb-line-highlight"></div>
+    <button class="copy-code-btn" onclick="copyCodeBlock('${id}')" data-copy-btn aria-label="Copy code">
+      <span class="copy-icon">${COPY_SVG}</span>
+      <span class="copy-label">Copy</span>
+    </button>
+    <div id="${id}" class="codeblock language-lua" data-raw="${encodeURIComponent(raw)}">${rows}</div>
+  </div>`;
 }
 
 function copyCodeBlock(id) {
   const el = document.getElementById(id);
-  const text = el.textContent.trim();
+  if(!el) return;
+  let text = '';
+  try { text = decodeURIComponent(el.getAttribute('data-raw') || ''); } catch(e) {}
+  if(!text)
+  {
+    text = Array.from(el.querySelectorAll('.cb-code-line'))
+      .map(l => l.textContent.replace(/​/g, ''))
+      .join('\n');
+  }
   navigator.clipboard.writeText(text).catch(() => {
     const ta = document.createElement('textarea');
     ta.value = text;
@@ -470,12 +915,18 @@ function copyCodeBlock(id) {
     document.execCommand('copy');
     document.body.removeChild(ta);
   });
-  const btn = el.parentElement.querySelector('.copy-code-btn');
+  const btn = el.parentElement.querySelector('[data-copy-btn]');
+  if(!btn) return;
   btn.classList.add('copied');
-  btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>';
-  setTimeout(() => {
+  const icon = btn.querySelector('.copy-icon');
+  const label = btn.querySelector('.copy-label');
+  if(icon) icon.innerHTML = CHECK_SVG;
+  if(label) label.textContent = 'Copied';
+  clearTimeout(btn._t);
+  btn._t = setTimeout(() => {
     btn.classList.remove('copied');
-    btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+    if(icon) icon.innerHTML = COPY_SVG;
+    if(label) label.textContent = 'Copy';
   }, 1500);
 }
 
@@ -1802,16 +2253,37 @@ function renderMain() {
     </div>` : "";
   document.getElementById("main").innerHTML = `
     <article>
-      <div class="copy-dropdown" id="copyDropdown">
-        <button class="copy-dropdown-btn" onclick="toggleCopyDropdown()">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          Copy All
-          <span class="arrow">&#9660;</span>
+      <div class="copy-split" id="copySplit">
+        <button class="split-btn split-primary" id="copySplitBtn" onclick="copyAll('markdown')" aria-label="Copy page as Markdown">
+          <svg class="copy-icon-default" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          <svg class="copy-icon-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" width="14" height="14" style="display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          <span class="copy-label">Copy</span>
         </button>
-        <div class="copy-dropdown-menu">
-          <button class="copy-dropdown-item" onclick="copyAll('text')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Plain Text</button>
-          <button class="copy-dropdown-item" onclick="copyAll('html')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> HTML</button>
-          <button class="copy-dropdown-item" onclick="copyAll('markdown')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Markdown</button>
+        <span class="split-divider" aria-hidden="true"></span>
+        <button class="split-btn split-more" onclick="toggleCopyDropdown(event)" aria-label="More options">
+          <svg class="chev" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="copy-more-menu" role="menu">
+          <button class="copy-more-item" role="menuitem" onclick="copyAll('markdown')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            <span class="cm-title">Copy page</span>
+            <span class="cm-sub">Copy page as Markdown for LLMs</span>
+          </button>
+          <button class="copy-more-item" role="menuitem" onclick="viewAsMarkdown()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+            <span class="cm-title">View as Markdown</span>
+            <span class="cm-sub">View this page as plain text</span>
+          </button>
+          <a class="copy-more-item" role="menuitem" target="_blank" rel="noopener" id="cm-chatgpt">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            <span class="cm-title">Open in ChatGPT</span>
+            <span class="cm-sub">Ask ChatGPT about this page</span>
+          </a>
+          <a class="copy-more-item" role="menuitem" target="_blank" rel="noopener" id="cm-claude">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="16" height="16"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
+            <span class="cm-title">Open in Claude</span>
+            <span class="cm-sub">Ask Claude about this page</span>
+          </a>
         </div>
       </div>
       <h1>${page.title}</h1>
@@ -1855,7 +2327,7 @@ function htmlToMarkdown(html) {
 }
 
 function copyAll(format) {
-  document.getElementById('copyDropdown').classList.remove('open');
+  document.getElementById('copySplit').classList.remove('open');
   const ordered = flatNav();
   let output;
   if(format === 'html')
@@ -1906,9 +2378,9 @@ function copyAll(format) {
     lines.push(format === 'markdown' ? '# END OF DOCUMENTATION' : '=== END OF DOCUMENTATION ===');
     output = lines.join('\n');
   }
-  navigator.clipboard.writeText(output).catch(() => {
+  const writeClip = txt => navigator.clipboard.writeText(txt).catch(() => {
     const ta = document.createElement('textarea');
-    ta.value = output;
+    ta.value = txt;
     ta.style.position = 'fixed';
     ta.style.left = '-9999px';
     document.body.appendChild(ta);
@@ -1916,15 +2388,228 @@ function copyAll(format) {
     document.execCommand('copy');
     document.body.removeChild(ta);
   });
+  writeClip(output);
+  const split = document.getElementById('copySplit');
+  const btn = document.getElementById('copySplitBtn');
+  if(split && btn)
+  {
+    split.classList.add('copied');
+    const iconDefault = btn.querySelector('.copy-icon-default');
+    const iconCheck = btn.querySelector('.copy-icon-check');
+    const label = btn.querySelector('.copy-label');
+    if(iconDefault) iconDefault.style.display = 'none';
+    if(iconCheck) iconCheck.style.display = 'inline-block';
+    if(label) label.textContent = 'Copied';
+    clearTimeout(btn._copiedTimer);
+    btn._copiedTimer = setTimeout(() => {
+      split.classList.remove('copied');
+      if(iconDefault) iconDefault.style.display = 'inline-block';
+      if(iconCheck) iconCheck.style.display = 'none';
+      if(label) label.textContent = 'Copy';
+    }, 1500);
+  }
+}
+
+function pageAsMarkdown() {
+  const path = currentPath();
+  const page = PAGES[path];
+  if(!page) return '';
+  return `# ${page.title}\n\n${page.intro}\n\n${htmlToMarkdown(page.body)}`;
+}
+
+function viewAsMarkdown() {
+  document.getElementById('copySplit').classList.remove('open');
+  const md = pageAsMarkdown();
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+function updateAskLinks() {
+  const gpt = document.getElementById('cm-chatgpt');
+  const clau = document.getElementById('cm-claude');
+  if(!gpt || !clau) return;
+  const pageUrl = location.href;
+  const q = `Read ${pageUrl} and answer questions about the content.`;
+  gpt.href = 'https://chat.openai.com/?q=' + encodeURIComponent(q);
+  clau.href = 'https://claude.ai/new?q=' + encodeURIComponent(q);
 }
 
 document.addEventListener('click', function(e) {
-  const dd = document.getElementById('copyDropdown');
+  const dd = document.getElementById('copySplit');
   if(dd && !dd.contains(e.target)) dd.classList.remove('open');
 });
-function toggleCopyDropdown() { document.getElementById('copyDropdown').classList.toggle('open'); }
+function toggleCopyDropdown(e) {
+  if(e) e.stopPropagation();
+  document.getElementById('copySplit').classList.toggle('open');
+}
 
-function render() { renderSidebar(); renderMain(); if (typeof hljs !== 'undefined') { if (typeof hljsDefineLuau !== 'undefined') hljs.registerLanguage('luau', hljsDefineLuau); document.querySelectorAll('.codeblock').forEach(el => hljs.highlightElement(el)); } }
+(function() {
+  if (window.ResizableColumns) return;
+  var MIN_PX = 60;
+
+  function attach(tableId) {
+    const table = typeof tableId === 'string' ? document.getElementById(tableId) : tableId;
+    if (!table || table._resizableAttached) return;
+    table._resizableAttached = true;
+
+    const key = 'luavm_cols_' + (table.id || Math.random().toString(36).slice(2, 8));
+
+    let colgroup = table.querySelector('colgroup');
+    if (!colgroup) {
+      const headers = table.querySelectorAll('thead th');
+      colgroup = document.createElement('colgroup');
+      headers.forEach(() => colgroup.appendChild(document.createElement('col')));
+      table.insertBefore(colgroup, table.firstChild);
+    }
+
+    const ths = Array.from(table.querySelectorAll('thead th'));
+    ths.forEach((th, i) => {
+      if (i === ths.length - 1) return;
+      if (!th.querySelector('.col-resizer')) {
+        const handle = document.createElement('span');
+        handle.className = 'col-resizer';
+        th.appendChild(handle);
+      }
+    });
+
+    function cols() { return Array.from(colgroup.querySelectorAll('col')); }
+
+    const initialWidths = cols().map(c => c.style.width || '');
+
+    function saveWidths() {
+      const widths = cols().map(c => c.style.width || '');
+      try { localStorage.setItem(key, JSON.stringify(widths)); } catch (e) {}
+    }
+
+    function restoreWidths() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(key) || 'null');
+        if (!Array.isArray(saved)) return;
+        const c = cols();
+        saved.forEach((w, i) => { if (w && c[i]) c[i].style.width = w; });
+      } catch (e) {}
+    }
+
+    restoreWidths();
+
+    table.querySelectorAll('th .col-resizer').forEach((handle, idx) => {
+      handle.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const c = cols();
+        const col = c[idx];
+        const nextCol = c[idx + 1];
+        if (!col || !nextCol) return;
+
+        const headerRow = Array.from(table.querySelectorAll('thead th'));
+        const tableWidth = headerRow.reduce((s, th) => s + th.getBoundingClientRect().width, 0) || 1;
+        const colPct = (colEl, th) => {
+          const s = colEl.style.width;
+          if (s && s.charAt(s.length - 1) === '%') { const v = parseFloat(s); if (isFinite(v)) return v; }
+          return (th.getBoundingClientRect().width / tableWidth) * 100;
+        };
+        const startX = e.clientX;
+        const startPct = colPct(col, headerRow[idx]);
+        const pairPct = startPct + colPct(nextCol, headerRow[idx + 1]);
+        const minPct = Math.min((MIN_PX / tableWidth) * 100, pairPct / 2);
+
+        handle.classList.add('is-dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+
+        function onMove(ev) {
+          const deltaPct = ((ev.clientX - startX) / tableWidth) * 100;
+          let newPct = startPct + deltaPct;
+          newPct = Math.max(minPct, Math.min(pairPct - minPct, newPct));
+          col.style.width = newPct.toFixed(3) + '%';
+          nextCol.style.width = (pairPct - newPct).toFixed(3) + '%';
+        }
+        function onUp() {
+          handle.classList.remove('is-dragging');
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          saveWidths();
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+
+      handle.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        const c = cols();
+        initialWidths.forEach((w, i) => { if (c[i]) c[i].style.width = w; });
+        try { localStorage.removeItem(key); } catch (e) {}
+      });
+    });
+  }
+
+  function attachAll(root) {
+    (root || document).querySelectorAll('table[data-resizable]').forEach(t => attach(t));
+  }
+
+  window.ResizableColumns = { attach, attachAll };
+})();
+
+function attachLineHighlights() {
+  document.querySelectorAll('.codeblock-wrap').forEach(wrap => {
+    if (wrap._hlAttached) return;
+    wrap._hlAttached = true;
+    const cb = wrap.querySelector('.codeblock');
+    const hl = wrap.querySelector('.cb-line-highlight');
+    if (!cb || !hl) return;
+    let last = null;
+    let entered = false;
+
+    cb.addEventListener('mousemove', e => {
+      const line = e.target.closest('.cb-line');
+      if (!line || !cb.contains(line)) return;
+      if (line === last) return;
+      last = line;
+      const wrapRect = wrap.getBoundingClientRect();
+      const lineRect = line.getBoundingClientRect();
+      const y = lineRect.top - wrapRect.top;
+      const h = lineRect.height;
+      if (!entered) {
+        // First hover in this session — snap into place without a slide
+        // from wherever the overlay was previously parked, then let subsequent
+        // moves tween smoothly to the next line.
+        entered = true;
+        const prev = hl.style.transition;
+        hl.style.transition = 'none';
+        hl.style.transform = `translateY(${y}px)`;
+        hl.style.height = h + 'px';
+        // force reflow so the "no transition" state is committed before
+        // fading in — otherwise opacity change would batch with the transform.
+        hl.getBoundingClientRect();
+        hl.style.transition = prev;
+        wrap.classList.add('cbh-active');
+      } else {
+        hl.style.transform = `translateY(${y}px)`;
+        hl.style.height = h + 'px';
+      }
+    });
+
+    cb.addEventListener('mouseleave', () => {
+      wrap.classList.remove('cbh-active');
+      last = null;
+      entered = false;
+    });
+  });
+}
+
+function render() {
+  renderSidebar();
+  renderMain();
+  // Code blocks are already syntax-highlighted at build time by renderLuaLines().
+  if (window.ResizableColumns) window.ResizableColumns.attachAll();
+  attachLineHighlights();
+  updateAskLinks();
+}
 window.addEventListener("hashchange", render);
 render();
 
