@@ -1177,7 +1177,8 @@ memory.Write("int", base + 0x1234, 999)`)}
           ["<b>Register(eventType, fn)</b>", "<code>string, function</code>", "Register a callback for an event type"],
           ["<b>Unregister(eventType, fn)</b>", "<code>string, function</code>", "Unregister a callback"],
           ["<b>Raycast(pos, dir, distance, ignoreTransparent?)</b>", "<code>Vector3, Vector3, number, bool</code>", "Returns <code>(hit, instance, position, distance)</code>"],
-          ["<b>getgc(includeAll?)</b>", "<code>bool?</code>", "Enumerates the target process's Luau GC and returns an array of object addresses (as <code>number</code>). Default returns tables only; pass <code>true</code> to include strings, functions, userdata, and threads."],
+          ["<b>getgc(includeAll?, searchKey?)</b>", "<code>bool?, string?</code>", "Enumerates the target process's Luau GC. Default returns tables only; pass <code>true</code> as the first arg to include strings, functions, userdata, and threads. If <code>searchKey</code> is a non-empty string, <code>getgc</code> instead scans every GC table for that key and returns the <b>first non-nil value</b> it finds — decoded to a Lua value (<code>string</code>/<code>number</code>/<code>boolean</code>) where possible, or the raw address as a <code>number</code> for GC-typed values. Returns <code>nil</code> if no table has the key."],
+          ["<b>setgc(key, value)</b>", "<code>string, bool | number | address</code>", "Iterates every GC table and writes <code>value</code> into every table that already has <code>key</code>. Accepts <code>bool</code>, <code>number</code>, or a GC address (the tt is inferred from the GC object's header). Cannot create new keys and does not issue a GC write barrier. String literals are rejected — pass an existing TString address (a <code>number</code>) instead."],
           ["<b>rawget(addr, key | true)</b>", "<code>number, string | bool</code>", "Reads a field on the external table at <code>addr</code>. 2nd arg: pass a <code>string</code> key to fetch a single field, or pass <code>true</code> to dump the whole table as a Lua table. Missing keys return <code>nil</code>. Returned GC-typed values (tables/functions/userdata) come back as their raw address <code>number</code>; call <code>rawget</code> recursively on them to dive deeper."],
           ["<b>rawset(addr, key, value)</b>", "<code>number, string, any</code>", "Writes an <b>existing</b> field on the external table at <code>addr</code>. Accepts <code>nil</code>, <code>bool</code>, <code>number</code>, or an address for GC-typed values (the tt is inferred from the GC object's header). Returns <code>true</code> on success, <code>false</code> if the key doesn't already exist. Cannot create new keys and does not issue a GC write barrier."],
         ]
@@ -1224,6 +1225,16 @@ for _, t in next, cheat.getgc() do
         cheat.rawset(t, "CurrentAmmo", math.huge)
     end
 end
+
+-- Shortcut: getgc(includeAll, searchKey) walks the GC for you
+--   and returns the first table's value for that key, or nil.
+local ammo = cheat.getgc(false, "MaxAmmo")
+if ammo then print("first MaxAmmo seen =", ammo) end
+
+-- setgc(key, value) writes into every GC table that has the key.
+--   One-liner replacement for the loop above:
+cheat.setgc("MaxAmmo",     math.huge)
+cheat.setgc("CurrentAmmo", math.huge)
 
 -- Dump every field on a table (debugging).
 local dump = cheat.rawget(someAddr, true)
