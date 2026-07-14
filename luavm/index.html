@@ -275,7 +275,7 @@
   article code {
     font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
     background: rgba(255,255,255,0.06); padding: 0.15rem 0.4rem;
-    border-radius: 0.3rem; font-size: 0.85em; color: var(--gold);
+    border-radius: 0.3rem; font-size: 0.95em; color: var(--gold);
   }
   article pre code { background: none; padding: 0; border-radius: 0; color: inherit; }
   .callout {
@@ -482,13 +482,13 @@
   }
   td.sig-cell {
     font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
-    font-size: 0.85em;
+    font-size: 0.95em;
     color: #e6e6e6;
   }
   td.sig-cell b { color: #e6e6e6; font-weight: 600; font-style: normal; }
   td.type-cell {
     font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
-    font-size: 0.85em;
+    font-size: 0.95em;
     color: #e6e6e6;
   }
   td.type-cell code { color: #e6e6e6; background: none; padding: 0; }
@@ -628,6 +628,7 @@ const NAV_ICONS = {
   "/fflags": "fflags",
   "/entity": "entity",
   "/instance": "instance",
+  "/remoteevent": "signal",
   "/class-properties": "props",
   "/custom-types": "types",
   "/signals": "signal",
@@ -641,7 +642,7 @@ const NAV = [
   { heading: "Rendering", items: [{ to: "/gui", label: "gui" }, { to: "/imgui", label: "imgui" }, { to: "/draw", label: "draw" }] },
   { heading: "System", items: [{ to: "/input", label: "input" }, { to: "/file", label: "file" }, { to: "/internet", label: "internet" }, { to: "/utility", label: "utility" }, { to: "/task", label: "task" }, { to: "/tween", label: "tween" }, { to: "/memory", label: "memory" }] },
   { heading: "Exploitation", items: [{ to: "/cheat", label: "cheat" }, { to: "/fflags", label: "fflags" }, { to: "/entity", label: "entity" }] },
-  { heading: "Roblox Types", items: [{ to: "/instance", label: "Instance" }, { to: "/class-properties", label: "Class Properties" }, { to: "/custom-types", label: "Custom Types" }, { to: "/signals", label: "RBXScriptSignal" }] },
+  { heading: "Roblox Types", items: [{ to: "/instance", label: "Instance" }, { to: "/remoteevent", label: "RemoteEvent" }, { to: "/class-properties", label: "Class Properties" }, { to: "/custom-types", label: "Custom Types" }, { to: "/signals", label: "RBXScriptSignal" }] },
   { heading: "Reference", items: [{ to: "/library-gating", label: "Library Gating" }, { to: "/notes", label: "Notes" }] },
 ];
 
@@ -1166,21 +1167,14 @@ memory.Write("int", base + 0x1234, 999)`)}
 
   "/cheat": {
     title: "cheat",
-    intro: "Cheat utilities including event registration and raycasting.",
+    intro: "Cheat utilities — event registration, raycasting, server/teleport helpers, and the Roblox Luau garbage-collector interface.",
     body: `
+      <h3>Events</h3>
       ${toTable(
         ["Function", "Signature", "Description"],
         [
-          ["<b>TeleportPlace(placeId, jobId?)</b>", "<code>string, string?</code>", "Teleport to a Roblox place/server. Also accepts a table <code>{PlaceId, JobId}</code>. Returns <code>bool</code>."],
-          ["<b>GetServers(placeId?)</b>", "<code>string?</code>", "Fetches game server list. Returns table of servers with <code>JobId, PlaceId, UniverseId, GameName, Playing, MaxPlayers, Ping, Fps</code>. Defaults to current place."],
-          ["<b>GetUniverseId(placeId?)</b>", "<code>string?</code>", "Gets universe ID for a place. Defaults to current place."],
-          ["<b>Register(eventType, fn)</b>", "<code>string, function</code>", "Register a callback for an event type"],
-          ["<b>Unregister(eventType, fn)</b>", "<code>string, function</code>", "Unregister a callback"],
-          ["<b>Raycast(pos, dir, distance, ignoreTransparent?)</b>", "<code>Vector3, Vector3, number, bool</code>", "Returns <code>(hit, instance, position, distance)</code>"],
-          ["<b>getgc(includeAll?, searchKey?)</b>", "<code>bool?, string?</code>", "Enumerates the target process's Luau GC. Default returns tables only; pass <code>true</code> as the first arg to include strings, functions, userdata, and threads. If <code>searchKey</code> is a non-empty string, <code>getgc</code> instead scans every GC table for that key and returns the <b>first non-nil value</b> it finds — decoded to a Lua value (<code>string</code>/<code>number</code>/<code>boolean</code>) where possible, or the raw address as a <code>number</code> for GC-typed values. Returns <code>nil</code> if no table has the key."],
-          ["<b>setgc(key, value)</b>", "<code>string, bool | number | address</code>", "Iterates every GC table and writes <code>value</code> into every table that already has <code>key</code>. Accepts <code>bool</code>, <code>number</code>, or a GC address (the tt is inferred from the GC object's header). Cannot create new keys and does not issue a GC write barrier. String literals are rejected — pass an existing TString address (a <code>number</code>) instead."],
-          ["<b>rawget(addr, key | true)</b>", "<code>number, string | bool</code>", "Reads a field on the external table at <code>addr</code>. 2nd arg: pass a <code>string</code> key to fetch a single field, or pass <code>true</code> to dump the whole table as a Lua table. Missing keys return <code>nil</code>. Returned GC-typed values (tables/functions/userdata) come back as their raw address <code>number</code>; call <code>rawget</code> recursively on them to dive deeper."],
-          ["<b>rawset(addr, key, value)</b>", "<code>number, string, any</code>", "Writes an <b>existing</b> field on the external table at <code>addr</code>. Accepts <code>nil</code>, <code>bool</code>, <code>number</code>, or an address for GC-typed values (the tt is inferred from the GC object's header). Returns <code>true</code> on success, <code>false</code> if the key doesn't already exist. Cannot create new keys and does not issue a GC write barrier."],
+          ["<b>Register(eventType, fn)</b>", "<code>string, function</code>", "Register a callback for an event type. Fires for the lifetime of the script until unregistered."],
+          ["<b>Unregister(eventType, fn)</b>", "<code>string, function</code>", "Unregister a previously registered callback. Pass the same function reference used with <code>Register</code>."],
         ]
       )}
 
@@ -1195,28 +1189,30 @@ memory.Write("int", base + 0x1234, 999)`)}
         ]
       )}
 
-      <h3>Example</h3>
-      ${toCodeblock(`cheat.Register("onPaint", function()
+      <h4>Example</h4>
+      ${toCodeblock(`local function onPaint()
     draw.Text("ESP Label", 100, 50, Color3.new(1, 1, 0))
-end)
-
-local hit, inst, pos, dist = cheat.Raycast(
-    Vector3.new(0, 5, 0),
-    Vector3.new(0, -1, 0),
-    500
-)
-
--- Teleport to a place
-local ok = cheat.TeleportPlace("123456789")
-print("Teleport:", ok)
-
--- Get servers for current place
-local servers = cheat.GetServers()
-for _, srv in ipairs(servers) do
-    print(srv.JobId, srv.Playing, "/", srv.MaxPlayers)
 end
 
--- GC enumeration + rawget / rawset (Roblox Luau)
+cheat.Register("onPaint", onPaint)
+
+-- Later, stop drawing:
+cheat.Unregister("onPaint", onPaint)`)}
+
+      <h3>Garbage Collector</h3>
+      <p>Read and write the target process's Luau GC directly. <code>getgc</code> enumerates live objects; <code>rawget</code>/<code>rawset</code> operate on a single external table by address; <code>setgc</code> writes across every table that has a key.</p>
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>getgc(includeAll?, searchKey?)</b>", "<code>bool?, string?</code>", "Enumerates the target process's Luau GC. Default returns tables only; pass <code>true</code> as the first arg to include strings, functions, userdata, and threads. If <code>searchKey</code> is a non-empty string, <code>getgc</code> instead scans every GC table for that key and returns the <b>first non-nil value</b> it finds — decoded to a Lua value (<code>string</code>/<code>number</code>/<code>boolean</code>) where possible, or the raw address as a <code>number</code> for GC-typed values. Returns <code>nil</code> if no table has the key."],
+          ["<b>setgc(key, value)</b>", "<code>string, bool | number | address</code>", "Iterates every GC table and writes <code>value</code> into every table that already has <code>key</code>. Accepts <code>bool</code>, <code>number</code>, or a GC address (the tt is inferred from the GC object's header). Cannot create new keys and does not issue a GC write barrier. String literals are rejected — pass an existing TString address (a <code>number</code>) instead."],
+          ["<b>rawget(addr, key | true)</b>", "<code>number, string | bool</code>", "Reads a field on the external table at <code>addr</code>. 2nd arg: pass a <code>string</code> key to fetch a single field, or pass <code>true</code> to dump the whole table as a Lua table. Missing keys return <code>nil</code>. Returned GC-typed values (tables/functions/userdata) come back as their raw address <code>number</code>; call <code>rawget</code> recursively on them to dive deeper."],
+          ["<b>rawset(addr, key, value)</b>", "<code>number, string, any</code>", "Writes an <b>existing</b> field on the external table at <code>addr</code>. Accepts <code>nil</code>, <code>bool</code>, <code>number</code>, or an address for GC-typed values (the tt is inferred from the GC object's header). Returns <code>true</code> on success, <code>false</code> if the key doesn't already exist. Cannot create new keys and does not issue a GC write barrier."],
+        ]
+      )}
+
+      <h4>Example</h4>
+      ${toCodeblock(`-- GC enumeration + rawget / rawset (Roblox Luau)
 --   Find every weapon config and give it unlimited ammo.
 for _, t in next, cheat.getgc() do
     if type(t) == "table"
@@ -1239,6 +1235,46 @@ cheat.setgc("CurrentAmmo", math.huge)
 -- Dump every field on a table (debugging).
 local dump = cheat.rawget(someAddr, true)
 for k, v in pairs(dump) do print(k, "=", v) end`)}
+
+      <h3>Raycast</h3>
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>Raycast(pos, dir, distance, ignoreTransparent?)</b>", "<code>Vector3, Vector3, number, bool?</code>", "Casts a ray. Returns <code>(hit, instance, position, distance)</code>."],
+        ]
+      )}
+
+      <h4>Example</h4>
+      ${toCodeblock(`local hit, inst, pos, dist = cheat.Raycast(
+    Vector3.new(0, 5, 0),
+    Vector3.new(0, -1, 0),
+    500
+)
+
+if hit then
+    print("hit", inst.Name, "at", pos, "dist", dist)
+end`)}
+
+      <h3>Servers &amp; Teleport</h3>
+      ${toTable(
+        ["Function", "Signature", "Description"],
+        [
+          ["<b>TeleportPlace(placeId, jobId?)</b>", "<code>string, string?</code>", "Teleport to a Roblox place/server. Also accepts a table <code>{PlaceId, JobId}</code>. Returns <code>bool</code>."],
+          ["<b>GetServers(placeId?)</b>", "<code>string?</code>", "Fetches game server list. Returns table of servers with <code>JobId, PlaceId, UniverseId, GameName, Playing, MaxPlayers, Ping, Fps</code>. Defaults to current place."],
+          ["<b>GetUniverseId(placeId?)</b>", "<code>string?</code>", "Gets universe ID for a place. Defaults to current place."],
+        ]
+      )}
+
+      <h4>Example</h4>
+      ${toCodeblock(`-- Teleport to a place
+local ok = cheat.TeleportPlace("123456789")
+print("Teleport:", ok)
+
+-- Get servers for current place
+local servers = cheat.GetServers()
+for _, srv in ipairs(servers) do
+    print(srv.JobId, srv.Playing, "/", srv.MaxPlayers)
+end`)}
     `,
   },
 
@@ -1731,6 +1767,75 @@ end)`)}
 
       ${toCodeblock(`local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")`)}
+    `,
+  },
+
+  "/remoteevent": {
+    title: "RemoteEvent",
+    intro: "FireServer and remote-event spy — extra members added to <code>RemoteEvent</code>, <code>UnreliableRemoteEvent</code>, and <code>RemoteFunction</code> instances.",
+    body: `
+      <p>These members appear on top of the standard <a href="#/instance">Instance</a> API for any instance whose <code>ClassName</code> matches. Reading a spy signal auto-installs the underlying hook on first read — you don't need to opt in ahead of time.</p>
+      <p>Remotes parented anywhere under <code>RobloxReplicatedStorage</code> are treated as protected — trying to access the spy on them errors with <code>Protected &lt;ClassName&gt;</code>.</p>
+
+      <h3>FireServer</h3>
+      ${toTable(
+        ["Method", "Signature", "Description"],
+        [
+          ["<b>FireServer(...)</b>", "<code>...args</code>", "Fires the remote to the server with the given args."],
+        ]
+      )}
+
+      <h4>Example</h4>
+      ${toCodeblock(`local rem = game:GetService("ReplicatedStorage").Events.MyEvent
+rem:FireServer("hello", 42, true)
+
+-- Instances, nested arrays, and string-keyed dicts are all supported.
+rem:FireServer(
+    game:GetService("Players").LocalPlayer,
+    { 1, 2, 3 },
+    { action = "buy", itemId = 7, meta = { source = "shop" } }
+)`)}
+
+      <h3>OnFireServer (RemoteEvent spy)</h3>
+      ${toTable(
+        ["Member", "Type", "Description"],
+        [
+          ["<b>OnFireServer</b>", "<code>RBXScriptSignal</code>", "Fires whenever <em>anything</em> in the game (Lua, C++, other exploits) sends args through this <code>RemoteEvent</code> or <code>UnreliableRemoteEvent</code> to the server. Reading this member enables the spy hook on the remote automatically. Callback receives the same variadic args that were sent."],
+          ["<b>OnClientEvent</b>", "<code>RBXScriptSignal</code>", "Alias for <code>OnFireServer</code> — kept for users coming from the Roblox docs."],
+          ["<b>OnServerEvent</b>", "<code>RBXScriptSignal</code>", "Alias for <code>OnFireServer</code>."],
+        ]
+      )}
+
+      <h4>Example</h4>
+      ${toCodeblock(`local rem = game:GetService("ReplicatedStorage").Events.MyEvent
+
+rem.OnFireServer:Connect(function(...)
+    print("FireServer intercepted:", ...)
+end)
+
+-- :Wait() yields the coroutine and returns the next fire's args.
+task.spawn(function()
+    local a, b, c = rem.OnFireServer:Wait()
+    print("first fire:", a, b, c)
+end)`)}
+
+      <h3>OnInvokeServer (RemoteFunction spy)</h3>
+      ${toTable(
+        ["Member", "Type", "Description"],
+        [
+          ["<b>OnInvokeServer</b>", "<code>RBXScriptSignal</code>", "Fires whenever anything invokes this <code>RemoteFunction</code>. Callback receives the invocation args. Only exists on <code>RemoteFunction</code> instances."],
+          ["<b>OnClientInvoke</b>", "<code>RBXScriptSignal</code>", "Alias for <code>OnInvokeServer</code>."],
+          ["<b>OnServerInvoke</b>", "<code>RBXScriptSignal</code>", "Alias for <code>OnInvokeServer</code>."],
+        ]
+      )}
+
+      <h4>Example</h4>
+      ${toCodeblock(`local func = game:GetService("ReplicatedStorage").Functions.GetInventory
+
+func.OnInvokeServer:Connect(function(...)
+    print("InvokeServer intercepted:", ...)
+end)`)}
+
     `,
   },
 
