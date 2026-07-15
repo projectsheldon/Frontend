@@ -299,6 +299,7 @@ async function ShowBalanceCheckout()
         const workinkLink = await Api.GetLink('workink');
 
         let cooldownTimer = null;
+        let rateLimitTimer = null;
 
         function formatCooldown(ms)
         {
@@ -320,9 +321,12 @@ async function ShowBalanceCheckout()
             const now = Date.now();
             const isOnCooldown = freeKeyCooldownUntil > 0 && freeKeyCooldownUntil > now;
             const cooldownRemaining = isOnCooldown ? freeKeyCooldownUntil - now : 0;
+            const rateLimitRemaining = (isRateLimited && rateLimitedUntil > now) ? rateLimitedUntil - now : 0;
 
             const paymentForm = document.getElementById('payment-form');
             if(!paymentForm) return;
+
+            if(rateLimitTimer) { clearInterval(rateLimitTimer); rateLimitTimer = null; }
 
             paymentForm.innerHTML = `
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; width: 100%; text-align: center; gap: 24px;">
@@ -342,7 +346,7 @@ async function ShowBalanceCheckout()
                     }
 
                     ${isRateLimited
-                        ? `<span style="font-size: 12px; color: #ef4444; font-weight: 700;">Rate limited — max balance reached. Come back later.</span>`
+                        ? `<span id="rate-limit-msg" style="font-size: 12px; color: #ef4444; font-weight: 700;">Rate limited — max balance reached.${rateLimitRemaining > 0 ? ` Try again in ${formatCooldown(rateLimitRemaining)}.` : ' Come back later.'}</span>`
                         : (isOnCooldown ? '' : `<a href="${workinkLink}" style="font-size: 13px; color: #c7b18f; text-decoration: underline;">
                             ${noCooldown ? 'Watch Ads for 1 Free Key' : `Watch Ads for +${adRewardBalance} balance`}
                            </a>`)
@@ -352,6 +356,23 @@ async function ShowBalanceCheckout()
 
             const totalEl = document.getElementById('final-total-price');
             if(totalEl) totalEl.textContent = `${totalCost.toFixed(1)} Balance`;
+
+            if(isRateLimited && rateLimitRemaining > 0)
+            {
+                rateLimitTimer = setInterval(() =>
+                {
+                    const remaining = rateLimitedUntil - Date.now();
+                    if(remaining <= 0)
+                    {
+                        clearInterval(rateLimitTimer);
+                        rateLimitTimer = null;
+                        renderCheckout();
+                        return;
+                    }
+                    const msgEl = document.getElementById('rate-limit-msg');
+                    if(msgEl) msgEl.textContent = `Rate limited — max balance reached. Try again in ${formatCooldown(remaining)}.`;
+                }, 1000);
+            }
 
             if(isOnCooldown)
             {
