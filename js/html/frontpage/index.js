@@ -92,16 +92,13 @@ async function LoadProducts()
 }
 document.addEventListener('DOMContentLoaded', LoadProducts);
 
-// Everything file-transfer-related lives in ./install.js and is imported ONLY after a
-// logged-in click. Logged-out visitors (and anonymous crawlers) never fetch that module,
-// so the static page has no modal DOM, no libarchive, and no blob-save code path to
-// fingerprint.
 document.getElementById('hero-cta')?.addEventListener('click', async () =>
 {
     const loggedIn = !!(window.DiscordAuth && window.DiscordAuth.currentUser);
     if(!loggedIn)
     {
-        RedirectToPlatform('discord_invite');
+        if(typeof window.Notify === 'function') window.Notify('You must log in with Discord to download Sheldon.', 'warning', 6000);
+        try { window.DiscordAuth?.LoginPopup?.(); } catch(e) {}
         return;
     }
 

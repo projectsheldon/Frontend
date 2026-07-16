@@ -1,8 +1,3 @@
-// Install flow — everything file-transfer-related lives here. This module is loaded
-// dynamically ONLY when a logged-in user activates the hero call-to-action, so the initial
-// page contains no modal DOM, no styles, no libarchive import, and no blob-save path.
-// Anonymous scanners see a plain page; Safe Browsing has nothing to fingerprint statically.
-
 import Api from '../../util/backend.js';
 import { extractArchive, buildDeliverable, saveBlob } from '../../util/installer.js';
 

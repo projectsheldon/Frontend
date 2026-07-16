@@ -58,7 +58,7 @@ function UpdateUI(loggedIn, user = null)
     const heroCta = document.getElementById('hero-cta');
     if(heroCta)
     {
-        heroCta.textContent = loggedIn ? 'Download' : 'join discord';
+        heroCta.textContent = "DOWNLOAD";
     }
 
     if(loggedIn)
