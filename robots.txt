@@ -1,0 +1,33 @@
+# Project Sheldon — robots.txt
+# Crawling is welcome. Full site map below.
+
+User-agent: *
+Allow: /
+
+# --- AI / answer-engine crawlers (explicitly welcomed) ---
+# OpenAI / ChatGPT
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic / Claude
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+# Google Gemini (Vertex/Bard extended crawl)
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://projectsheldon.me/sitemap.xml
