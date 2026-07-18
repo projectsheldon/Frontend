@@ -1,0 +1,1338 @@
+# Sheldon LuaVM — Full Documentation
+
+> Scripting reference and API documentation for Sheldon's LuaVM, a customizable Lua scripting environment for Roblox.
+> Source: https://projectsheldon.me/luavm/
+> This plain-text file mirrors the full documentation for AI assistants and search tools.
+
+---
+
+## Sheldon's Scripting Environment
+
+A scripting environment made for letting users have more customizability over their product. (<- not ai)
+
+---
+
+## Global Functions
+
+Built-in global functions available in the LuaVM environment.
+
+| Function | Description |
+| --- | --- |
+| **print(...)** | Outputs to console with `[print]` prefix |
+| **warn(...)** | Outputs to console with `[warn]` prefix |
+| **error(...)** | Throws a Lua error |
+| **hex(number)** | Formats a number as hex string (e.g. `0x7FF...`) |
+| **tick()** | Returns `GetTickCount64()` — milliseconds since system start |
+| **loadstring(source)** | Loads and compiles Lua source code. Returns `(function, nil)` on success or `(nil, error_message)` on failure. |
+| **type(v)** | Overrides Lua's built-in `type()`. Behaves normally for all Lua values, and additionally recognizes Roblox Luau GC addresses returned by `cheat.getgc()`/`cheat.rawget()` — for a number that points at a live GC object it returns `"table"`, `"string"`, `"function"`, `"userdata"`, or `"thread"` depending on the object's type. |
+
+### String Extensions
+
+Appended to Lua's built-in `string` library:
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **string.regex(text, pattern)** | `string, string` | Returns `true` if the pattern is found (std::regex_search). Returns `false` on invalid patterns. |
+
+#### Example
+
+```lua
+-- string.regex
+if string.regex("hello123", "%d+") then
+    print("contains digits")
+end
+
+-- type() also recognizes external Roblox GC addresses
+local gc = cheat.getgc()
+for _, t in next, gc do
+    if type(t) == "table" then
+        -- t is a number (Roblox table's memory address), but
+        -- type() reports "table" because it dereferences the GC header.
+    end
+end
+```
+
+---
+
+## base64
+
+Base64 encoding and decoding. Always available (no library gate).
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **base64.Encode(data)** | `string` | Encodes a string to base64 |
+| **base64.Decode(data)** | `string` | Decodes a base64 string back to plaintext |
+
+### Example
+
+```lua
+local encoded = base64.Encode("Hello, world!")
+print(encoded)  -- SGVsbG8sIHdvcmxkIQ==
+local decoded = base64.Decode(encoded)
+print(decoded)  -- Hello, world!
+```
+
+---
+
+## hash
+
+Cryptographic hash functions. Always available (no library gate).
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **hash.Sha256(data)** | `string` | Returns SHA-256 hex digest |
+| **hash.Sha3(data)** | `string` | Returns SHA-3 hex digest |
+| **hash.Md5(data)** | `string` | Returns MD5 hex digest |
+
+### Example
+
+```lua
+local sha = hash.Sha256("hello")
+print(sha)  -- 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+```
+
+---
+
+## compress
+
+LZ4 compression utilities. Always available (no library gate).
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **compress.Compress(data)** | `string` | Compresses data using LZ4 (does NOT prepend original size). `Decompress` expects a 4-byte size header — functions are currently incompatible. |
+| **compress.Decompress(data)** | `string` | Decompresses LZ4-compressed data back to original. |
+
+### Example
+
+```lua
+local comp = compress.Compress("Hello, world!")
+local dec = compress.Decompress(comp)
+print(dec)  -- Hello, world!
+```
+
+---
+
+## task
+
+Scheduling utilities for asynchronous execution.
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **task.spawn(fn)** | `function` | Schedules `fn` to run asynchronously |
+| **task.delay(seconds, fn)** | `number, function` | Schedules `fn` after `seconds` |
+| **task.wait(seconds)** | `number` | Yields the coroutine, returns actual elapsed time. Must be called within a `task.spawn`'d or yielded coroutine (not from main thread). |
+
+### Example
+
+```lua
+task.spawn(function()
+    print("Runs asynchronously!")
+end)
+
+local elapsed = task.wait(1)
+print("Waited", elapsed, "seconds")
+```
+
+---
+
+## tween
+
+Interpolate instance properties smoothly over time. Modelled on Roblox's TweenService.
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **tween.Info(time, delayTime?, style?)** | `number, number?, string?` | Builds a TweenInfo table. `style` defaults to `"Linear"`, `delayTime` to `0`. You can also pass a raw table `{time=..., delayTime=..., style=...}` anywhere info is expected. |
+| **tween.Create(instance, info, props)** | `Instance, table, table` | Creates a tween that will interpolate each property in `props` from its current value to the target value. Returns a tween object. |
+
+### Tween Object
+
+| Method | Signature | Description |
+| --- | --- | --- |
+| **tween:Play(waitForFinish?)** | `bool?` | Starts the tween. When `waitForFinish` is `true`, blocks the calling coroutine until every property has finished tweening; otherwise returns immediately. Both `tween:Play(...)` and `tween.Play(...)` syntaxes are accepted. |
+| **tween:Cancel()** |  | Snaps every property back to the value it had when the tween was created. Does not stop already-scheduled ticks — for that, let the tween finish or overwrite the property. |
+
+### Easing Styles
+
+`Linear`, `Bounce`, `Elastic`, `Exponential`, `Cubic`. Also exposed as `tween.EasingStyle.Linear` etc. for readability. Pass either the string or the constant.
+
+### Supported Property Types
+
+- `number` — e.g. `Transparency`, `Reflectance`, `WalkSpeed`
+
+- `Vector3` — e.g. `Position`, `Size`, `LinearVelocity`, `AngularVelocity`
+
+- `Color3` — e.g. `Color`
+
+The property must be registered for the instance's class (see [Class Properties](#/class-properties)) and must not be read-only. Unsupported properties raise an error at `tween.Create` time.
+
+### Example — Move a part
+
+```lua
+local part = workspace.Part
+local info = tween.Info(1.5, 0, "Cubic")
+
+local t = tween.Create(part, info, {
+    Position = Vector3.new(0, 20, 0),
+    Transparency = 0.5,
+})
+
+t:Play()
+```
+
+### Example — Wait until finished
+
+```lua
+local part = workspace.Part
+
+local t = tween.Create(part, { time = 2, style = "Bounce" }, {
+    Position = part.Position + Vector3.new(0, 15, 0),
+})
+
+t:Play(true)
+print("Tween finished — running follow-up code")
+```
+
+### Example — Chained tweens
+
+```lua
+task.spawn(function()
+    local part = workspace.Part
+    local up   = tween.Create(part, tween.Info(1, 0, "Cubic"),  { Position = part.Position + Vector3.new(0, 10, 0) })
+    local down = tween.Create(part, tween.Info(1, 0, "Bounce"), { Position = part.Position })
+
+    up:Play(true)
+    down:Play(true)
+end)
+```
+
+### Notes
+
+- Each property tweens independently. Passing multiple properties runs them in parallel on the same schedule.
+
+- `tween:Play(true)` blocks the calling coroutine — use `task.spawn` if you don't want to freeze your main script.
+
+- Tweens write directly to memory. Physics-driven properties (`Position`, `CFrame`, velocities) update visually but the engine may resimulate them next physics step; combine with anchoring or velocity-zeroing for full control.
+
+- Tween ticks run on a dedicated background thread and continue even if the script yields.
+
+---
+
+## memory
+
+Raw memory read/write operations. Requires the Memory library to be enabled.
+
+Requires: Memory library enabled
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **memory.Read(type, address)** | `string, uintptr` | Reads from memory |
+| **memory.Write(type, address, value)** | `string, uintptr, any` | Writes to memory |
+| **memory.GetRTTI(address)** | `uintptr` | Gets RTTI type from vtable |
+| **memory.GetBase()** |  | Returns Roblox process base address |
+| **memory.Rebase(offset)** | `uintptr` | Returns `base + offset` |
+
+### Supported Types
+
+**Read/Write:** `float`, `double`, `int`, `uint`, `bool`, `byte`, `short`, `ushort`, `int64`, `uint64`, `string`, `vector2`, `vector3`, `color3`.
+
+**Write also supports:** `pointer`.
+
+### Example
+
+```lua
+local base = memory.GetBase()
+local value = memory.Read("int", base + 0x1234)
+print(hex(value))
+memory.Write("int", base + 0x1234, 999)
+```
+
+---
+
+## cheat
+
+Cheat utilities — event registration, raycasting, server/teleport helpers, and the Roblox Luau garbage-collector interface.
+
+### Events
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **Register(eventType, fn)** | `string, function` | Register a callback for an event type. Fires for the lifetime of the script until unregistered. |
+| **Unregister(eventType, fn)** | `string, function` | Unregister a previously registered callback. Pass the same function reference used with `Register`. |
+
+#### Event Types
+
+| Event | Description |
+| --- | --- |
+| **onPaint** | Fires every frame for rendering |
+| **onUpdate** | Fires every frame for logic updates |
+| **onSlowUpdate** | Fires at a reduced rate |
+| **teleport** | Fires when the player teleports |
+
+#### Example
+
+```lua
+local function onPaint()
+    draw.Text("ESP Label", 100, 50, Color3.new(1, 1, 0))
+end
+
+cheat.Register("onPaint", onPaint)
+
+-- Later, stop drawing:
+cheat.Unregister("onPaint", onPaint)
+```
+
+### Garbage Collector
+
+Read and write the target process's Luau GC directly. `getgc` enumerates live objects; `rawget`/`rawset` operate on a single external table by address; `setgc` writes across every table that has a key.
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **getgc(includeAll?, searchKey?)** | `bool?, string?` | Enumerates the target process's Luau GC. Default returns tables only; pass `true` as the first arg to include strings, functions, userdata, and threads. If `searchKey` is a non-empty string, `getgc` instead scans every GC table for that key and returns the **first non-nil value** it finds — decoded to a Lua value (`string`/`number`/`boolean`) where possible, or the raw address as a `number` for GC-typed values. Returns `nil` if no table has the key. |
+| **setgc(key, value)** | `string, bool \| number \| address` | Iterates every GC table and writes `value` into every table that already has `key`. Accepts `bool`, `number`, or a GC address (the tt is inferred from the GC object's header). Cannot create new keys and does not issue a GC write barrier. String literals are rejected — pass an existing TString address (a `number`) instead. |
+| **rawget(addr, key \| true)** | `number, string \| bool` | Reads a field on the external table at `addr`. 2nd arg: pass a `string` key to fetch a single field, or pass `true` to dump the whole table as a Lua table. Missing keys return `nil`. Returned GC-typed values (tables/functions/userdata) come back as their raw address `number`; call `rawget` recursively on them to dive deeper. |
+| **rawset(addr, key, value)** | `number, string, any` | Writes an **existing** field on the external table at `addr`. Accepts `nil`, `bool`, `number`, or an address for GC-typed values (the tt is inferred from the GC object's header). Returns `true` on success, `false` if the key doesn't already exist. Cannot create new keys and does not issue a GC write barrier. |
+
+#### Example
+
+```lua
+-- GC enumeration + rawget / rawset (Roblox Luau)
+--   Find every weapon config and give it unlimited ammo.
+for _, t in next, cheat.getgc() do
+    if type(t) == "table"
+       and cheat.rawget(t, "MaxAmmo") ~= nil then
+        cheat.rawset(t, "MaxAmmo",     math.huge)
+        cheat.rawset(t, "CurrentAmmo", math.huge)
+    end
+end
+
+-- Shortcut: getgc(includeAll, searchKey) walks the GC for you
+--   and returns the first table's value for that key, or nil.
+local ammo = cheat.getgc(false, "MaxAmmo")
+if ammo then print("first MaxAmmo seen =", ammo) end
+
+-- setgc(key, value) writes into every GC table that has the key.
+--   One-liner replacement for the loop above:
+cheat.setgc("MaxAmmo",     math.huge)
+cheat.setgc("CurrentAmmo", math.huge)
+
+-- Dump every field on a table (debugging).
+local dump = cheat.rawget(someAddr, true)
+for k, v in pairs(dump) do print(k, "=", v) end
+```
+
+### Raycast
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **Raycast(pos, dir, distance, ignoreTransparent?)** | `Vector3, Vector3, number, bool?` | Casts a ray. Returns `(hit, instance, position, distance)`. |
+
+#### Example
+
+```lua
+local hit, inst, pos, dist = cheat.Raycast(
+    Vector3.new(0, 5, 0),
+    Vector3.new(0, -1, 0),
+    500
+)
+
+if hit then
+    print("hit", inst.Name, "at", pos, "dist", dist)
+end
+```
+
+### Servers & Teleport
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **TeleportPlace(placeId, jobId?)** | `string, string?` | Teleport to a Roblox place/server. Also accepts a table `{PlaceId, JobId}`. Returns `bool`. |
+| **GetServers(placeId?)** | `string?` | Fetches game server list. Returns table of servers with `JobId, PlaceId, UniverseId, GameName, Playing, MaxPlayers, Ping, Fps`. Defaults to current place. |
+| **GetUniverseId(placeId?)** | `string?` | Gets universe ID for a place. Defaults to current place. |
+
+#### Example
+
+```lua
+-- Teleport to a place
+local ok = cheat.TeleportPlace("123456789")
+print("Teleport:", ok)
+
+-- Get servers for current place
+local servers = cheat.GetServers()
+for _, srv in ipairs(servers) do
+    print(srv.JobId, srv.Playing, "/", srv.MaxPlayers)
+end
+```
+
+---
+
+## internet
+
+HTTP networking functions.
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **internet.get(url, timeout?, info?)** | `string, number?, table?` | HTTP GET. Info supports `{headers={}}`. Returns `{text, status_code}` |
+| **internet.post(url, body?, timeout?, info?)** | `string, string?, number?, table?` | HTTP POST |
+
+### Example
+
+```lua
+local res = internet.get("https://api.example.com/data", 5000)
+print(res.status_code)
+print(res.text)
+```
+
+---
+
+## input
+
+Mouse and keyboard input simulation. Requires the Input library to be enabled.
+
+Requires: Input library enabled
+
+### Mouse
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **input.MoveMouse(dir, relative?)** | `Vector2, bool?` | Move mouse (absolute or relative to overlay) |
+| **input.GetMousePosition()** |  | Current cursor position |
+| **input.MouseClick(click, time?)** | `int, int?` | Simulate click (1=left, 2=right) |
+| **input.MousePress(click)** | `int` | Press button |
+| **input.MouseRelease(click)** | `int` | Release button |
+| **input.GetScrollDelta()** |  | Scroll wheel delta |
+| **input.GetMoveDelta()** |  | Mouse move delta |
+
+### Keyboard
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **input.IsHeld(vKey)** | `int\|string` | Key held down |
+| **input.IsPressed(vKey)** | `int\|string` | Key just pressed |
+| **input.IsReleased(vKey)** | `int\|string` | Key just released |
+| **input.PressKey(vKey, time?)** | `int\|string, int?` | Press and release key |
+| **input.HoldKey(vKey)** | `int\|string` | Hold key down |
+| **input.ReleaseKey(vKey)** | `int\|string` | Release key |
+| **input.Type(text, time?)** | `string, int?` | Type text character by character |
+
+### Example
+
+```lua
+-- Center mouse and click
+input.MoveMouse(Vector2.new(960, 540))
+input.MouseClick(1)
+
+-- Type a message
+input.Type("Hello, world!", 50)
+```
+
+---
+
+## file
+
+Sandboxed file system operations. Requires the File_Management library to be enabled.
+
+Requires: File_Management library enabled
+
+All operations are sandboxed to `{workspaceDir}/scripts/SandboxEnv/`. Path traversal (`..`) is blocked.
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **file.write(location, content)** | `string, string` | Write file |
+| **file.read(location)** | `string` | Read file |
+| **file.rename(location, newName)** | `string, string` | Rename/move file |
+| **file.delete(location)** | `string` | Delete file |
+| **file.list(location)** | `string` | List directory |
+| **file.append(location, content)** | `string, string` | Append to file |
+
+### Example
+
+```lua
+file.write("config.txt", "Hello, world!")
+local content = file.read("config.txt")
+print(content)
+file.delete("config.txt")
+```
+
+---
+
+## utility
+
+Various utility functions including world-to-screen projection and clipboard access.
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **utility.WorldToScreen(worldPos)** | `Vector3` | Project world position to screen. Returns `(Vector2 screenPos, bool isOnScreen)`. |
+| **utility.GetClipboard()** |  | Get clipboard text |
+| **utility.SetClipboard(text)** | `string` | Set clipboard text |
+
+### Example
+
+```lua
+-- Project a player's position to screen
+local pos = utility.WorldToScreen(player.Character.HumanoidRootPart.Position)
+draw.Text("Player", pos.X, pos.Y, Color3.new(1, 1, 1))
+```
+
+`GetClipboard` / `SetClipboard` require `Clipboard` library enabled.
+
+---
+
+## entity
+
+Custom entity management system.
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **entity.AddEntity(key, data)** | `string, table` | Add custom entity. `data` supports: `Character`, `PrimaryPart`, `Name`, `DisplayName`, `Team`, `TeamColor`, `DoTeamCheck`, `Humanoid`, `MaxHealth`, `Health`, `RemoveOnDeath`, `Bones` |
+| **entity.EditEntity(key, data)** | `string, table` | Edit entity data |
+| **entity.RemoveEntity(key)** | `string` | Remove entity |
+| **entity.Clear()** |  | Remove all entities |
+| **entity.GetEntity(key)** | `string` | Get entity data. Returns `Character`, `PrimaryPart`, `Name`, `DisplayName`, `Team`, `Humanoid`, `MaxHealth`, `Health`, `UserId`, `IsEntity` |
+| **entity.GetPlayers(includeEnemies?, includeEntities?)** | `bool?, bool?` | Get players/entities data. Additionally returns: `IsAlive`, `IsCameraVisible`, `IsLocal`, `IsPreview`, `IsTargeted`, `IsFriend`, `IsWhitelisted`, `IsEnemy`, `RigType` |
+
+### Example
+
+```lua
+entity.AddEntity("target", {
+    Character = char,
+    PrimaryPart = char.HumanoidRootPart,
+    Name = "Player1"
+})
+local data = entity.GetEntity("target")
+print(data.Name, data.Character)
+```
+
+---
+
+## draw
+
+2D drawing primitives for rendering overlays.
+
+| Function | Signature |
+| --- | --- |
+| **draw.Text(text, x, y, color?, font?, alpha?)** | `string, number, number, Color3?, string?, int?` |
+| **draw.TextOutlined(text, x, y, color?, font?, alpha?)** | same |
+| **draw.GetTextSize(text, font?)** | `string, string?` |
+| **draw.Line(x1,y1,x2,y2, color?, thickness?, alpha?)** |  |
+| **draw.Rect(x,y,w,h, color?, thickness?, rounding?, alpha?)** |  |
+| **draw.RectFilled(x,y,w,h, color?, rounding?, alpha?)** |  |
+| **draw.Circle(cx,cy,radius, color?, thickness?, segments?, alpha?)** |  |
+| **draw.CircleFilled(cx,cy,radius, color?, segments?, alpha?)** |  |
+| **draw.Triangle(x1,y1,x2,y2,x3,y3, color?, thickness?, alpha?)** |  |
+| **draw.TriangleFilled(x1,y1,x2,y2,x3,y3, color?, alpha?)** |  |
+| **draw.Gradient(x,y,w,h, startColor, endColor, isHorizontal, startAlpha?, endAlpha?)** |  |
+| **draw.Image(textureId, x,y,w,h, r,g,b,a)** | `int, number,number,number,number, int,int,int,int` |
+| **draw.Polyline(points, color, closed, thickness, alpha?)** | `table, Color3, bool, number, int?` |
+| **draw.ConvexPolyFilled(points, color, alpha?)** |  |
+| **draw.ComputeConvexHull(points)** | `table` |
+| **draw.GetPartCorners(part)** | `Instance` |
+| **draw.DeltaTime()** |  |
+
+`draw.GetTextSize` returns `width, height` as two float values.
+
+### Example
+
+```lua
+-- Draw overlay text and shapes
+draw.Text("Hello World", 100, 100, Color3.new(1, 1, 1))
+draw.RectFilled(50, 50, 200, 100, Color3.new(1, 0, 0), 4, 0.8)
+```
+
+---
+
+## gui
+
+Overlay GUI management functions.
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **gui.AddTab(tabName, func)** | `string, function` | Add a scripted runtime tab |
+| **gui.RemoveTab(tabName)** | `string` | Remove a runtime tab |
+| **gui.IsTab(tabName)** | `string` | Check if tab exists |
+| **gui.GetMenuState(checkForeground?)** | `bool?` | Menu overlay state |
+| **gui.IsForeground()** |  | Roblox is foreground window |
+| **gui.GetWindowSize()** |  | Overlay window dimensions |
+
+### Example
+
+```lua
+-- Add a runtime tab
+gui.AddTab("My Script", function()
+    print("Tab opened!")
+end)
+```
+
+---
+
+## imgui
+
+Dear ImGui-style immediate mode GUI system.
+
+### Windowing
+
+| Function | Signature |
+| --- | --- |
+| **imgui.Begin(name, flags?)** | `string, int?` |
+| **imgui.End()** |  |
+| **imgui.BeginChild(id, w?, h?, border?, flags?)** |  |
+| **imgui.EndChild()** |  |
+| **imgui.SetNextWindowPos(x,y, cond?, pivot_x?, pivot_y?)** |  |
+| **imgui.SetNextWindowSize(w,h, cond?)** |  |
+| **imgui.SetNextWindowBgAlpha(alpha)** |  |
+| **imgui.SetNextWindowCollapsed(collapsed, cond?)** |  |
+| **imgui.SetNextWindowFocus()** |  |
+
+### Position
+
+| Function | Signature |
+| --- | --- |
+| **imgui.GetWindowPos()** |  |
+| **imgui.GetWindowSize()** |  |
+| **imgui.GetCursorPos()** |  |
+| **imgui.SetCursorPos(x,y)** |  |
+| **imgui.GetCursorScreenPos()** |  |
+| **imgui.SetCursorScreenPos(x, y)** |  |
+| **imgui.GetCursorStartPos()** |  |
+| **imgui.GetContentRegionAvail()** |  |
+| **imgui.GetWindowContentRegionMin()** |  |
+| **imgui.GetWindowContentRegionMax()** |  |
+| **imgui.GetContentAvail()** |  |
+| **imgui.GetFrameHeight()** |  |
+| **imgui.GetFrameHeightWithSpacing()** |  |
+| **imgui.SameLine(...)** |  |
+| **imgui.Spacing()** |  |
+| **imgui.Separator()** |  |
+| **imgui.SeparatorText(label)** |  |
+
+### Indentation
+
+| Function | Signature |
+| --- | --- |
+| **imgui.Indent(w?)** |  |
+| **imgui.Unindent(w?)** |  |
+| **imgui.BeginIndent()** |  |
+| **imgui.EndIndent()** |  |
+
+### Groups
+
+| Function | Signature |
+| --- | --- |
+| **imgui.BeginGroup()** |  |
+| **imgui.EndGroup()** |  |
+
+### Item Width
+
+| Function | Signature |
+| --- | --- |
+| **imgui.PushItemWidth(width)** |  |
+| **imgui.PopItemWidth()** |  |
+
+### ID Stack
+
+| Function | Signature |
+| --- | --- |
+| **imgui.PushID(id)** |  |
+| **imgui.PopID()** |  |
+
+### Dummy
+
+| Function | Signature |
+| --- | --- |
+| **imgui.Dummy(w, h)** | Adds an empty item with the specified size |
+
+### Text Utilities
+
+| Function | Signature |
+| --- | --- |
+| **imgui.CalcTextSize(text)** | Returns rendered `width, height` of text |
+
+### Widgets
+
+| Function | Signature |
+| --- | --- |
+| **imgui.Button(text, w?, h?)** |  |
+| **imgui.TabButton(text, w?, h?, active?)** |  |
+| **imgui.Checkbox(text, v)** |  |
+| **imgui.Slider(title, v, min, max)** |  |
+| **imgui.SliderInt(title, v, min, max)** |  |
+| **imgui.DragFloat(title, v, speed?, min?, max?, format?, disabled?)** | returns `changed, value` |
+| **imgui.DragInt(title, v, speed?, min?, max?, format?, disabled?)** | returns `changed, value` |
+| **imgui.DragFloat2(title, x, y, speed?, min?, max?, format?, disabled?)** | labeled row, returns `changed, x, y` |
+| **imgui.DragFloat3(title, x, y, z, speed?, min?, max?, format?, disabled?)** | labeled row, returns `changed, x, y, z` |
+| **imgui.InputText(title, v, placeholder, w?, flags?)** |  |
+| **imgui.MultilineInput(title, v, placeholder, w?, flags?)** |  |
+| **imgui.WidgetsText(text, color?, alpha?)** |  |
+| **imgui.BeginContent(title, h?, w?)** |  |
+| **imgui.EndContent()** |  |
+| **imgui.ColorPicker(title, color?, alpha?)** |  |
+| **imgui.ProgressBar(title, value01, width, divisions, align?)** |  |
+| **imgui.Note(text)** |  |
+| **imgui.ListBox(label, items, height?, w?, listHeight?)** |  |
+| **imgui.Dropdown(title, items, current?)** |  |
+| **imgui.Shimmer(w, h)** |  |
+
+### Drag Widgets
+
+`DragFloat` / `DragInt` are draggable numeric fields. Drag horizontally to change the value; click without dragging to type a value directly. Hold `Ctrl` while dragging for finer steps (0.1×), `Shift` for coarser (10×).
+
+- `speed` — value change per pixel dragged (default `1`).
+
+- `min`, `max` — clamp range. Leave both `0` (or equal) for an **unbounded** field.
+
+- `format` — printf-style, may include a suffix, e.g. `"%.2f studs"` or `"%d rounds"`.
+
+- `disabled` — when `true`, the field is dimmed and ignores input.
+
+- `DragFloat2` / `DragFloat3` render a labeled property row with 2 / 3 boxes sharing one row's width — ideal for Vector2 / Vector3.
+
+### Tabs
+
+| Function | Signature |
+| --- | --- |
+| **imgui.BeginTabs(title, enableAnim?)** |  |
+| **imgui.BeginTab(name)** |  |
+| **imgui.EndTab()** |  |
+| **imgui.EndTabs()** |  |
+
+### Item State
+
+| Function | Signature |
+| --- | --- |
+| **imgui.IsItemHovered(flags?)** |  |
+| **imgui.IsItemActive()** |  |
+| **imgui.IsItemFocused()** |  |
+| **imgui.IsItemClicked(btn?)** |  |
+| **imgui.IsAnyItemHovered()** |  |
+| **imgui.IsAnyItemActive()** |  |
+| **imgui.IsAnyItemFocused()** |  |
+| **imgui.GetItemRectMin()** |  |
+| **imgui.GetItemRectMax()** |  |
+| **imgui.GetItemRectSize()** |  |
+| **imgui.IsWindowHovered(flags?)** |  |
+| **imgui.IsWindowFocused(flags?)** |  |
+
+### Columns
+
+| Function | Signature |
+| --- | --- |
+| **imgui.Columns(...)** |  |
+| **imgui.NextColumn()** |  |
+| **imgui.GetColumnIndex()** |  |
+| **imgui.GetColumnWidth()** |  |
+| **imgui.SetColumnWidth()** |  |
+
+### Example
+
+```lua
+imgui.Begin("My Window", 0)
+imgui.Text("Hello, world!")
+if imgui.Button("Click Me") then
+    print("Button clicked!")
+end
+
+-- Drag widgets return (changed, newValue). Reassign to persist.
+local changed, speed = imgui.DragFloat("Speed", speed, 0.5, 0, 100, "%.1f")
+if changed then print("Speed is now", speed) end
+
+-- Vector3 as a labeled 3-box row
+local moved, px, py, pz = imgui.DragFloat3("Position", px, py, pz, 0.25)
+
+-- A disabled (read-only looking) field
+imgui.DragFloat("Locked", 42, 1, 0, 0, "%.2f", true)
+imgui.End()
+```
+
+---
+
+## fflags
+
+FastFlag (FFlag) reading and writing utilities.
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| **fflags.Get(name, type, original?)** | `string, string, bool?` | Get an FFlag value |
+| **fflags.Set(name, type, value)** | `string, string, any` | Set an FFlag value |
+| **fflags.GetAll()** |  | Get all FFlags. Returns a table of entries, each with `name`, `runtime`, and `original` fields. |
+
+### Types
+
+`float`, `double`, `int`, `uint`, `bool`, `byte`, `short`, `ushort`, `int64`, `uint64`, `string`. Set also supports `pointer`.
+
+### Example
+
+```lua
+local val = fflags.Get("FFlagEnableVR", "bool")
+print("VR enabled:", val)
+fflags.Set("FFlagEnableVR", "bool", true)
+```
+
+---
+
+## Instance
+
+The core Roblox instance type. Access instances via game, Instance constructors, or methods.
+
+### Properties
+
+| Property | Type | Access | Description |
+| --- | --- | --- | --- |
+| **Name** | `string` | RW | Instance name |
+| **ClassName** | `string` | RO | Class name |
+| **Parent** | `Instance` | RW | Parent instance |
+| **Address** | `uintptr` | RO | Raw memory address |
+| **FullName** | `string` | RO | Full hierarchical path |
+
+### Methods
+
+| Method | Returns | Description |
+| --- | --- | --- |
+| **:FindFirstChild(name)** | `Instance\|nil` | Find first child by name |
+| **:WaitForChild(name, timeout?)** | `Instance\|nil` | Wait for child to appear |
+| **:FindFirstChildOfClass(className)** | `Instance\|nil` | Find first child of class |
+| **:FindDescendants(name)** | `table` | Find all descendants by name |
+| **:FindDescendantsOfClass(className)** | `table` | Find all descendants of class |
+| **:GetChildren()** | `table` | Direct children |
+| **:GetDescendants()** | `table` | All descendants |
+| **:Ancestors()** | `table` | All ancestors |
+| **:IsDescendantOf(ancestor)** | `bool` | Check ancestry |
+| **:IsA(className)** | `bool` | Check class |
+| **:IsAncestorOf(descendant)** | `bool` | Check if is ancestor |
+| **:GetAttributes()** | `table` | Attribute table |
+| **:GetAttribute(name)** | `string\|nil` | Get attribute |
+| **:SetAttribute(name, value)** |  | Set attribute |
+| **:GetTags()** | `table` | Collection tags |
+| **:HasTag(tag)** | `bool` | Check tag |
+| **:RenameTag(oldName, newName)** |  | Rename tag |
+| **:GetPropertyChangedSignal(property)** | `RBXScriptSignal` | Returns a signal that fires when the given property changes |
+
+#### Example
+
+```lua
+local part = workspace.Part
+local sig = part:GetPropertyChangedSignal("Position")
+sig:Connect(function()
+    print("Position changed!")
+end)
+```
+
+### Meta-Behavior
+
+- `instance.PropertyName` first checks built-in properties, then registered class properties, then falls back to child lookup by name.
+
+- Setting properties respects read-only flags.
+
+- `instance.Changed` returns an `RBXScriptSignal` that fires when any registered class property changes. Usage: `instance.Changed:Connect(function(propertyName, newValue) ... end)`.
+
+- `for k, v in pairs(instance) do ... end` iterates over built-in properties, class properties, and children.
+
+### DataModel
+
+Both `game` and `Game` resolve to the Roblox `DataModel` instance.
+
+`DataModel` inherits from `Instance`, so all Instance methods are available.
+
+#### GetService
+
+| Method | Returns | Description |
+| --- | --- | --- |
+| **:GetService(className)** | `Instance\|nil` | Get service by class name |
+
+```lua
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+```
+
+---
+
+## RemoteEvent
+
+FireServer and remote-event spy — extra members added to RemoteEvent, UnreliableRemoteEvent, and RemoteFunction instances.
+
+These members appear on top of the standard [Instance](#/instance) API for any instance whose `ClassName` matches. Reading a spy signal auto-installs the underlying hook on first read — you don't need to opt in ahead of time.
+
+Remotes parented anywhere under `RobloxReplicatedStorage` are treated as protected — trying to access the spy on them errors with `Protected `.
+
+### FireServer
+
+| Method | Signature | Description |
+| --- | --- | --- |
+| **FireServer(...)** | `...args` | Fires the remote to the server with the given args. |
+
+#### Example
+
+```lua
+local rem = game:GetService("ReplicatedStorage").Events.MyEvent
+rem:FireServer("hello", 42, true)
+
+-- Instances, nested arrays, and string-keyed dicts are all supported.
+rem:FireServer(
+    game:GetService("Players").LocalPlayer,
+    { 1, 2, 3 },
+    { action = "buy", itemId = 7, meta = { source = "shop" } }
+)
+```
+
+### OnFireServer (RemoteEvent spy)
+
+| Member | Type | Description |
+| --- | --- | --- |
+| **OnFireServer** | `RBXScriptSignal` | Fires whenever anything in the game (Lua, C++, other exploits) sends args through this `RemoteEvent` or `UnreliableRemoteEvent` to the server. Reading this member enables the spy hook on the remote automatically. Callback receives the same variadic args that were sent. |
+| **OnClientEvent** | `RBXScriptSignal` | Alias for `OnFireServer` — kept for users coming from the Roblox docs. |
+| **OnServerEvent** | `RBXScriptSignal` | Alias for `OnFireServer`. |
+
+#### Example
+
+```lua
+local rem = game:GetService("ReplicatedStorage").Events.MyEvent
+
+rem.OnFireServer:Connect(function(...)
+    print("FireServer intercepted:", ...)
+end)
+
+-- :Wait() yields the coroutine and returns the next fire's args.
+task.spawn(function()
+    local a, b, c = rem.OnFireServer:Wait()
+    print("first fire:", a, b, c)
+end)
+```
+
+### OnInvokeServer (RemoteFunction spy)
+
+| Member | Type | Description |
+| --- | --- | --- |
+| **OnInvokeServer** | `RBXScriptSignal` | Fires whenever anything invokes this `RemoteFunction`. Callback receives the invocation args. Only exists on `RemoteFunction` instances. |
+| **OnClientInvoke** | `RBXScriptSignal` | Alias for `OnInvokeServer`. |
+| **OnServerInvoke** | `RBXScriptSignal` | Alias for `OnInvokeServer`. |
+
+#### Example
+
+```lua
+local func = game:GetService("ReplicatedStorage").Functions.GetInventory
+
+func.OnInvokeServer:Connect(function(...)
+    print("InvokeServer intercepted:", ...)
+end)
+```
+
+---
+
+## Class Properties
+
+Registered class properties for common Roblox classes.
+
+### Part / MeshPart (BasePart)
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Transparency | float | RW |
+| Reflectance | float | RW |
+| Position | Vector3 | RW |
+| Size | Vector3 | RW |
+| LinearVelocity | Vector3 | RW |
+| AngularVelocity | Vector3 | RW |
+| Rotation | Vector3 (euler) | RW |
+| RightVector | Vector3 | RO |
+| UpVector | Vector3 | RO |
+| ForwardVector | Vector3 | RO |
+| Anchored | bool | RW |
+| CanCollide | bool | RW |
+| Color | Color3 | RW |
+
+### Humanoid
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Health | float | RW |
+| MaxHealth | float | RW |
+| WalkSpeed | float | RW |
+| JumpPower | float | RW |
+| JumpHeight | float | RW |
+| HipHeight | float | RW |
+| MaxSlopeAngle | float | RW |
+| PlatformStand | bool | RW |
+| AutoRotate | bool | RW |
+| UseJumpPower | bool | RW |
+| Sit | bool | RW |
+
+### Player
+
+| Property | Type | Access |
+| --- | --- | --- |
+| UserId | uintptr | RO |
+| DisplayName | string | RO |
+| Character | Instance | RO |
+| CameraMode | int | RW |
+| NetworkPing | float | RO |
+
+`NetworkPing` returns the player's ping in ms. Only non-nil for `LocalPlayer`.
+
+### Players
+
+| Property | Type | Access |
+| --- | --- | --- |
+| LocalPlayer | Instance (Player) | RO |
+| GetPlayers | function | RO |
+| PlayerAdded | RBXScriptSignal | RO |
+| PlayerRemoving | RBXScriptSignal | RO |
+
+### Camera
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Fov | float | RW |
+| Position | Vector3 | RW |
+| Subject | Instance\|nil | RW |
+| CameraType | int | RW |
+
+### Workspace
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Gravity | float | RW |
+
+### Lighting
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Brightness | float | RW |
+| FogStart | float | RW |
+| FogEnd | float | RW |
+| ClockTime | float | RW |
+| Exposure | float | RW |
+| Latitude | float | RW |
+| GlobalShadows | bool | RW |
+| FogColor | Color3 | RW |
+| Ambient | Color3 | RW |
+| ColorShiftTop | float | RW |
+| ColorShiftBottom | float | RW |
+| SkyTopAmbient | Color3 | RW |
+| SkyBottomAmbient | Color3 | RW |
+| LightColor | Color3 | RW |
+| LightDirection | Vector3 | RW |
+| TrueSunPosition | Vector3 | RW |
+| TrueMoonPosition | Vector3 | RW |
+| Sky | Instance | RO |
+| Atmosphere | Instance | RO |
+| SunRays | Instance | RO |
+| ColorCorrection | Instance | RO |
+
+### Sky
+
+| Property | Type | Access |
+| --- | --- | --- |
+| SkyboxBk / SkyboxDn / SkyboxFt / SkyboxLf / SkyboxRt / SkyboxUp | string | RW |
+| MoonTextureId | string | RW |
+| MoonSize | float | RW |
+| SunTextureId | string | RW |
+| SunSize | float | RW |
+| StarCount | int | RW |
+| SkyboxOrientation | Vector3 | RW |
+
+### Atmosphere
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Color | Color3 | RW |
+| Decay | Color3 | RW |
+| Glare | float | RW |
+| Haze | float | RW |
+| Density | float | RW |
+
+### SunRays
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Intensity | float | RW |
+| Spread | float | RW |
+
+### ColorCorrection
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Brightness | float | RW |
+| Contrast | float | RW |
+| Saturation | float | RW |
+| TintColor | Color3 | RW |
+
+### Teams
+
+| Property | Type | Access |
+| --- | --- | --- |
+| GetPlayers | function(team) | RO |
+
+### FriendService
+
+| Property | Type | Access |
+| --- | --- | --- |
+| FriendsStatus | function() | RO |
+| GetFriendStatus | function(userId, otherUserId?) | RO |
+
+### Value Objects
+
+`IntValue`, `BoolValue`, `StringValue`, `NumberValue`, `ObjectValue`, `Color3Value`, `Vector3Value` — all have a single `Value` property of their respective type (RW).
+
+### Animation
+
+| Property | Type | Access |
+| --- | --- | --- |
+| AnimationId | string | RW |
+
+### Animator
+
+| Property | Type | Access |
+| --- | --- | --- |
+| ActiveAnimations | function() | RO |
+
+### AnimationTrack
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Speed | float | RW |
+| TimePosition | float | RO |
+| Influence | float | RW |
+| Animation | Instance | RO |
+| Animator | Instance | RO |
+
+### VehicleSeat
+
+| Property | Type | Access |
+| --- | --- | --- |
+| MaxSpeed | float | RW |
+| Torque | float | RW |
+| TurnSpeed | float | RW |
+
+### ProximityPrompt
+
+| Property | Type | Access |
+| --- | --- | --- |
+| HoldDuration | float | RW |
+
+### GuiObject (base class for GUI elements)
+
+Inherited by `Frame`, `TextLabel`, `TextBox`, `TextButton`, `ImageLabel`, `ScreenGui`.
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Rotation | float | RW |
+| Size | UDim2 | RW |
+| Position | UDim2 | RW |
+| BackgroundColor3 | Color3 | RW |
+| BorderColor3 | Color3 | RW |
+| Visible | bool | RW |
+
+### ScreenGui
+
+Inherits all `GuiObject` properties.
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Enabled | bool | RW |
+| DisplayOrder | int | RW |
+| ResetOnSpawn | bool | RW |
+| IgnoreGuiInset | bool | RW |
+| AbsoluteSize | Vector2 | RO |
+| AbsolutePosition | Vector2 | RO |
+
+### TextLabel
+
+Inherits all `GuiObject` properties.
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Text | string | RW |
+| TextColor3 | Color3 | RW |
+
+### TextBox
+
+Inherits all `GuiObject` properties.
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Text | string | RW |
+| PlaceholderText | string | RW |
+| TextColor3 | Color3 | RW |
+| PlaceholderColor3 | Color3 | RW |
+
+### TextButton
+
+Inherits all `GuiObject` properties.
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Text | string | RW |
+| TextColor3 | Color3 | RW |
+
+### ImageLabel
+
+Inherits all `GuiObject` properties.
+
+| Property | Type | Access |
+| --- | --- | --- |
+| Image | string | RW |
+| ImageColor3 | Color3 | RW |
+| ImageTransparency | float | RW |
+
+### Frame
+
+Inherits all `GuiObject` properties. No additional own properties.
+
+---
+
+## Custom Types
+
+Vector3, Vector2, Color3, UDim, and UDim2 types with Roblox-like semantics.
+
+### Vector3
+
+```lua
+Vector3.new()           -- (0, 0, 0)
+Vector3.new(x, y, z)
+Vector3.new(n)          -- (n, n, n)
+```
+
+| Member | Type |
+| --- | --- |
+| .x | float |
+| .y | float |
+| .z | float |
+| .Magnitude | float (RO) |
+| .Unit | Vector3 (RO) |
+
+**Operators:** `+`, `-`, `*`, `/`, unary `-`
+
+### Vector2
+
+```lua
+Vector2.new()           -- (0, 0)
+Vector2.new(x, y)
+Vector2.new(n)          -- (n, n)
+```
+
+| Member | Type |
+| --- | --- |
+| .x | float |
+| .y | float |
+| .Magnitude | float (method) |
+| .Unit | Vector2 (RO) |
+
+### Color3
+
+```lua
+Color3.new(r, g, b)     -- values > 1 are divided by 255
+Color3.fromRGB(r, g, b)
+Color3.fromHSV(h, s, v)
+Color3.fromHex(string)
+```
+
+| Member | Type |
+| --- | --- |
+| .r | float |
+| .g | float |
+| .b | float |
+
+**Static constants:** `.White`, `.Red`, `.Green`, `.Blue`, `.Yellow`, `.Black`
+
+### UDim
+
+```lua
+UDim.new()                -- UDim(0, 0)
+UDim.new(scale)           -- UDim(scale, 0)
+UDim.new(scale, offset)   -- UDim(scale, offset)
+```
+
+| Property | Type | Access |
+| --- | --- | --- |
+| .Scale | float | RW |
+| .Offset | int | RW |
+
+**Operators:** `+`, `-`, `tostring`
+
+### UDim2
+
+```lua
+UDim2.new()                                          -- UDim2(0,0, 0,0)
+UDim2.new(UDim x, UDim y)                          -- UDim2
+UDim2.new(float xs, int xo, float ys, int yo)       -- UDim2
+UDim2.fromScale(float xs, float ys)                 -- UDim2
+UDim2.fromOffset(int xo, int yo)                    -- UDim2
+UDim2.Lerp(UDim2 a, UDim2 b, float alpha)          -- UDim2
+```
+
+| Property | Type | Access |
+| --- | --- | --- |
+| .X | UDim | RW |
+| .Y | UDim | RW |
+
+**Operators:** `+`, `-`, `tostring`
+
+#### Example
+
+```lua
+local u = UDim2.fromOffset(100, 50)
+local v = UDim2.new(0.5, 0, 0, 20)
+local result = u + v
+
+local udim = UDim.new(0.5, 10)
+print(udim.Scale, udim.Offset)
+```
+
+---
+
+## RBXScriptSignal (Events)
+
+Roblox-style event connection system.
+
+```lua
+local connection = signal:Connect(fn)
+connection:Disconnect()
+connection:Stop()
+
+local result = signal:Wait()  -- yields coroutine
+```
+
+### Built-in Signals
+
+| Signal | Description |
+| --- | --- |
+| **Players.PlayerAdded** | Fires when a new player is detected |
+| **Players.PlayerRemoving** | Fires when a player leaves |
+
+---
+
+## Library Gating
+
+Some libraries must be explicitly enabled before use.
+
+| Library | Gated Functions |
+| --- | --- |
+| **Memory** | All `memory.*` |
+| **Clipboard** | `utility.GetClipboard`, `utility.SetClipboard` |
+| **File_Management** | All `file.*` |
+| **Input** | All `input.*` |
+
+---
+
+## Notes
+
+Additional implementation details and behavior notes.
+
+- Compound assignments (`+=`, `-=`, `*=`, `/=`, `**=`) are automatically expanded before execution.
+
+- `pcall` and `xpcall` are overridden to support script interruption.
+
+- Scripts can be interrupted mid-execution via a Lua instruction hook (every 10 instructions) that checks the stop flag.
+
+- File operations are sandboxed; path traversal (`..`) is blocked.
+
+- `print()` outputs with prefix `[print]`; `warn()` outputs with prefix `[warn]`.
+
+- `tick()` returns `GetTickCount64()` — milliseconds since system start (not UNIX time).
+
+- `loadstring` returns `(function, nil)` on success or `(nil, error_message)` on failure.
+
+- Instance property access via `__index` checks built-in properties first, then registered class properties, then falls back to child lookup by name.
+
+- Property writes respect read-only flags — silently fail on RO properties like `Address`, `FullName`, `RightVector`, `UpVector`, `ForwardVector`, etc.
+
+- Both `game` and `Game` globals resolve to the Roblox DataModel instance.
+
+- Compressed data from `compress.Compress` does NOT store the original size, but `compress.Decompress` expects it. This is a known inconsistency — Compress and Decompress are currently incompatible.
