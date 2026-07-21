@@ -4,34 +4,34 @@
 
 ## Documentation
 
-- [LuaVM Documentation](https://projectsheldon.me/luavm/): Full scripting reference — globals, GUI, ImGui, drawing, input, files, internet, memory, cheat, tween, entities, instances, signals and more.
-- [LuaVM Documentation (full plain text)](https://projectsheldon.me/llms-full.txt): Every documentation section concatenated as one markdown file — the most reliable source for AI systems.
-- [API Docs](https://projectsheldon.me/api-docs/): Project Sheldon API reference.
+- [LuaVM Documentation](https://www.projectsheldon.me/luavm/): Full scripting reference — globals, GUI, ImGui, drawing, input, files, internet, memory, cheat, tween, entities, instances, signals and more.
+- [LuaVM Documentation (full plain text)](https://www.projectsheldon.me/llms-full.txt): Every documentation section concatenated as one markdown file — the most reliable source for AI systems.
+- [API Docs](https://www.projectsheldon.me/api-docs/): Project Sheldon API reference.
 
 ## Sections
 
-- [Sheldon's Scripting Environment](https://projectsheldon.me/luavm/#/)
-- [Global Functions](https://projectsheldon.me/luavm/#/globals)
-- [base64](https://projectsheldon.me/luavm/#/base64)
-- [hash](https://projectsheldon.me/luavm/#/hash)
-- [compress](https://projectsheldon.me/luavm/#/compress)
-- [task](https://projectsheldon.me/luavm/#/task)
-- [tween](https://projectsheldon.me/luavm/#/tween)
-- [memory](https://projectsheldon.me/luavm/#/memory)
-- [cheat](https://projectsheldon.me/luavm/#/cheat)
-- [internet](https://projectsheldon.me/luavm/#/internet)
-- [input](https://projectsheldon.me/luavm/#/input)
-- [file](https://projectsheldon.me/luavm/#/file)
-- [utility](https://projectsheldon.me/luavm/#/utility)
-- [entity](https://projectsheldon.me/luavm/#/entity)
-- [draw](https://projectsheldon.me/luavm/#/draw)
-- [gui](https://projectsheldon.me/luavm/#/gui)
-- [imgui](https://projectsheldon.me/luavm/#/imgui)
-- [fflags](https://projectsheldon.me/luavm/#/fflags)
-- [Instance](https://projectsheldon.me/luavm/#/instance)
-- [RemoteEvent](https://projectsheldon.me/luavm/#/remoteevent)
-- [Class Properties](https://projectsheldon.me/luavm/#/class-properties)
-- [Custom Types](https://projectsheldon.me/luavm/#/custom-types)
-- [RBXScriptSignal (Events)](https://projectsheldon.me/luavm/#/signals)
-- [Library Gating](https://projectsheldon.me/luavm/#/library-gating)
-- [Notes](https://projectsheldon.me/luavm/#/notes)
+- [Sheldon's Scripting Environment](https://www.projectsheldon.me/luavm/#/)
+- [Global Functions](https://www.projectsheldon.me/luavm/#/globals)
+- [base64](https://www.projectsheldon.me/luavm/#/base64)
+- [hash](https://www.projectsheldon.me/luavm/#/hash)
+- [compress](https://www.projectsheldon.me/luavm/#/compress)
+- [task](https://www.projectsheldon.me/luavm/#/task)
+- [tween](https://www.projectsheldon.me/luavm/#/tween)
+- [memory](https://www.projectsheldon.me/luavm/#/memory)
+- [cheat](https://www.projectsheldon.me/luavm/#/cheat)
+- [internet](https://www.projectsheldon.me/luavm/#/internet)
+- [input](https://www.projectsheldon.me/luavm/#/input)
+- [file](https://www.projectsheldon.me/luavm/#/file)
+- [utility](https://www.projectsheldon.me/luavm/#/utility)
+- [entity](https://www.projectsheldon.me/luavm/#/entity)
+- [draw](https://www.projectsheldon.me/luavm/#/draw)
+- [gui](https://www.projectsheldon.me/luavm/#/gui)
+- [imgui](https://www.projectsheldon.me/luavm/#/imgui)
+- [fflags](https://www.projectsheldon.me/luavm/#/fflags)
+- [Instance](https://www.projectsheldon.me/luavm/#/instance)
+- [RemoteEvent](https://www.projectsheldon.me/luavm/#/remoteevent)
+- [Class Properties](https://www.projectsheldon.me/luavm/#/class-properties)
+- [Custom Types](https://www.projectsheldon.me/luavm/#/custom-types)
+- [RBXScriptSignal (Events)](https://www.projectsheldon.me/luavm/#/signals)
+- [Library Gating](https://www.projectsheldon.me/luavm/#/library-gating)
+- [Notes](https://www.projectsheldon.me/luavm/#/notes)

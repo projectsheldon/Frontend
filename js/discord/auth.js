@@ -104,22 +104,18 @@ function UpdateUI(loggedIn, user = null)
 
         if(discordBtn)
         {
-            discordBtn.classList.remove('hidden');
-            discordBtn.className = 'bg-white text-black font-black px-5 py-2 rounded-xl text-[0.65rem] uppercase tracking-wider transition-all hover:bg-[#c7b18f] flex items-center justify-center';
-            discordBtn.style.display = 'flex';
-            discordBtn.style.justifyContent = 'center';
-            discordBtn.style.alignItems = 'center';
+            // Toggle state via classes only — never rebuild the button. The old code
+            // removed the Discord <svg> on login and never restored it, so the icon
+            // stayed gone after a login→logout cycle until a full page reload.
+            discordBtn.classList.remove('hidden', 'is-loading');
+            discordBtn.classList.add('is-authed');
+            discordBtn.setAttribute('aria-label', 'Log out');
 
             const loginTxt = discordBtn.querySelector('#discord-login-txt');
             if(loginTxt)
             {
                 loginTxt.textContent = 'Logout';
                 loginTxt.classList.remove('hidden');
-            }
-            const discordIcon = discordBtn.querySelector('svg');
-            if(discordIcon)
-            {
-                discordIcon.remove();
             }
         }
     }
@@ -135,11 +131,16 @@ function UpdateUI(loggedIn, user = null)
         }
         if(discordBtn)
         {
-            discordBtn.classList.remove('hidden');
-            discordBtn.className = 'btn-discord px-5 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-wider transition-all';
+            discordBtn.classList.remove('hidden', 'is-authed', 'is-loading');
+            discordBtn.setAttribute('aria-label', 'Login with Discord');
 
             const loginTxt = discordBtn.querySelector('#discord-login-txt');
-            if(loginTxt) loginTxt.textContent = 'Login';
+            if(loginTxt)
+            {
+                loginTxt.textContent = 'Login';
+                // Restore the mobile-hidden behaviour (icon-only on small screens).
+                loginTxt.classList.add('hidden');
+            }
         }
     }
 }
@@ -184,7 +185,21 @@ const DiscordAuth = {
     async Logout()
     {
         const apiUrl = await Api.GetApiUrl();
-        await fetch(`${apiUrl}/discord/logout`, { method: "POST" });
+        const token = this.GetSessionToken();
+
+        // Send the session token (and cookie) so the backend can invalidate THIS
+        // session server-side. Best-effort: a network failure must not block the
+        // local sign-out that follows in the click handler.
+        try
+        {
+            await fetch(`${apiUrl}/discord/logout`, {
+                method: "POST",
+                mode: 'cors',
+                credentials: 'include',
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined
+            });
+        }
+        catch(e) {}
     },
     async GetUser()
     {
@@ -231,29 +246,72 @@ const DiscordAuth = {
     // prompt
     _PromptDiscordApp(callback)
     {
+        const previouslyFocused = document.activeElement;
+        const previousBodyOverflow = document.body.style.overflow;
+        let minCloseTime = 0;
+
         const overlay = document.createElement('div');
         overlay.id = 'discord-app-overlay';
-        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;transition:opacity 0.2s ease;opacity:0;';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'discord-app-title');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;transition:opacity 0.2s ease;opacity:0;';
 
         const modal = document.createElement('div');
         modal.id = 'discord-app-modal';
-        modal.style.cssText = 'background:#1e1e1e;border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.5);';
+        modal.style.cssText = 'position:relative;background:rgba(20,20,20,0.98);border:1px solid rgba(255,255,255,0.12);border-top:2px solid #c7b18f;border-radius:20px;padding:32px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);transform:scale(0.96);transition:transform 0.2s cubic-bezier(0.16,1,0.3,1);';
 
-        modal.innerHTML = '<h3 style="color:white;font-size:18px;margin:0 0 8px;">Login with Discord</h3><p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0 0 24px;">Open the Discord app to continue?</p><div style="display:flex;gap:12px;"><button id="discord-app-yes" style="flex:1;background:#5865F2;color:white;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:bold;cursor:pointer;">Open App</button><button id="discord-app-no" style="flex:1;background:rgba(255,255,255,0.1);color:white;border:none;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer;">Browser</button></div>';
+        modal.innerHTML =
+            '<div style="width:52px;height:52px;margin:0 auto 16px;border-radius:14px;background:#5865F2;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(88,101,242,0.35);">' +
+                '<svg width="28" height="28" viewBox="0 0 127.14 96.36" fill="#ffffff" aria-hidden="true"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a.41.41,0,0,0-.43.2,72.48,72.48,0,0,0-3.17,6.52,97.26,97.26,0,0,0-29,0,72.84,72.84,0,0,0-3.19-6.52.4.4,0,0,0-.43-.2A105.09,105.09,0,0,0,19.44,8.07a.44.44,0,0,0-.2.07C2.12,34,1.15,59.39,3.46,84.41a.48.48,0,0,0,.19.34A105.77,105.77,0,0,0,35.77,96.36a.42.42,0,0,0,.46-.22,74.22,74.22,0,0,0,6.42-10.38.4.4,0,0,0-.22-.56,68.7,68.7,0,0,1-10-4.76.41.41,0,0,1,0-.69c.83-.62,1.67-1.28,2.46-1.95a.39.39,0,0,1,.41-.05,73.4,73.4,0,0,0,57.48,0,.39.39,0,0,1,.41.05c.79.67,1.63,1.33,2.46,1.95a.41.41,0,0,1,0,.69,68.61,68.61,0,0,1-10,4.76.41.41,0,0,0-.22.56,74.8,74.8,0,0,0,6.43,10.38.42.42,0,0,0,.46.22,105.48,105.48,0,0,0,32.11-11.61.45.45,0,0,0,.19-.34c2.72-28.53-4.67-53.59-20-76.27A.39.39,0,0,0,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.07,65.69,84.69,65.69Z"/></svg>' +
+            '</div>' +
+            '<h3 id="discord-app-title" style="color:white;font-size:19px;font-weight:700;margin:0 0 8px;">Login with Discord</h3>' +
+            '<p style="color:rgba(255,255,255,0.55);font-size:13px;line-height:1.5;margin:0 0 24px;">How would you like to continue?</p>' +
+            '<div style="display:flex;gap:12px;">' +
+                '<button id="discord-app-yes" style="flex:1;background:#5865F2;color:white;border:none;border-radius:10px;padding:12px 16px;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.2s ease;">Open App</button>' +
+                '<button id="discord-app-no" style="flex:1;background:rgba(255,255,255,0.08);color:white;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.2s ease;">Use Browser</button>' +
+            '</div>';
 
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
+        document.body.style.overflow = 'hidden';
 
-        requestAnimationFrame(() => overlay.style.opacity = '1');
+        requestAnimationFrame(() => {
+            overlay.style.opacity = '1';
+            modal.style.transform = 'scale(1)';
+        });
 
-        let minCloseTime = 0;
+        // Single teardown for scroll lock, key listener and focus restore. Called both from
+        // closeOverlay() here and from _PollForToken's removeOverlay(), so cleanup happens no
+        // matter which path tears the overlay down.
+        window._discordOverlayCleanup = function()
+        {
+            document.removeEventListener('keydown', onKeyDown);
+            document.body.style.overflow = previousBodyOverflow;
+            if(previouslyFocused && typeof previouslyFocused.focus === 'function')
+            {
+                try { previouslyFocused.focus(); } catch(e) {}
+            }
+            window._discordOverlayCleanup = null;
+        };
 
         function closeOverlay()
         {
             window._discordLoginPopupOpen = false;
+            if(window._discordOverlayCleanup) window._discordOverlayCleanup();
             overlay.style.opacity = '0';
             setTimeout(() => overlay.remove(), 200);
         }
+
+        function onKeyDown(e)
+        {
+            if(e.key === 'Escape' && Date.now() >= minCloseTime)
+            {
+                callback(null);
+                closeOverlay();
+            }
+        }
+        document.addEventListener('keydown', onKeyDown);
 
         overlay.onclick = (e) => {
             if(e.target === overlay && Date.now() >= minCloseTime) {
@@ -261,14 +319,26 @@ const DiscordAuth = {
                 closeOverlay();
             }
         };
-        document.getElementById('discord-app-yes').onclick = () => {
+
+        const yesBtn = document.getElementById('discord-app-yes');
+        const noBtn = document.getElementById('discord-app-no');
+
+        yesBtn.onmouseenter = () => yesBtn.style.background = '#4752c4';
+        yesBtn.onmouseleave = () => yesBtn.style.background = '#5865F2';
+        noBtn.onmouseenter = () => noBtn.style.background = 'rgba(255,255,255,0.14)';
+        noBtn.onmouseleave = () => noBtn.style.background = 'rgba(255,255,255,0.08)';
+
+        yesBtn.onclick = () => {
             minCloseTime = Date.now() + 2000;
             callback('app');
         };
-        document.getElementById('discord-app-no').onclick = () => {
+        noBtn.onclick = () => {
             callback('browser');
             closeOverlay();
         };
+
+        // Give the primary action keyboard focus so Enter/Escape work immediately.
+        requestAnimationFrame(() => { try { yesBtn.focus(); } catch(e) {} });
     },
 
     // window
@@ -396,6 +466,7 @@ const DiscordAuth = {
             function removeOverlay(delay)
             {
                 window._discordLoginPopupOpen = false;
+                if(window._discordOverlayCleanup) window._discordOverlayCleanup();
                 const o = document.querySelector('#discord-app-overlay');
                 if(!o) return;
                 if(delay > 0) { o.style.opacity = '0'; setTimeout(() => o.remove(), delay); }

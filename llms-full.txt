@@ -1,7 +1,7 @@
 # Sheldon LuaVM — Full Documentation
 
 > Scripting reference and API documentation for Sheldon's LuaVM, a customizable Lua scripting environment for Roblox.
-> Source: https://projectsheldon.me/luavm/
+> Source: https://www.projectsheldon.me/luavm/
 > This plain-text file mirrors the full documentation for AI assistants and search tools.
 
 ---
@@ -845,17 +845,18 @@ local RunService = game:GetService("RunService")
 
 ## RemoteEvent
 
-FireServer and remote-event spy — extra members added to RemoteEvent, UnreliableRemoteEvent, and RemoteFunction instances.
+FireServer, InvokeServer, and bidirectional remote spy — extra members added to RemoteEvent, UnreliableRemoteEvent, and RemoteFunction instances.
 
 These members appear on top of the standard [Instance](#/instance) API for any instance whose `ClassName` matches. Reading a spy signal auto-installs the underlying hook on first read — you don't need to opt in ahead of time.
 
 Remotes parented anywhere under `RobloxReplicatedStorage` are treated as protected — trying to access the spy on them errors with `Protected `.
 
-### FireServer
+### Methods
 
-| Method | Signature | Description |
+| Method | Applies to | Description |
 | --- | --- | --- |
-| **FireServer(...)** | `...args` | Fires the remote to the server with the given args. |
+| **FireServer(...)** | `RemoteEvent`, `UnreliableRemoteEvent` | Fires the remote to the server with the given args. |
+| **InvokeServer(...)** | `RemoteFunction` | Invokes the remote against the server with the given args. Currently fire-and-forget — the server WILL reply but the return value is not routed back to Lua yet, so this returns `nil`. If you need the reply value, pair a `RemoteEvent` both directions instead. |
 
 #### Example
 
@@ -869,15 +870,21 @@ rem:FireServer(
     { 1, 2, 3 },
     { action = "buy", itemId = 7, meta = { source = "shop" } }
 )
+
+local func = game:GetService("ReplicatedStorage").Functions.RequestInventory
+func:InvokeServer("get", { slot = 1 })  -- returns nil for now
 ```
 
-### OnFireServer (RemoteEvent spy)
+### Outgoing spy (client → server)
+
+Fires whenever anything in the game (Lua, C++, other exploits) sends args from this client to the server through the remote. One shared hook per class covers every instance — the first read installs it.
 
 | Member | Type | Description |
 | --- | --- | --- |
-| **OnFireServer** | `RBXScriptSignal` | Fires whenever anything in the game (Lua, C++, other exploits) sends args through this `RemoteEvent` or `UnreliableRemoteEvent` to the server. Reading this member enables the spy hook on the remote automatically. Callback receives the same variadic args that were sent. |
-| **OnClientEvent** | `RBXScriptSignal` | Alias for `OnFireServer` — kept for users coming from the Roblox docs. |
+| **OnFireServer** | `RBXScriptSignal` | Callback fires with the args when this `RemoteEvent` / `UnreliableRemoteEvent` is fired to the server. |
 | **OnServerEvent** | `RBXScriptSignal` | Alias for `OnFireServer`. |
+| **OnInvokeServer** | `RBXScriptSignal` | Callback fires with the args when this `RemoteFunction` is invoked against the server. `RemoteFunction` only. |
+| **OnServerInvoke** | `RBXScriptSignal` | Alias for `OnInvokeServer`. |
 
 #### Example
 
@@ -893,23 +900,34 @@ task.spawn(function()
     local a, b, c = rem.OnFireServer:Wait()
     print("first fire:", a, b, c)
 end)
+
+local func = game:GetService("ReplicatedStorage").Functions.GetInventory
+func.OnInvokeServer:Connect(function(...)
+    print("InvokeServer intercepted:", ...)
+end)
 ```
 
-### OnInvokeServer (RemoteFunction spy)
+### Incoming spy (server → client)
+
+Fires whenever the server sends args to this client through the remote. Hooked per-instance — the first read installs one shared hooked vtable per unique class-vptr, then every subsequent instance is cheap. Callback receives the args the server sent.
 
 | Member | Type | Description |
 | --- | --- | --- |
-| **OnInvokeServer** | `RBXScriptSignal` | Fires whenever anything invokes this `RemoteFunction`. Callback receives the invocation args. Only exists on `RemoteFunction` instances. |
-| **OnClientInvoke** | `RBXScriptSignal` | Alias for `OnInvokeServer`. |
-| **OnServerInvoke** | `RBXScriptSignal` | Alias for `OnInvokeServer`. |
+| **OnClientEvent** | `RBXScriptSignal` | Callback fires with the args when the server sends to this client through the `RemoteEvent` / `UnreliableRemoteEvent`. |
+| **OnClientInvoke** | `RBXScriptSignal` | Callback fires with the args when the server invokes this `RemoteFunction` against the client. Purely observational — the connect does not assign a return value the server sees. `RemoteFunction` only. |
 
 #### Example
 
 ```lua
-local func = game:GetService("ReplicatedStorage").Functions.GetInventory
+local rem = game:GetService("ReplicatedStorage").Events.MyEvent
 
-func.OnInvokeServer:Connect(function(...)
-    print("InvokeServer intercepted:", ...)
+rem.OnClientEvent:Connect(function(...)
+    print("server -> client:", ...)
+end)
+
+local func = game:GetService("ReplicatedStorage").Functions.GetInventory
+func.OnClientInvoke:Connect(function(...)
+    print("server invoked us with:", ...)
 end)
 ```
 

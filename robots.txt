@@ -30,4 +30,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://projectsheldon.me/sitemap.xml
+Sitemap: https://www.projectsheldon.me/sitemap.xml

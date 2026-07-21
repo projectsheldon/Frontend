@@ -18,16 +18,42 @@ window.addEventListener('message', function(event)
     }
 });
 
-function DiscordBtnHandler()
+async function DiscordBtnHandler(e)
 {
+    const btn = e && e.currentTarget ? e.currentTarget : document.getElementById('discord-login-btn');
+
+    // Guard against double-clicks while an action is already in flight.
+    if(btn && btn.classList.contains('is-loading')) return;
+
     if(window.DiscordAuth.currentUser)
     {
+        // Logout: invalidate the session server-side first (best-effort), then clear locally.
+        if(btn) btn.classList.add('is-loading');
+        try
+        {
+            await window.DiscordAuth.Logout();
+        }
+        catch(err) {}
+
         window.DiscordAuth.DeleteSessionToken();
         window.DiscordAuth.currentUser = null;
         UpdateUI();
-    } else
+
+        if(typeof window.Notify !== 'undefined') window.Notify('Logged out', 'info', 2500);
+    }
+    else
     {
-        window.DiscordAuth.LoginPopup();
+        // Login: show a spinner while the OAuth popup is being prepared (client id +
+        // init-auth fetches). The popup itself drives the rest of the flow.
+        if(btn) btn.classList.add('is-loading');
+        try
+        {
+            await window.DiscordAuth.LoginPopup();
+        }
+        finally
+        {
+            if(btn) btn.classList.remove('is-loading');
+        }
     }
 }
 if(discordBtn)
