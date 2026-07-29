@@ -259,7 +259,7 @@ const DiscordAuth = {
 
         const modal = document.createElement('div');
         modal.id = 'discord-app-modal';
-        modal.style.cssText = 'position:relative;background:rgba(20,20,20,0.98);border:1px solid rgba(255,255,255,0.12);border-top:2px solid #c7b18f;border-radius:20px;padding:32px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);transform:scale(0.96);transition:transform 0.2s cubic-bezier(0.16,1,0.3,1);';
+        modal.style.cssText = 'position:relative;background:rgba(20,20,20,0.98);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);transform:scale(0.96);transition:transform 0.2s cubic-bezier(0.16,1,0.3,1);';
 
         modal.innerHTML =
             '<div style="width:52px;height:52px;margin:0 auto 16px;border-radius:14px;background:#5865F2;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(88,101,242,0.35);">' +

@@ -4,22 +4,8 @@ import { DiscordAuth } from "../../discord/auth.js";
 
 let keys = [];
 
-const copyIcon = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>`;
-const checkIcon = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
-
-window.escapeHtml = function(str)
-{
-    if(typeof str !== "string") return "";
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#x27;',
-        '/': '&#x2F;'
-    };
-    return str.replace(/[&<>"'\/]/g, c => map[c]);
-}
+const copyIcon = `<svg class="w-4 h-4 copy-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>`;
+const checkIcon = `<svg class="w-4 h-4 check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
 
 function copyKey(btn, val)
 {
@@ -30,14 +16,12 @@ function copyKey(btn, val)
     document.execCommand('copy');
     document.body.removeChild(el);
 
-    btn.innerHTML = checkIcon;
     btn.classList.add('success');
 
     setTimeout(() =>
     {
-        btn.innerHTML = copyIcon;
         btn.classList.remove('success');
-    }, 2000);
+    }, 1200);
 }
 window.copyKey = copyKey;
 
@@ -77,7 +61,7 @@ function render()
         copyBtn.className = 'copy-btn';
         copyBtn.title = 'Copy Key';
         copyBtn.dataset.key = item.key;
-        copyBtn.innerHTML = copyIcon;
+        copyBtn.innerHTML = copyIcon + checkIcon;
         copyBtn.addEventListener('click', function() { copyKey(this, this.dataset.key); });
 
         wrapper.appendChild(info);
@@ -306,23 +290,23 @@ function renderUsageProgress() {
     if (!list) return;
 
     const pct = Math.min(100, Math.round((seconds / threshold) * 100));
-    const hours = (seconds / 3600).toFixed(1);
+    const hours = Math.floor(seconds / 3600);
     const thresholdHours = Math.round(threshold / 3600);
     const rewarded = sessionStorage.getItem('usage_reward') === '1';
-    const remaining = Math.max(0, thresholdHours - Math.floor(seconds / 3600));
+    const remaining = Math.max(0, thresholdHours - hours);
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'margin-top:20px;padding:16px 18px;background:rgba(199,177,143,0.05);border:1px solid rgba(199,177,143,0.2);border-radius:12px;text-align:left';
     wrap.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.4);margin-bottom:8px">
             <span>Weekly usage</span>
-            <span style="color:#c7b18f;font-weight:700">${window.escapeHtml(hours + ' / ' + thresholdHours + ' h')}</span>
+            <span style="color:#c7b18f;font-weight:700">${window.escapeHtml(hours + ' / ' + thresholdHours + ' hours')}</span>
         </div>
         <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
             <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#c7b18f,#e2c9a1);border-radius:3px;transition:width 0.5s ease"></div>
         </div>
         <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px;text-align:center">
-            ${rewarded ? "Free key claimed. Counter reset — play another " + thresholdHours + " h this week for the next." : (remaining > 0 ? "Play " + remaining + " more hour" + (remaining === 1 ? "" : "s") + " this week to earn a free key without watching an ad." : "Threshold met! Your next ad grants a free key.")}
+            ${rewarded ? "Free key claimed. Counter reset — use Sheldon another " + thresholdHours + " hours this week for the next." : (remaining > 0 ? "Use Sheldon " + remaining + " more hour" + (remaining === 1 ? "" : "s") + " this week to earn a free key without watching an ad." : "Threshold met! Your next ad grants a free key.")}
         </div>
     `;
     list.appendChild(wrap);

@@ -202,18 +202,18 @@ async function loadWeeklyProgress(token)
         const seconds = Math.max(0, Number(data.seconds) || 0);
         const threshold = data.threshold_seconds;
         const pct = Math.min(100, Math.round((seconds / threshold) * 100));
-        const hours = (seconds / 3600).toFixed(1);
+        const hours = Math.floor(seconds / 3600);
         const thresholdHours = Math.round(threshold / 3600);
-        const remaining = Math.max(0, thresholdHours - Math.floor(seconds / 3600));
+        const remaining = Math.max(0, thresholdHours - hours);
         const note = pct >= 100
             ? 'Milestone reached — a free key is ready!'
-            : `Play ${remaining} more h this week for a free key.`;
+            : `Use Sheldon ${remaining} more hour${remaining === 1 ? '' : 's'} this week for a free key.`;
 
         slot.innerHTML = `
             <div style="margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px;">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
                     <span style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.5); font-weight:700;">Weekly usage</span>
-                    <span style="font-size:12px; color:#c7b18f; font-weight:700;">${hours} / ${thresholdHours}h</span>
+                    <span style="font-size:12px; color:#c7b18f; font-weight:700;">${hours} / ${thresholdHours} hours</span>
                 </div>
                 <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
                     <div style="height:100%; width:${pct}%; background:linear-gradient(90deg,#c7b18f,#e6d3b5); border-radius:3px;"></div>
@@ -230,9 +230,16 @@ async function loadWeeklyProgress(token)
 
 function RenderLicenses(menu, licenses, token)
 {
-    if(licenses.length > 0)
+    const validLicenses = (licenses || []).filter(l =>
     {
-        const licensesHtml = licenses.map(lic => `
+        if (l.banned || l.disabled) return false;
+        if (l.expires_at && l.expires_at !== -1 && Date.now() > l.expires_at) return false;
+        return true;
+    });
+
+    if(validLicenses.length > 0)
+    {
+        const licensesHtml = validLicenses.map(lic => `
             <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                 <div style="flex: 1; min-width: 0;">
                     <div style="font-size: 13px; color: #c7b18f; word-break: break-all;">${lic.key}</div>
