@@ -878,7 +878,7 @@ if (window.couponCode && window.currentPricing) {
             padding: 16px;
             border-radius: 12px;
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid transparent;
             font-size: 12px;
             font-weight: 800;
             text-transform: uppercase;
@@ -893,9 +893,9 @@ if (window.couponCode && window.currentPricing) {
 
         .btn-confirm-fill {
             position: absolute;
-            top: 0;
+            top: 1px;
             left: 0;
-            bottom: 0;
+            bottom: 1px;
             width: 0%;
             background: #c7b18f;
         }
@@ -903,23 +903,116 @@ if (window.couponCode && window.currentPricing) {
         .btn-confirm-text {
             position: relative;
             z-index: 1;
-            background: linear-gradient(to right, #000 0%, #000 50%, #fff 50%, #fff 100%);
-            background-size: 200% 100%;
-            background-position: 100% 0;
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            color: transparent;
+            color: #fff;
+        }
+
+        /* Dark wash over the part the fill hasn't reached yet, so it keeps the
+           disabled look (dimmed background + text) while the swept part is bright. */
+        .btn-confirm-dim {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: rgba(5, 5, 5, 0.65);
+            clip-path: inset(0 0 0 0);
+            pointer-events: none;
+        }
+
+        /* Black copy of the text, revealed by a clip-path that sweeps in EXACT
+           sync with the background fill (both are 3s linear from the same frame),
+           so the text is black exactly where the gold fill has reached. */
+        .btn-confirm-text-clip {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            clip-path: inset(0 100% 0 0);
+            color: #050505;
+            pointer-events: none;
         }
 
         .btn-confirm.filling .btn-confirm-fill {
-            transition: width 3s linear;
-            width: 100%;
+            animation: confirmFill 3s linear forwards;
         }
 
-        .btn-confirm.filling .btn-confirm-text {
-            transition: background-position 3s linear;
-            background-position: 0% 0;
+        .btn-confirm.filling .btn-confirm-text-clip {
+            animation: confirmText 3s linear forwards;
+        }
+
+        /* The dim wash recedes from the left, matching the fill exactly. */
+        .btn-confirm.filling .btn-confirm-dim {
+            animation: confirmDim 3s linear forwards;
+        }
+
+        /* The visible border: gold at 40% alpha across the whole button... */
+        .btn-confirm-border-base {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            border: 1px solid rgba(199, 177, 143, 0.4);
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        /* ...with the gold border swept in left-to-right in sync with the fill.
+           0.5 alpha over the 0.4 base composites to exactly 0.7, so the border
+           reads 70% within the swept part and 40% past it. */
+        .btn-confirm-border {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            border: 1px solid rgba(199, 177, 143, 0.5);
+            border-radius: inherit;
+            clip-path: inset(0 100% 0 0);
+            pointer-events: none;
+        }
+
+        .btn-confirm.filling .btn-confirm-border {
+            animation: confirmBorder 3s linear forwards;
+        }
+
+        /* Animations (not transitions): transitions can jump straight to their
+           end state when the checkbox is ticked in the same frame the modal
+           opens (no before-change style established). Animations always start
+           from the `from` keyframe, so the sweep runs reliably. */
+        @keyframes confirmFill {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+
+        @keyframes confirmText {
+            from { clip-path: inset(0 100% 0 0); }
+            to { clip-path: inset(0 0% 0 0); }
+        }
+
+        @keyframes confirmDim {
+            from { clip-path: inset(0 0 0 0); }
+            to { clip-path: inset(0 0 0 100%); }
+        }
+
+        @keyframes confirmBorder {
+            from { clip-path: inset(0 100% 0 0); }
+            to { clip-path: inset(0 0% 0 0); }
+        }
+
+        /* While the fill is running the button is not yet clickable. */
+        .btn-confirm.filling {
+            cursor: not-allowed;
+        }
+
+        /* Fill complete: the button becomes armed and snaps to the enabled look. */
+        .btn-confirm.armed {
+            opacity: 1;
+            cursor: pointer;
+            background: #c7b18f;
+            border-color: #c7b18f;
+            box-shadow: 0 10px 30px rgba(199, 177, 143, 0.35);
+        }
+
+        .btn-confirm.armed .btn-confirm-text {
+            color: #050505;
         }
     </style>
 </head>
@@ -1077,6 +1170,10 @@ if (window.couponCode && window.currentPricing) {
             <button id="ticket-confirm-btn" class="btn-confirm" disabled>
                 <span class="btn-confirm-fill"></span>
                 <span class="btn-confirm-text">Confirm</span>
+                <span class="btn-confirm-dim" aria-hidden="true"></span>
+                <span class="btn-confirm-text-clip" aria-hidden="true"><span>Confirm</span></span>
+                <span class="btn-confirm-border-base" aria-hidden="true"></span>
+                <span class="btn-confirm-border" aria-hidden="true"></span>
             </button>
         </div>
     </div>

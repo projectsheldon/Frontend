@@ -196,7 +196,7 @@ function SetupTicketModal()
             clearTimeout(fillTimer);
             fillTimer = null;
         }
-        confirmBtn.classList.remove('filling');
+        confirmBtn.classList.remove('filling', 'armed');
         void confirmBtn.offsetWidth;
         confirmBtn.disabled = true;
     }
@@ -223,14 +223,22 @@ function SetupTicketModal()
         {
             fillTimer = null;
             if(!filling) return;
-            closeModal();
-            CreatePurchaseTicket();
+            // Fill completed: arm the button. No auto ticket — the user clicks to confirm.
+            filling = false;
+            confirmBtn.classList.add('armed');
         }, FILL_DURATION);
     });
 
     confirmBtn.addEventListener('click', function(e)
     {
-        if(filling) e.preventDefault();
+        if(filling || confirmBtn.disabled)
+        {
+            e.preventDefault();
+            return;
+        }
+
+        closeModal();
+        CreatePurchaseTicket();
     });
 
     if(closeBtn) closeBtn.addEventListener('click', closeModal);
