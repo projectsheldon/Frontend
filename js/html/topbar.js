@@ -1,11 +1,8 @@
 (function()
 {
-    function injectTopbar()
+    function navMarkup()
     {
-        const placeholder = document.getElementById('shared-topbar');
-        if(!placeholder) return;
-
-        placeholder.outerHTML = '<nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center">' +
+        return '<nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center">' +
             '<div class="w-full max-w-[1100px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">' +
                 '<div class="flex items-center gap-3 z-10 shrink-0">' +
                     '<div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">' +
@@ -38,17 +35,17 @@
                             '<div class="user-name text-[0.7rem] font-bold text-neutral-400 transition-colors">Username</div>' +
                             '<div class="user-balance text-[0.6rem] font-bold text-[#c7b18f] tracking-wider hidden leading-none" style="margin-top: 1px"></div>' +
                         '</div>' +
-                         '<div class="flex items-center gap-2 cursor-pointer group" style="position:relative;">' +
-                             '<button class="flex items-center gap-2 bg-white/7 border border-white/15 rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-widest uppercase text-white/80 cursor-pointer transition-all duration-200 hover:bg-white/12 hover:border-white/30" style="padding:5px 14px 5px 5px;">' +
-                                 '<div class="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden transition-all">' +
-                                     '<img class="user-avatar w-full h-full object-cover hidden" src="" alt="Avatar">' +
-                                     '<svg class="default-avatar w-full h-full text-neutral-400" fill="#ffffff" viewBox="0 0 24 24">' +
-                                         '<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />' +
-                                     '</svg>' +
-                                 '</div>' +
-                                 '<span class="text-white/80 transition-colors duration-200 group-hover:text-[#c7b18f]">View Licenses</span>' +
-                             '</button>' +
-                         '</div>' +
+                        '<div class="flex items-center gap-2 cursor-pointer group" style="position:relative;">' +
+                            '<button class="flex items-center gap-2 bg-white/7 border border-white/15 rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-widest uppercase text-white/80 cursor-pointer transition-all duration-200 hover:bg-white/12 hover:border-white/30" style="padding:5px 14px 5px 5px;">' +
+                                '<div class="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group-hover:bg-white/10 transition-all group-hover:scale-105 ">' +
+                                    '<img class="user-avatar w-full h-full object-cover hidden" src="" alt="Avatar">' +
+                                    '<svg class="default-avatar w-full h-full text-neutral-400" fill="#ffffff" viewBox="0 0 24 24">' +
+                                        '<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />' +
+                                    '</svg>' +
+                                '</div>' +
+                                '<span class="text-white/80 transition-colors duration-200 group-hover:text-[#c7b18f]">View Licenses</span>' +
+                            '</button>' +
+                        '</div>' +
                     '</div>' +
 
                     '<button id="discord-login-btn" class="btn-discord px-5 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-wider transition-all" aria-label="Login with Discord">' +
@@ -71,13 +68,24 @@
         '</nav>';
     }
 
-    if(document.readyState === 'loading')
+    function injectTopbar()
     {
-        document.addEventListener('DOMContentLoaded', injectTopbar);
+        const placeholder = document.getElementById('shared-topbar');
+        if(!placeholder || placeholder.dataset.topbarInjected) return;
+        placeholder.dataset.topbarInjected = '1';
+        placeholder.outerHTML = navMarkup();
     }
-    else
+
+    // Inject synchronously while the parser is still at the bottom of <body> (the placeholder
+    // exists at this point), so deferred module scripts like topbar_buttons.js can capture
+    // #discord-login-btn / #user-profile-trigger the same way they do on the home page.
+    if(document.getElementById('shared-topbar'))
     {
         injectTopbar();
+    }
+    else if(document.readyState === 'loading')
+    {
+        document.addEventListener('DOMContentLoaded', injectTopbar);
     }
 
     window.toggleMobileMenu = function()
@@ -86,8 +94,17 @@
         if(menu) menu.classList.toggle('show');
     };
 
+    // Close the mobile menu when a link inside it is clicked (home-page behavior).
     document.addEventListener('click', function(e)
     {
+        const link = e.target && e.target.closest ? e.target.closest('#mobileMenu .nav-tab') : null;
+        if(link)
+        {
+            const menu = document.getElementById('mobileMenu');
+            if(menu) menu.classList.remove('show');
+            return;
+        }
+
         const menu = document.getElementById('mobileMenu');
         if(!menu || !menu.classList.contains('show')) return;
         if(menu.contains(e.target) || e.target.closest('.mobile-menu-btn')) return;
@@ -98,5 +115,14 @@
     {
         const menu = document.getElementById('mobileMenu');
         if(menu && window.innerWidth > 768) menu.classList.remove('show');
+    });
+
+    // Navbar darkens once scrolled (home-page behavior).
+    window.addEventListener('scroll', function()
+    {
+        const navbar = document.querySelector('.glass-nav');
+        if(!navbar) return;
+        if(window.scrollY > 50) navbar.classList.add('scrolled');
+        else navbar.classList.remove('scrolled');
     });
 })();

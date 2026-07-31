@@ -64,6 +64,12 @@
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .glass-nav.scrolled {
+            background: rgba(5, 5, 5, 0.8);
+            border-color: rgba(255, 255, 255, 0.1);
         }
 
         .nav-tab {
@@ -192,6 +198,54 @@
         .btn-discord:hover {
             background: #4752c4;
             transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(88, 101, 242, 0.3);
+        }
+
+        /* Icon slots: only the icon relevant to the current state is shown. */
+        .discord-logout-icon,
+        .discord-login-spinner {
+            display: none;
+        }
+
+        /* Logged-in ("Logout") state: swap to the light/gold treatment + logout glyph. */
+        .btn-discord.is-authed {
+            background: white;
+            color: black;
+        }
+
+        .btn-discord.is-authed:hover {
+            background: #c7b18f;
+            box-shadow: 0 10px 30px rgba(199, 177, 143, 0.3);
+        }
+
+        .btn-discord.is-authed .discord-login-icon {
+            display: none;
+        }
+
+        .btn-discord.is-authed .discord-logout-icon {
+            display: inline-block;
+        }
+
+        /* Busy state while the OAuth popup is being prepared / logout is in flight. */
+        .btn-discord.is-loading {
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        .btn-discord.is-loading .discord-login-icon,
+        .btn-discord.is-loading .discord-logout-icon {
+            display: none;
+        }
+
+        .btn-discord.is-loading .discord-login-spinner {
+            display: inline-block;
+            animation: discordSpin 0.7s linear infinite;
+        }
+
+        @keyframes discordSpin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .glass-card {

@@ -121,6 +121,15 @@
   .logo-box:hover { transform: rotate(10deg) scale(1.05); }
   .btn-discord { background: #5865F2; color: white; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease; }
   .btn-discord:hover { background: #4752c4; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(88,101,242,0.3); }
+  .discord-logout-icon, .discord-login-spinner { display: none; }
+  .btn-discord.is-authed { background: white; color: black; }
+  .btn-discord.is-authed:hover { background: #c7b18f; box-shadow: 0 10px 30px rgba(199,177,143,0.3); }
+  .btn-discord.is-authed .discord-login-icon { display: none; }
+  .btn-discord.is-authed .discord-logout-icon { display: inline-block; }
+  .btn-discord.is-loading { pointer-events: none; opacity: 0.85; }
+  .btn-discord.is-loading .discord-login-icon, .btn-discord.is-loading .discord-logout-icon { display: none; }
+  .btn-discord.is-loading .discord-login-spinner { display: inline-block; animation: discordSpin 0.7s linear infinite; }
+  @keyframes discordSpin { to { transform: rotate(360deg); } }
 
   .layout { max-width: 80rem; margin: 0 auto; padding: 2.5rem 1.5rem; display: flex; gap: 2rem; }
   aside { width: 16rem; flex-shrink: 0; position: sticky; top: 5rem; height: calc(100vh - 6rem); overflow-y: auto; }
@@ -506,6 +515,10 @@
   .pager .label-tiny { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted-2); }
   .pager .label-main { font-weight: 600; color: var(--fg); }
 
+  @media (max-width: 640px) {
+    .logo-box img { width: 1.5rem !important; height: 1.5rem !important; }
+    #discord-login-btn { padding: 0.5rem 0.75rem !important; }
+  }
   @media (max-width: 768px) {
     aside { display: none; }
     .layout { padding: 1.5rem 1rem; flex-direction: column; }

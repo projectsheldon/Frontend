@@ -167,77 +167,152 @@ function SetupTicketButton()
     const createBtn = document.getElementById('create-ticket-btn');
     if(!createBtn) return;
 
-    createBtn.addEventListener('click', async function()
+    createBtn.addEventListener('click', function()
     {
-        const statusEl = document.getElementById('ticket-status');
-        const originalText = createBtn.innerHTML;
-        
-        createBtn.disabled = true;
-        createBtn.innerHTML = '<div class="install-spinner" style="border-top-color: #000;"></div> Creating...';
-        if(statusEl) { statusEl.style.display = 'none'; }
+        const modal = document.getElementById('ticket-modal');
+        if(modal) modal.classList.remove('hidden');
+    });
 
-        try
+    SetupTicketModal();
+}
+
+function SetupTicketModal()
+{
+    const modal = document.getElementById('ticket-modal');
+    const checkbox = document.getElementById('ticket-confirm-checkbox');
+    const confirmBtn = document.getElementById('ticket-confirm-btn');
+    const closeBtn = document.getElementById('ticket-modal-close');
+    if(!modal || !checkbox || !confirmBtn) return;
+
+    const FILL_DURATION = 3000;
+    let fillTimer = null;
+    let filling = false;
+
+    function resetFill()
+    {
+        filling = false;
+        if(fillTimer)
         {
-            const token = window.DiscordAuth?.GetSessionToken();
-            if(!token)
-            {
-                if(statusEl)
-                {
-                    statusEl.style.cssText = 'display: block; margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);';
-                    statusEl.textContent = 'You must be logged in to create a ticket.';
-                }
-                return;
-            }
-
-            const apiUrl = await Api.GetApiUrl();
-            const qty = parseInt(document.getElementById('qty-value')?.value || '1', 10);
-
-            const res = await fetch(`${apiUrl}/discord/create-purchase-ticket`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    product: productKey,
-                    quantity: qty,
-                    is_personal_use: window.personalUse || false,
-                    coupon_code: window.couponCode || undefined
-                })
-            });
-
-            const data = await res.json();
-
-            if(data.ok)
-            {
-                createBtn.innerHTML = 'Ticket Created';
-                createBtn.style.background = 'rgba(34,197,94,0.2)';
-                createBtn.style.color = '#22c55e';
-                createBtn.style.cursor = 'default';
-            }
-            else
-            {
-                if(statusEl)
-                {
-                    statusEl.style.cssText = 'display: block; margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);';
-                    statusEl.textContent = data.message || 'Failed to create ticket.';
-                }
-                createBtn.innerHTML = originalText;
-                createBtn.disabled = false;
-            }
+            clearTimeout(fillTimer);
+            fillTimer = null;
         }
-        catch(err)
+        confirmBtn.classList.remove('filling');
+        void confirmBtn.offsetWidth;
+        confirmBtn.disabled = true;
+    }
+
+    function closeModal()
+    {
+        checkbox.checked = false;
+        resetFill();
+        modal.classList.add('hidden');
+    }
+
+    checkbox.addEventListener('change', function()
+    {
+        if(!checkbox.checked)
         {
-            const statusEl = document.getElementById('ticket-status');
+            resetFill();
+            return;
+        }
+
+        confirmBtn.disabled = false;
+        confirmBtn.classList.add('filling');
+        filling = true;
+        fillTimer = setTimeout(function()
+        {
+            fillTimer = null;
+            if(!filling) return;
+            closeModal();
+            CreatePurchaseTicket();
+        }, FILL_DURATION);
+    });
+
+    confirmBtn.addEventListener('click', function(e)
+    {
+        if(filling) e.preventDefault();
+    });
+
+    if(closeBtn) closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', function(e)
+    {
+        if(e.target === modal) closeModal();
+    });
+}
+
+async function CreatePurchaseTicket()
+{
+    const createBtn = document.getElementById('create-ticket-btn');
+    if(!createBtn) return;
+
+    const statusEl = document.getElementById('ticket-status');
+    const originalText = createBtn.innerHTML;
+
+    createBtn.disabled = true;
+    createBtn.innerHTML = '<div class="install-spinner" style="border-top-color: #000;"></div> Creating...';
+    if(statusEl) { statusEl.style.display = 'none'; }
+
+    try
+    {
+        const token = window.DiscordAuth?.GetSessionToken();
+        if(!token)
+        {
             if(statusEl)
             {
                 statusEl.style.cssText = 'display: block; margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);';
-                statusEl.textContent = 'Failed to create ticket. Please try again.';
+                statusEl.textContent = 'You must be logged in to create a ticket.';
+            }
+            return;
+        }
+
+        const apiUrl = await Api.GetApiUrl();
+        const qty = parseInt(document.getElementById('qty-value')?.value || '1', 10);
+
+        const res = await fetch(`${apiUrl}/discord/create-purchase-ticket`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                product: productKey,
+                quantity: qty,
+                is_personal_use: window.personalUse || false,
+                coupon_code: window.couponCode || undefined
+            })
+        });
+
+        const data = await res.json();
+
+        if(data.ok)
+        {
+            createBtn.innerHTML = 'Ticket Created';
+            createBtn.style.background = 'rgba(34,197,94,0.2)';
+            createBtn.style.color = '#22c55e';
+            createBtn.style.cursor = 'default';
+        }
+        else
+        {
+            if(statusEl)
+            {
+                statusEl.style.cssText = 'display: block; margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);';
+                statusEl.textContent = data.message || 'Failed to create ticket.';
             }
             createBtn.innerHTML = originalText;
             createBtn.disabled = false;
         }
-    });
+    }
+    catch(err)
+    {
+        const statusEl = document.getElementById('ticket-status');
+        if(statusEl)
+        {
+            statusEl.style.cssText = 'display: block; margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);';
+            statusEl.textContent = 'Failed to create ticket. Please try again.';
+        }
+        createBtn.innerHTML = originalText;
+        createBtn.disabled = false;
+    }
 }
 
 function renderBalanceState(message, action)
