@@ -49,6 +49,10 @@ export async function CheckAuthStatus()
 }
 function UpdateUI(loggedIn, user = null)
 {
+    // The loading veil stays up until the auth check settles on a definite
+    // answer (logged in or not) — never leave the page covered.
+    if(window.AuthLoading) window.AuthLoading.hide();
+
     const discordBtn = document.getElementById('discord-login-btn');
     const userProfileTrigger = document.getElementById('user-profile-trigger');
 
