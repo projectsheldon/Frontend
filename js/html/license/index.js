@@ -1,6 +1,7 @@
 // License page script
 import Api from "../../util/backend.js";
 import { DiscordAuth } from "../../discord/auth.js";
+import { GetBrowserFingerprint } from "../../util/fingerprint.js";
 
 let keys = [];
 
@@ -168,6 +169,7 @@ async function loadLicenses()
             genBody.set('sessionToken', sessionToken);
             const fp = getFingerprint();
             if(fp) genBody.set('fingerprint', fp);
+            try { const bfp = await GetBrowserFingerprint(); if(bfp) genBody.set('browserFp', bfp); } catch(e) {}
 
             const response = await fetch(`${apiUrl}/workink/generate`, {
                 method: 'POST',

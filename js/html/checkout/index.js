@@ -1,6 +1,7 @@
 import { CheckAuthStatus, DiscordAuth } from "../../discord/auth.js";
 import { initStripe } from "../../payment/stripe/stripe.js";
 import Api from "../../util/backend.js";
+import { GetIdentityPayload } from "../../util/fingerprint.js";
 
 window.Api = Api;
 
@@ -350,12 +351,19 @@ async function ShowBalanceCheckout()
     if(!authToken) { renderBalanceState('Please log in to redeem your balance for a key.', 'login'); return; }
 
     const apiUrl = await Api.GetApiUrl();
-    const authHeaders = { 'Authorization': `Bearer ${authToken}` };
 
     try
     {
+        // Form body with the session token inside — a CORS simple request (no preflight),
+        // so it works behind the Cloudflare challenge like /workink/generate.
+        const body = new URLSearchParams();
+        if(authToken) body.set('sessionToken', authToken);
+        const identity = await GetIdentityPayload();
+        for(const [k, v] of identity.entries()) body.set(k, v);
+
         const response = await fetch(`${apiUrl}/discord/balance`, {
-            headers: authHeaders,
+            method: 'POST',
+            body,
             credentials: 'include'
         });
         const data = await response.json();
@@ -369,6 +377,8 @@ async function ShowBalanceCheckout()
         const isRateLimited = data.rate_limited || false;
         const rateLimitedUntil = data.rate_limited_until || 0;
         const freeKeyCooldownUntil = data.free_key_cooldown_until || 0;
+        const firstAdBoosted = data.first_ad_boosted ? true : false;
+        const firstAdBoostBalance = (typeof data.first_ad_boost_balance === 'number' && !isNaN(data.first_ad_boost_balance)) ? data.first_ad_boost_balance : 0.9;
 
         let durationHours = 4.5;
         try
@@ -431,9 +441,15 @@ async function ShowBalanceCheckout()
                     ${isRateLimited
                         ? `<span id="rate-limit-msg" style="font-size: 12px; color: #ef4444; font-weight: 700;">Rate limited — max balance reached.${rateLimitRemaining > 0 ? ` Try again in ${formatCooldown(rateLimitRemaining)}.` : ' Come back later.'}</span>`
                         : (isOnCooldown ? '' : `<a href="${workinkLink}" style="font-size: 13px; color: #c7b18f; text-decoration: underline;">
-                            ${noCooldown ? 'Watch Ads for 1 Free Key' : `Watch Ads for +${adRewardBalance} balance`}
+                            ${noCooldown ? 'Watch Ads for 1 Free Key' : (firstAdBoosted ? 'Watch 1 Ad for your First Key' : `Watch Ads for +${adRewardBalance} balance`)}
                            </a>`)
                     }
+
+                    ${firstAdBoosted && !noCooldown && !isOnCooldown
+                        ? `<div style="font-size: 12px; color: #22c55e; font-weight: 700; max-width: 80%; line-height: 1.45;">
+                            Your first ad grants +${firstAdBoostBalance.toFixed(1)} — only 1 stage of work for your first free key. After that it's 3 stages per key.
+                           </div>`
+                        : ''}
                 </div>
             `;
 
@@ -492,11 +508,16 @@ async function ShowBalanceCheckout()
 
                         try
                         {
+                            const purchaseBody = new URLSearchParams();
+                            purchaseBody.set('quantity', String(qty));
+                            if(authToken) purchaseBody.set('sessionToken', authToken);
+                            const purchaseIdentity = await GetIdentityPayload();
+                            for(const [k, v] of purchaseIdentity.entries()) purchaseBody.set(k, v);
+
                             const purchaseRes = await fetch(`${apiUrl}/discord/purchase-free-key`, {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json', ...authHeaders },
-                                credentials: 'include',
-                                body: JSON.stringify({ quantity: qty })
+                                body: purchaseBody,
+                                credentials: 'include'
                             });
                             const purchaseData = await purchaseRes.json();
 

@@ -1,5 +1,8 @@
 import Api from "../util/backend.js";
 import { CheckAuthStatus, DiscordAuth, UpdateUI } from "./auth.js";
+import "../util/cookie_banner.js"; // sets window.SheldonCookies; auto-shows the prompt on main pages only
+
+let cookieChoiceFinal = false; // a Sure/No choice was recorded → the menu button never returns
 
 const discordBtn = document.getElementById('discord-login-btn');
 const userProfileTrigger = document.getElementById('user-profile-trigger');
@@ -113,6 +116,49 @@ function getCachedLicenses() {
     } catch (e) {}
     return null;
 }
+
+// "Cookie settings" row in the licenses menu: shown while consent is undecided or declined
+// (a way to read/re-open the prompt without the banner auto-showing). Once the user
+// proceeds with Sure or No, the row is removed forever.
+function appendCookieSettingsButton(menu)
+{
+    if(cookieChoiceFinal) return;
+    let status = null;
+    try { status = window.SheldonCookies?.GetConsentStatus?.() ?? null; } catch(e) {}
+    if(status === 'accepted') return;
+
+    const wrap = document.createElement('div');
+    wrap.id = 'cookie-settings-btn';
+    wrap.style.cssText = 'margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);';
+
+    const btn = document.createElement('button');
+    btn.textContent = status === 'declined' ? 'Cookie settings \u2014 declined' : 'Cookie settings';
+    btn.title = 'Show the cookie / fingerprint consent prompt again';
+    btn.style.cssText = 'width:100%;padding:8px 0;border-radius:10px;border:1px solid rgba(199,177,143,0.35);background:rgba(199,177,143,0.08);color:#c7b18f;font-size:10.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background .2s;';
+    btn.addEventListener('click', () =>
+    {
+        try { window.SheldonCookies?.ShowCookiePrompt?.(); } catch(e) {}
+    });
+    wrap.append(btn);
+    menu.append(wrap);
+}
+
+window.addEventListener('sheldon-consent', function()
+{
+    cookieChoiceFinal = true;
+    const btn = document.getElementById('cookie-settings-btn');
+    if(btn) btn.remove();
+});
+
+window.addEventListener('sheldon-consent-state', function(e)
+{
+    if(e && e.detail && e.detail.consent === 'accepted')
+    {
+        cookieChoiceFinal = true;
+        const btn = document.getElementById('cookie-settings-btn');
+        if(btn) btn.remove();
+    }
+});
 
 function setCachedLicenses(licenses) {
     try {
@@ -307,6 +353,7 @@ function RenderLicenses(menu, licenses, token)
             #licenses-scroll-rect::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
         `;
         document.head.appendChild(style);
+        appendCookieSettingsButton(menu);
     }
     else
     {
@@ -318,6 +365,7 @@ function RenderLicenses(menu, licenses, token)
             </div>
         `;
         loadWeeklyProgress(token);
+        appendCookieSettingsButton(menu);
     }
 }
 

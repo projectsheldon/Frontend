@@ -1,5 +1,6 @@
 import Api from "../../util/backend.js";
 import { Product, ProductsManager } from "../../payment/products/manager.js";
+import { GetBrowserFingerprint } from "../../util/fingerprint.js";
 
 // Only run tab logic on homepage
 const isHomepage = window.location.pathname === '/' || window.location.pathname.endsWith('/index.html');
@@ -331,6 +332,7 @@ async function claimWorkinkToken()
         body.set('sessionToken', sessionToken);
         const fp = claimFingerprint();
         if(fp) body.set('fingerprint', fp);
+        try { const bfp = await GetBrowserFingerprint(); if(bfp) body.set('browserFp', bfp); } catch(e) {}
 
         const res = await fetch(`${apiUrl}/workink/generate`, { method: 'POST', body });
         const data = await res.json().catch(() => null);

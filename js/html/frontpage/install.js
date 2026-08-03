@@ -11,28 +11,29 @@ const MODAL_CSS = `
 #install-modal.show { display: flex; }
 #install-modal .modal-box {
     background: #111; border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 24px; padding: 2rem; max-width: 460px; width: 90%;
+    border-radius: 24px; padding: 2.5rem 3rem;
+    max-width: 560px; width: 92%;
     text-align: center;
 }
 #install-modal .modal-title {
-    font-size: 1rem; font-weight: 800; color: #fff;
-    margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;
+    font-size: 1.5rem; font-weight: 800; color: #fff;
+    margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;
 }
 #install-modal .modal-sub {
-    font-size: 0.7rem; font-weight: 500; color: #666; margin-bottom: 1.25rem;
+    font-size: 0.95rem; font-weight: 500; color: #999; margin-bottom: 1.75rem;
 }
 #install-modal .close-btn {
-    padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
-    color: #666; font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+    padding: 0.75rem 2rem; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+    color: #888; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s;
 }
 #install-modal .close-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
-#install-modal .error-msg { color: #ef4444; font-size: 0.75rem; font-weight: 500; margin-bottom: 1rem; }
+#install-modal .error-msg { color: #ef4444; font-size: 0.9rem; font-weight: 500; margin-bottom: 1rem; }
 #install-modal .loader {
-    border: 2px solid rgba(255,255,255,0.06); border-top-color: #c7b18f;
-    border-radius: 50%; width: 24px; height: 24px;
-    animation: modalSpin 0.8s linear infinite; margin: 1rem auto;
+    border: 3px solid rgba(255,255,255,0.06); border-top-color: #c7b18f;
+    border-radius: 50%; width: 32px; height: 32px;
+    animation: modalSpin 0.8s linear infinite; margin: 1.25rem auto;
 }
 @keyframes modalSpin { to { transform: rotate(360deg); } }
 #install-modal #im-progress-wrap {
@@ -44,7 +45,7 @@ const MODAL_CSS = `
     background: linear-gradient(90deg,#c7b18f,#e6d3b5); transition: width 0.2s ease;
 }
 #install-modal #im-actions, #install-modal #im-error-actions {
-    display: none; gap: 0.5rem; justify-content: center; margin-top: 0.25rem;
+    display: none; gap: 1rem; justify-content: center; margin-top: 0.5rem;
 }
 #install-modal .close-btn.accent {
     background: rgba(199,177,143,0.15); border-color: rgba(199,177,143,0.25); color: #c7b18f;
