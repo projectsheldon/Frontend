@@ -48,6 +48,8 @@
     color: white;
     font-family: 'Inter', sans-serif;
   }
+  html, body { height: 100%; overflow: hidden; }
+  body > .pt-20 { display: none; }
   a { color: inherit; text-decoration: none; }
 
   .bg-mesh {
@@ -131,8 +133,13 @@
   .btn-discord.is-loading .discord-login-spinner { display: inline-block; animation: discordSpin 0.7s linear infinite; }
   @keyframes discordSpin { to { transform: rotate(360deg); } }
 
-  .layout { max-width: 80rem; margin: 0 auto; padding: 2.5rem 1.5rem; display: flex; gap: 2rem; }
-  aside { width: 16rem; flex-shrink: 0; position: sticky; top: 5rem; height: calc(100vh - 6rem); overflow-y: auto; }
+  .layout {
+    max-width: 80rem; margin: 0 auto; padding: 2.5rem 1.5rem 1rem;
+    display: flex; gap: 2rem; align-items: stretch;
+    height: calc(100vh - 104px); height: calc(100dvh - 104px);
+    overflow: hidden;
+  }
+  aside { width: 16rem; flex-shrink: 0; height: 100%; overflow-y: auto; }
   aside::-webkit-scrollbar { width: 4px; }
   aside::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
   nav.sidebar { display: flex; flex-direction: column; gap: 1.5rem; font-size: 0.875rem; padding-right: 0.5rem; }
@@ -158,7 +165,7 @@
     border-radius: 9999px; background: var(--gold);
   }
 
-  main { min-width: 0; flex: 1; }
+  main { min-width: 0; flex: 1; overflow-y: auto; }
   article { max-width: 54rem; }
   article h1 {
     font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1;
@@ -521,7 +528,12 @@
   }
   @media (max-width: 768px) {
     aside { display: none; }
-    .layout { padding: 1.5rem 1rem; flex-direction: column; }
+    .layout {
+      padding: 1.25rem 1rem;
+      flex-direction: column;
+      height: calc(100vh - 88px); height: calc(100dvh - 88px);
+    }
+    main { flex: 1; min-height: 0; }
     article h1 { font-size: 1.75rem; }
     .nav-tabs-desktop { display: none !important; }
     .mobile-menu-btn { display: block; }
@@ -3098,7 +3110,8 @@ function renderMain() {
       ${pager}
     </article>
   `;
-  window.scrollTo({ top: 0 });
+  const mainEl = document.getElementById("main");
+  if (mainEl) mainEl.scrollTo({ top: 0 });
 }
 
 function htmlToMarkdown(html) {
