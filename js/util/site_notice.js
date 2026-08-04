@@ -73,7 +73,7 @@ function buildBanner()
     if(bannerEl) return bannerEl;
 
     const wrap = document.createElement('div');
-    wrap.id = 'sheldon-cookie-banner';
+    wrap.id = 'sheldon-site-notice';
     wrap.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:10002;width:min(360px,calc(100vw - 40px));background:rgba(18,18,18,0.97);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:18px 18px 16px;box-shadow:0 14px 50px rgba(0,0,0,0.6);font-family:Inter,sans-serif;color:#fff;';
 
     const text = document.createElement('div');

@@ -1,6 +1,6 @@
 import Api from "../util/backend.js";
 import { CheckAuthStatus, DiscordAuth, UpdateUI } from "./auth.js";
-import "../util/cookie_banner.js"; // sets window.SheldonCookies; auto-shows the prompt on main pages only
+import "../util/site_notice.js"; // sets window.SheldonCookies; auto-shows the prompt on main pages only
 
 let cookieChoiceFinal = false; // a Sure/No choice was recorded → the menu button never returns
 
