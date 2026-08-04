@@ -66,7 +66,7 @@ export async function RecordChoice(choice)
 
 // ── UI ───────────────────────────────────────────────────────────────────────────
 
-const BANNER_TEXT = 'We use device fingerprinting and store your choice on our server to keep free keys fair. Accepting cookies is required to get a free key with only 1 stage of work — otherwise it takes 3 stages. Your choice is final.';
+const BANNER_TEXT = 'We use device fingerprinting to keep free keys fair.';
 
 function buildBanner()
 {
@@ -184,9 +184,11 @@ window.SheldonCookies = {
     try
     {
         const status = await FetchConsentStatus();
-        // Recorded choice (accepted or declined) → never auto-show again. Only undecided
-        // visitors on the main pages get the automatic prompt.
-        if(!status && isMainPage())
+        // Only show the automatic prompt to logged-in visitors (a Discord session exists)
+        // with no recorded choice. Recorded choice (accepted or declined) → never auto-show
+        // again. Undecided visitors on the main pages get the prompt.
+        const loggedIn = (() => { try { return !!localStorage.getItem('discord_session'); } catch(e) { return false; } })();
+        if(!status && loggedIn && isMainPage())
         {
             ShowCookiePrompt();
         }
