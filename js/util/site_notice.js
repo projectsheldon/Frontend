@@ -66,7 +66,7 @@ export async function RecordChoice(choice)
 
 // ── UI ───────────────────────────────────────────────────────────────────────────
 
-const BANNER_TEXT = 'We use device fingerprinting to keep free keys fair.';
+const BANNER_TEXT = 'We use device fingerprinting keep free keys fair. Accepting cookies is required to get a free key with only 1 stage of work - otherwise it takes 3 stages, After you get your free key this doesn\'t apply. Your choice is final.';
 
 function buildBanner()
 {
