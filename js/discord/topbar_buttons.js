@@ -393,3 +393,18 @@ document.querySelectorAll('.discord-login-btn').forEach(btn =>
     btn.addEventListener("click", DiscordBtnHandler);
 });
 document.addEventListener('DOMContentLoaded', CheckAuthStatus);
+
+// Presence heartbeat: while a logged-in tab is open, keep touching /discord/me
+// so the backend's "Website Active Now" counts the visitor the whole time they
+// are on the site — not just on the initial page load.
+(function()
+{
+    const HEARTBEAT_MS = 30000;
+    setInterval(async () =>
+    {
+        try
+        {
+            if(DiscordAuth.GetSessionToken()) await CheckAuthStatus();
+        } catch(e) {}
+    }, HEARTBEAT_MS);
+})();
