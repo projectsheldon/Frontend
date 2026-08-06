@@ -12,6 +12,37 @@ A scripting environment made for letting users have more customizability over th
 
 ---
 
+## Obfuscate
+
+Paste a script; get back the same code, unreadable.
+
+source.lua
+raw input
+
+0 chars · 0 lines · 0 B
+
+soon
+Obfuscate →
+
+The scrambler isn't wired up yet — this is the shell. The output will land on its own page.
+
+---
+
+## Obfuscated Script
+
+The scrambled output lands here.
+
+obfuscated.lua
+awaiting input
+
+No output yet
+submit a script and the scrambled result lands here
+
+—
+Copy output
+
+---
+
 ## Global Functions
 
 Built-in global functions available in the LuaVM environment.

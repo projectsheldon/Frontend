@@ -11,6 +11,8 @@
 ## Sections
 
 - [Sheldon's Scripting Environment](https://www.projectsheldon.me/luavm/#/)
+- [Obfuscate](https://www.projectsheldon.me/luavm/#/obfuscate)
+- [Obfuscated Script](https://www.projectsheldon.me/luavm/#/obfuscate-result)
 - [Global Functions](https://www.projectsheldon.me/luavm/#/globals)
 - [base64](https://www.projectsheldon.me/luavm/#/base64)
 - [hash](https://www.projectsheldon.me/luavm/#/hash)
