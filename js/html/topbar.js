@@ -15,6 +15,7 @@
                     '<a href="/" class="nav-tab active">Home</a>' +
                     '<a href="/luavm/" class="nav-tab">Lua VM</a>' +
                     '<a href="/resellers/" class="nav-tab">Resell</a>' +
+                    '<a href="/resellers/directory/" class="nav-tab">Resellers</a>' +
                 '</div>' +
 
                 '<button class="mobile-menu-btn" onclick="toggleMobileMenu()">' +
@@ -27,6 +28,7 @@
                     '<a href="/" class="nav-tab">Home</a>' +
                     '<a href="/luavm/" class="nav-tab">Lua VM</a>' +
                     '<a href="/resellers/" class="nav-tab">Resell</a>' +
+                    '<a href="/resellers/directory/" class="nav-tab">Resellers</a>' +
                 '</div>' +
 
                 '<div class="flex items-center gap-5 z-10 shrink-0">' +

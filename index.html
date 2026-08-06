@@ -323,6 +323,114 @@
             transform: scale(1.02);
         }
 
+        /* Feature / community info cards */
+        .feature-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 1rem;
+            background: rgba(199, 177, 143, 0.08);
+            border: 1px solid rgba(199, 177, 143, 0.25);
+            margin-bottom: 1.75rem;
+            transition: all 0.4s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: rgba(199, 177, 143, 0.16);
+            border-color: rgba(199, 177, 143, 0.45);
+            box-shadow: 0 0 30px rgba(199, 177, 143, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .feature-bullet {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.5;
+        }
+
+        .feature-bullet .bullet-check {
+            flex-shrink: 0;
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-top: 0.1rem;
+            color: #c7b18f;
+        }
+
+        /* Showcase video frames */
+        .showcase-video {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #000;
+            transition: all 0.4s ease;
+        }
+
+        .showcase-video iframe {
+            width: 100%;
+            height: 100%;
+            opacity: 0.85;
+            transition: all 0.4s ease;
+        }
+
+        .showcase-video:hover {
+            border-color: rgba(199, 177, 143, 0.4);
+            box-shadow: 0 30px 80px -20px rgba(199, 177, 143, 0.2);
+        }
+
+        .showcase-video:hover iframe {
+            opacity: 1;
+            transform: scale(1.03);
+        }
+
+        .showcase-video .video-chip {
+            position: absolute;
+            top: 0.75rem;
+            left: 0.75rem;
+            z-index: 2;
+            pointer-events: none;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.6rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: #c7b18f;
+        }
+
+        .showcase-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-top: 0.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .showcase-title-row .video-label {
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        .showcase-title-row .video-label b {
+            color: #c7b18f;
+        }
+
         .info-label {
             font-size: 0.65rem;
             font-weight: 800;
@@ -653,57 +761,115 @@
     <section class="py-20 px-6">
         <div class="max-w-6xl mx-auto space-y-12">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div class="glass-card p-8 md:p-12 rounded-[2rem] animate-on-scroll">
-                    <h3 class="text-3xl font-black mb-4 uppercase tracking-tight">UI & Features</h3>
-                    <p class="text-neutral-500 text-sm leading-relaxed mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-12">
+                <div class="glass-card feature-card p-8 md:p-12 rounded-[2rem] animate-on-scroll">
+                    <div class="feature-icon">
+                        <svg class="w-7 h-7 text-[#c7b18f]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-black mb-3 uppercase tracking-tight">UI & Features</h3>
+                    <p class="text-neutral-500 text-sm leading-relaxed mb-8">
                         Project Sheldon features a straightforward, user-friendly interface designed to help users
                         quickly find what they need without getting lost. It also includes a wide range of features,
                         ensuring that everyone can enjoy it regardless of their preferred game genre.
                     </p>
+                    <ul class="space-y-3">
+                        <li class="feature-bullet">
+                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            Simple, clean, no-nonsense interface
+                        </li>
+                        <li class="feature-bullet">
+                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            Wide range of features for every genre
+                        </li>
+                        <li class="feature-bullet">
+                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            Actively maintained & kept up to date
+                        </li>
+                    </ul>
                 </div>
 
-                <div class="glass-card p-8 md:p-12 rounded-[2rem] animate-on-scroll stagger-1">
-                    <h3 class="text-3xl font-black mb-4 uppercase tracking-tight">Community</h3>
-                    <p class="text-neutral-500 text-sm leading-relaxed">
+                <div class="glass-card feature-card p-8 md:p-12 rounded-[2rem] animate-on-scroll stagger-1">
+                    <div class="feature-icon">
+                        <svg class="w-7 h-7 text-[#c7b18f]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 010 7.75"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-black mb-3 uppercase tracking-tight">Community</h3>
+                    <p class="text-neutral-500 text-sm leading-relaxed mb-8">
                         Project Sheldon is developed based on feedback from the community as well as my own ideas. I
                         also do my best to implement requested features and fix any bugs that are reported.
                     </p>
+                    <ul class="space-y-3">
+                        <li class="feature-bullet">
+                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            Built on community feedback & ideas
+                        </li>
+                        <li class="feature-bullet">
+                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            Requested features get implemented
+                        </li>
+                        <li class="feature-bullet">
+                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            Reported bugs get fixed fast
+                        </li>
+                    </ul>
                 </div>
             </div>
 
             <div class="glass-card p-6 md:p-10 rounded-[3rem] overflow-hidden animate-on-scroll stagger-2">
-                <div class="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
                     <div>
                         <h4 class="text-3xl md:text-5xl font-black uppercase tracking-tighter">Showcase</h4>
+                        <p class="text-neutral-500 text-sm mt-3 max-w-lg leading-relaxed">
+                            See Sheldon in action — official footage straight from the newest updates.
+                        </p>
                     </div>
+                    <span class="inline-flex items-center px-4 py-2 rounded-full bg-[#c7b18f]/10 border border-[#c7b18f]/25 text-[0.6rem] font-black uppercase tracking-[0.2em] text-[#c7b18f] whitespace-nowrap">YouTube Official</span>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                     <div class="space-y-4 animate-on-scroll stagger-1">
-                        <div class="ui-preview-container aspect-video group cursor-pointer">
-                            <iframe class="w-full h-full opacity-80 group-hover:opacity-100 transition-opacity"
-                                src="https://www.youtube.com/embed/9I19HYIgYPk" title="Sheldon Update 1" frameborder="0"
+                        <div class="showcase-video group cursor-pointer">
+                            <span class="video-chip">Update 1</span>
+                            <iframe src="https://www.youtube.com/embed/9I19HYIgYPk?rel=0&modestbranding=1&playsinline=1"
+                                title="Sheldon Update 1" frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowfullscreen></iframe>
+                        </div>
+                        <div class="showcase-title-row">
+                            <span class="video-label">Update <b>01</b></span>
                         </div>
                     </div>
 
                     <div class="space-y-4 animate-on-scroll stagger-2">
-                        <div class="ui-preview-container aspect-video group cursor-pointer">
-                            <iframe class="w-full h-full opacity-80 group-hover:opacity-100 transition-opacity"
-                                src="https://www.youtube.com/embed/B0awFbYrX9k" title="Sheldon Update 2" frameborder="0"
+                        <div class="showcase-video group cursor-pointer">
+                            <span class="video-chip">Update 2</span>
+                            <iframe src="https://www.youtube.com/embed/B0awFbYrX9k?rel=0&modestbranding=1&playsinline=1"
+                                title="Sheldon Update 2" frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowfullscreen></iframe>
+                        </div>
+                        <div class="showcase-title-row">
+                            <span class="video-label">Update <b>02</b></span>
                         </div>
                     </div>
 
                     <div class="space-y-4 animate-on-scroll stagger-3">
-                        <div class="ui-preview-container aspect-video group cursor-pointer">
-                            <iframe class="w-full h-full opacity-80 group-hover:opacity-100 transition-opacity"
-                                src="https://www.youtube.com/embed/t4T-H4nwTC8" title="Sheldon Update 3" frameborder="0"
+                        <div class="showcase-video group cursor-pointer">
+                            <span class="video-chip">Update 3</span>
+                            <iframe src="https://www.youtube.com/embed/t4T-H4nwTC8?rel=0&modestbranding=1&playsinline=1"
+                                title="Sheldon Update 3" frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowfullscreen></iframe>
+                        </div>
+                        <div class="showcase-title-row">
+                            <span class="video-label">Update <b>03</b></span>
                         </div>
                     </div>
                 </div>

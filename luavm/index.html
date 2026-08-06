@@ -26,7 +26,7 @@
 <script type="text/javascript" charset="UTF-8" src="https://unpkg.com/highlightjs-luau/dist/luau.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -137,9 +137,11 @@
     max-width: 80rem; margin: 104px auto 0; padding: 1.5rem 1.5rem 1rem;
     display: flex; gap: 2rem; align-items: stretch;
     height: calc(100vh - 104px); height: calc(100dvh - 104px);
-    overflow: hidden;
   }
-  aside { width: 16rem; flex-shrink: 0; height: 100%; overflow-y: auto; }
+  aside {
+    width: 16rem; flex-shrink: 0; height: 100%; overflow-y: auto;
+    transform: translateX(calc(max(0px, (100vw - 80rem) / 2) * -0.3));
+  }
   aside::-webkit-scrollbar { width: 4px; }
   aside::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
   nav.sidebar { display: flex; flex-direction: column; gap: 1.5rem; font-size: 0.875rem; padding-right: 0.5rem; }
@@ -290,6 +292,7 @@
   article ul li::marker { color: var(--gold); }
   article code {
     font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-weight: 300;
     background: rgba(255,255,255,0.06); padding: 0.15rem 0.4rem;
     border-radius: 0.3rem; font-size: 0.95em; color: var(--gold);
   }
@@ -359,6 +362,7 @@
   }
   .codeblock {
     font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-weight: 300;
     font-size: 0.85rem;
     color: #d4d4d4;
     line-height: 1.55;
@@ -498,12 +502,14 @@
   }
   td.sig-cell {
     font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-weight: 300;
     font-size: 0.95em;
     color: #e6e6e6;
   }
-  td.sig-cell b { color: #e6e6e6; font-weight: 600; font-style: normal; }
+  td.sig-cell b { color: #e6e6e6; font-weight: 500; font-style: normal; }
   td.type-cell {
     font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-weight: 300;
     font-size: 0.95em;
     color: #e6e6e6;
   }
