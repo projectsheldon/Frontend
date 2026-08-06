@@ -177,6 +177,51 @@
             box-shadow: 0 10px 30px rgba(88, 101, 242, 0.3);
         }
 
+        /* Icon slots: only the icon relevant to the current state is shown. */
+        .discord-logout-icon,
+        .discord-login-spinner {
+            display: none;
+        }
+
+        /* Logged-in ("Logout") state: swap to the light/gold treatment + logout glyph. */
+        .btn-discord.is-authed {
+            background: white;
+            color: black;
+        }
+
+        .btn-discord.is-authed:hover {
+            background: #c7b18f;
+            box-shadow: 0 10px 30px rgba(199, 177, 143, 0.3);
+        }
+
+        .btn-discord.is-authed .discord-login-icon {
+            display: none;
+        }
+
+        .btn-discord.is-authed .discord-logout-icon {
+            display: inline-block;
+        }
+
+        /* Busy state while the OAuth popup is being prepared / logout is in flight. */
+        .btn-discord.is-loading {
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        .btn-discord.is-loading .discord-login-icon,
+        .btn-discord.is-loading .discord-logout-icon {
+            display: none;
+        }
+
+        .btn-discord.is-loading .discord-login-spinner {
+            display: inline-block;
+            animation: discordSpin 0.7s linear infinite;
+        }
+
+        @keyframes discordSpin {
+            to { transform: rotate(360deg); }
+        }
+
         .glass-card {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -221,34 +266,139 @@
         .embed-box {
             position: relative;
             width: 100%;
-            height: 170px;
+            min-height: 96px;
             background: rgba(0, 0, 0, 0.4);
             border-top: 1px solid rgba(255, 255, 255, 0.05);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             overflow: hidden;
         }
 
-        .embed-box iframe {
+        .embed-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            height: 96px;
+        }
+
+        .embed-loading-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(199, 177, 143, 0.2);
+            border-top-color: #c7b18f;
+            border-radius: 50%;
+            animation: discordSpin 0.7s linear infinite;
+        }
+
+        .site-favicon-slot {
+            position: relative;
+        }
+
+        .site-favicon-globe {
+            width: 24px;
+            height: 24px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .site-favicon-img {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
-            border: none;
+            object-fit: cover;
+        }
+
+        .embed-card-link {
+            display: flex;
+            align-items: stretch;
+            min-height: 96px;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.2s ease;
+        }
+
+        .embed-card-link:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .embed-card-image-link {
+            display: block;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .embed-card-image {
+            display: block;
+            width: 100%;
+            max-height: 240px;
+            object-fit: cover;
+        }
+
+        .embed-card-image-domain {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 0.6rem 0.85rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+            color: white;
+            font-size: 0.62rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        .embed-card-body {
+            flex: 1;
+            min-width: 0;
+            padding: 0.9rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .embed-card-domain {
+            color: #c7b18f;
+            font-size: 0.6rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .embed-card-title {
+            color: white;
+            font-weight: 800;
+            font-size: 0.9rem;
+            line-height: 1.35;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .embed-card-desc {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 0.75rem;
+            line-height: 1.45;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
 
         .embed-fallback {
-            position: absolute;
-            inset: 0;
-            display: none;
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 0.75rem;
+            min-height: 96px;
             background: rgba(10, 10, 10, 0.92);
             text-align: center;
             padding: 1rem;
-        }
-
-        .embed-fallback.show {
-            display: flex;
         }
 
         .website-btn {
@@ -289,6 +439,29 @@
             white-space: nowrap;
         }
 
+        .resellers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 340px));
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .avatar-fallback {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 9999px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(199, 177, 143, 0.12);
+            border: 1px solid rgba(199, 177, 143, 0.35);
+            color: #c7b18f;
+            font-weight: 900;
+            font-size: 1.15rem;
+            text-transform: uppercase;
+        }
+
         .loading-spinner {
             border: 3px solid rgba(255, 255, 255, 0.1);
             border-top-color: #c7b18f;
@@ -296,6 +469,26 @@
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .animate-on-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
+        }
+
+        .placeholder-pulse {
+            animation: pulse-soft 2.4s ease-in-out infinite;
         }
 
         @keyframes spin {
@@ -312,14 +505,12 @@
     <div id="shared-topbar"></div>
 
     <div style="position: relative; min-height: 100vh; padding-top: 120px; padding-bottom: 4rem;">
-        <div class="max-w-[1200px] mx-auto px-6">
+        <div class="max-w-[1320px] mx-auto px-6">
 
             <div class="text-center mb-14 animate-on-scroll">
-                <span class="info-label" style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #c7b18f;">Official Partners</span>
                 <h1 class="page-title mt-3 mb-4">Verified Resellers</h1>
                 <p class="text-neutral-500 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
-                    These are the only officially verified Project Sheldon resellers. Always buy from this list —
-                    anyone else is not authorized.
+                    These are the only officially verified Project Sheldon resellers.
                 </p>
             </div>
 
@@ -332,25 +523,17 @@
                 <p class="text-neutral-500">No verified resellers yet. Check back soon.</p>
             </div>
 
-            <div id="directory-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="directory-grid" class="hidden resellers-grid"></div>
 
-            <div class="glass-card rounded-[2rem] p-10 text-center mt-16 animate-on-scroll">
-                <h2 class="text-2xl md:text-3xl font-black uppercase tracking-tight mb-3">Want to become a reseller?</h2>
+            <div class="glass-card rounded-[2rem] p-10 text-center mt-16 animate-on-scroll scroll-gated">
+                <h2 class="text-2xl md:text-3xl font-black uppercase tracking-tight mt-3 mb-3">Interested in Selling Sheldon licenses?</h2>
                 <p class="text-neutral-500 text-sm mb-8 max-w-lg mx-auto leading-relaxed">
-                    Interested in selling Sheldon licenses? Open a reseller ticket in the Discord server to apply.
+                    Sign up or log in at the Reseller Portal to manage your stock and earnings.
+                    Applications open a Discord ticket for review.
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="/resellers/" class="btn-primary inline-flex items-center justify-center px-8 py-4 rounded-xl text-[0.65rem] font-black uppercase tracking-[0.2em] transition-all" style="background: white; color: black;">
-                        Reseller Portal
-                    </a>
-                    <a href="javascript:void(0)" onclick="RedirectToPlatform('discord_invite')"
-                        class="btn-discord inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-[0.65rem] font-black uppercase tracking-[0.2em]">
-                        <svg class="w-4 h-4" viewBox="0 0 127.14 96.36" fill="#ffffff">
-                            <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a.41.41,0,0,0-.43.2,72.48,72.48,0,0,0-3.17,6.52,97.26,97.26,0,0,0-29,0,72.84,72.84,0,0,0-3.19-6.52.4.4,0,0,0-.43-.2A105.09,105.09,0,0,0,19.44,8.07a.44.44,0,0,0-.2.07C2.12,34,1.15,59.39,3.46,84.41a.48.48,0,0,0,.19.34A105.77,105.77,0,0,0,35.77,96.36a.42.42,0,0,0,.46-.22,74.22,74.22,0,0,0,6.42-10.38.4.4,0,0,0-.22-.56,68.7,68.7,0,0,1-10-4.76.41.41,0,0,1,0-.69c.83-.62,1.67-1.28,2.46-1.95a.39.39,0,0,1,.41-.05,73.4,73.4,0,0,0,57.48,0,.39.39,0,0,1,.41.05c.79.67,1.63,1.33,2.46,1.95a.41.41,0,0,1,0,.69,68.61,68.61,0,0,1-10,4.76.41.41,0,0,0-.22.56,74.8,74.8,0,0,0,6.43,10.38.42.42,0,0,0,.46.22,105.48,105.48,0,0,0,32.11-11.61.45.45,0,0,0,.19-.34c2.72-28.53-4.67-53.59-20-76.27A.39.39,0,0,0,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.07,65.69,84.69,65.69Z" />
-                        </svg>
-                        Join Discord
-                    </a>
-                </div>
+                <a href="/resellers/" class="btn-primary inline-flex items-center justify-center px-8 py-4 rounded-xl text-[0.65rem] font-black uppercase tracking-[0.2em] transition-all" style="background: white; color: black;">
+                    Open Reseller Portal
+                </a>
             </div>
 
         </div>
@@ -359,7 +542,6 @@
     <script src="../../js/html/topbar.js"></script>
     <script type="module" src="../../js/util/backend.js"></script>
     <script type="module" src="../../js/discord/topbar_buttons.js"></script>
-    <script type="module" src="../../js/util/redirect.js"></script>
     <script type="module">
         import Api from "../../js/util/backend.js";
 
@@ -394,24 +576,94 @@
             try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return url; }
         }
 
-        // Render the embed area. An iframe preview is shown; if the site blocks framing
-        // (no load event within the timeout) it is replaced by a fallback card with the
-        // clickable link. Cards without a website get no embed area at all.
+        // Embed area for a card with a website. The site itself is never loaded in
+        // the browser: the backend fetches it once, server-side, and returns its
+        // og:image/title/description, which we render as a Discord-style embed card.
         function embedHtml(r, url) {
             if (!url) return '';
-            const fallback = `
+            return `
+                <div class="embed-box" data-embed-url="${esc(url)}" data-embed-domain="${esc(domainOf(url))}">
+                    <div class="embed-loading">
+                        <div class="embed-loading-spinner"></div>
+                        <p class="text-neutral-500 text-xs font-bold uppercase tracking-widest">Loading preview</p>
+                    </div>
+                </div>`;
+        }
+
+        function embedFallbackHtml(url, domain) {
+            return `
                 <div class="embed-fallback">
                     <svg class="w-8 h-8 text-[#c7b18f]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                         <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
                     </svg>
                     <p class="text-neutral-400 text-xs font-bold uppercase tracking-widest">Preview unavailable</p>
-                    <a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="website-btn" style="max-width: 220px;">Visit ${esc(domainOf(url))}</a>
+                    <a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="website-btn" style="max-width: 220px;">Visit ${esc(domain)}</a>
                 </div>`;
-            return `
-                <div class="embed-box" data-embed data-url="${esc(url)}">
-                    <iframe src="${esc(url)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="${esc(domainOf(url))}"></iframe>
-                    ${fallback}
-                </div>`;
+        }
+
+        function embedCardHtml(d, url, domain) {
+            const hasText = !!(d.title || d.description);
+            const image = d.image && /^https?:\/\//i.test(d.image) ? esc(d.image) : null;
+
+            // Text takes priority: a card with title/description shows text only.
+            if (hasText) {
+                return `
+                    <a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="embed-card-link">
+                        <div class="embed-card-body">
+                            <p class="embed-card-domain">${esc(domain)}</p>
+                            ${d.title ? `<h4 class="embed-card-title">${esc(d.title)}</h4>` : ''}
+                            ${d.description ? `<p class="embed-card-desc">${esc(d.description)}</p>` : ''}
+                        </div>
+                    </a>`;
+            }
+
+            // No text but an image: show the image alone, full width.
+            if (image) {
+                return `
+                    <a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="embed-card-image-link">
+                        <img class="embed-card-image" src="${image}" alt="" loading="lazy" onerror="this.closest('.embed-card-image-link').remove()">
+                        <span class="embed-card-image-domain">${esc(domain)}</span>
+                    </a>`;
+            }
+
+            return embedFallbackHtml(url, domain);
+        }
+
+        // Fill the card header's site identity (favicon + site name) once the embed
+        // metadata arrives. The favicon slot keeps a globe placeholder underneath, so
+        // a dead favicon URL just falls back to the globe.
+        function setSiteIdentity(card, d) {
+            const favicon = d.favicon && /^https?:\/\//i.test(d.favicon) ? d.favicon : null;
+            const slot = card.querySelector('[data-favicon-slot]');
+            if (slot && favicon) {
+                const img = new Image();
+                img.className = 'site-favicon-img';
+                img.alt = '';
+                img.onerror = () => img.remove();
+                img.src = favicon;
+                slot.append(img);
+            }
+            const nameEl = card.querySelector('[data-site-name]');
+            if (nameEl && d.siteName) nameEl.textContent = d.siteName;
+        }
+
+        async function loadEmbed(box) {
+            const url = box.dataset.embedUrl;
+            const domain = box.dataset.embedDomain;
+            const card = box.closest('.reseller-card');
+            try {
+                const apiUrl = await Api.GetApiUrl();
+                const response = await fetch(`${apiUrl}/resellers/embed?url=${encodeURIComponent(url)}`);
+                const data = await response.json();
+                if (data.ok && (data.title || data.description || data.image)) {
+                    box.innerHTML = embedCardHtml(data, url, domain);
+                    if (card) setSiteIdentity(card, data);
+                } else {
+                    box.innerHTML = embedFallbackHtml(url, domain);
+                }
+            } catch (err) {
+                box.innerHTML = embedFallbackHtml(url, domain);
+            }
         }
 
         function cardHtml(r, index) {
@@ -420,19 +672,40 @@
             const verifiedDate = r.verified_at
                 ? new Date(r.verified_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
                 : null;
-            return `
-                <div class="glass-card reseller-card rounded-[1.5rem] overflow-hidden animate-on-scroll${pinned ? ' pinned' : ''}" style="transition-delay: ${Math.min(index, 6) * 0.06}s;">
+            const initial = (r.discord_username || '?').trim().charAt(0).toUpperCase() || '?';
+            // With a website, the site is the main identity (favicon + site name),
+            // Discord stays as the secondary verification line. Without one, the
+            // Discord identity carries the card.
+            const header = url ? `
                     <div class="p-6 flex items-center gap-4">
-                        <img src="${esc(getDiscordAvatar(r.discord_id, r.discord_avatar))}" alt="Avatar"
-                            class="w-14 h-14 rounded-full object-cover border border-white/10">
+                        <div class="site-favicon-slot w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden" data-favicon-slot>
+                            <svg class="site-favicon-globe" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <p class="text-white font-black text-base truncate" data-site-name>${esc(domainOf(url))}</p>
+                                ${pinned ? '<span class="pinned-chip">Pinned</span>' : ''}
+                            </div>
+                            <p class="text-neutral-500 text-xs mt-1">${esc(r.discord_username || 'Unknown')}${verifiedDate ? ` &middot; ${esc(verifiedDate)}` : ''}</p>
+                        </div>
+                    </div>` : `
+                    <div class="p-6 flex items-center gap-4">
+                        <img src="${esc(getDiscordAvatar(r.discord_id, r.discord_avatar))}" alt="" data-initial="${esc(initial)}"
+                            class="w-14 h-14 rounded-full object-cover border border-white/10 shrink-0">
                         <div class="min-w-0">
                             <div class="flex items-center gap-2 flex-wrap">
                                 <p class="text-white font-black text-base truncate">${esc(r.discord_username || 'Unknown')}</p>
                                 ${pinned ? '<span class="pinned-chip">Pinned</span>' : ''}
                             </div>
-                            <p class="text-neutral-500 text-xs mt-1">Verified Reseller${verifiedDate ? ` &middot; ${esc(verifiedDate)}` : ''}</p>
+                            <p class="text-neutral-500 text-xs mt-1">${verifiedDate ? esc(verifiedDate) : 'Verified Reseller'}</p>
                         </div>
-                    </div>
+                    </div>`;
+            return `
+                <div class="glass-card reseller-card rounded-[1.5rem] overflow-hidden animate-on-scroll${pinned ? ' pinned' : ''}" style="transition-delay: ${Math.min(index, 6) * 0.06}s;">
+                    ${header}
                     ${embedHtml(r, url)}
                     <div class="p-6 pt-5 space-y-4">
                         ${r.description ? `<p class="text-neutral-400 text-sm leading-relaxed">${esc(r.description)}</p>` : ''}
@@ -446,6 +719,25 @@
                     </div>
                 </div>`;
         }
+
+        const placeholderCard = `
+                <div class="glass-card reseller-card rounded-[1.5rem] overflow-hidden animate-on-scroll" style="border: 1px dashed rgba(255,255,255,0.14);">
+                    <div class="p-6 flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 placeholder-pulse">
+                            <svg class="w-5 h-5 text-white/25" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="h-2.5 w-1/2 rounded-full bg-white/[0.07]"></div>
+                            <p class="text-white/25 text-[0.65rem] font-bold uppercase tracking-[0.18em] mt-2">Reserved slot</p>
+                        </div>
+                    </div>
+                    <div class="mx-6 h-px bg-white/5"></div>
+                    <div class="p-6 pt-5">
+                        <p class="text-neutral-600 text-xs leading-relaxed">A verified partner will be listed here soon. Check back shortly.</p>
+                    </div>
+                </div>`;
 
         async function loadDirectory() {
             const loading = document.getElementById('directory-loading');
@@ -461,49 +753,77 @@
 
                 if (!data.ok || !data.resellers || data.resellers.length === 0) {
                     empty.classList.remove('hidden');
+                    empty.innerHTML = `
+                        <p class="text-neutral-500 mb-10">No verified resellers yet — check back soon.</p>
+                        <div class="resellers-grid">
+                            ${placeholderCard.repeat(3)}
+                        </div>`;
+                    empty.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+                    setTimeout(gateCta, 300);
                     return;
                 }
 
                 grid.classList.remove('hidden');
                 grid.innerHTML = data.resellers.map((r, i) => cardHtml(r, i)).join('');
-
-                // Scroll-reveal observer (mirrors the home page).
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add('visible');
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                }, { threshold: 0.1 });
-                grid.querySelectorAll('.glass-card').forEach(el => observer.observe(el));
-
-                // Embed fallback: if a site never loads in time (X-Frame-Options / CSP),
-                // swap the iframe for the "Preview unavailable" card.
-                grid.querySelectorAll('[data-embed]').forEach(box => {
-                    const iframe = box.querySelector('iframe');
-                    const fallback = box.querySelector('.embed-fallback');
-                    let settled = false;
-                    const timeout = window.setTimeout(() => {
-                        if (settled) return;
-                        settled = true;
-                        if (iframe) iframe.remove();
-                        fallback.classList.add('show');
-                    }, 4500);
-                    iframe.addEventListener('load', () => {
-                        if (settled) return;
-                        settled = true;
-                        window.clearTimeout(timeout);
+                // Broken/blocked avatar images swap to a gold monogram circle instead
+                // of showing the browser's broken-image glyph.
+                grid.querySelectorAll('img[data-initial]').forEach(img => {
+                    img.addEventListener('error', () => {
+                        const fb = document.createElement('div');
+                        fb.className = 'avatar-fallback';
+                        fb.textContent = img.dataset.initial || '?';
+                        img.replaceWith(fb);
                     });
                 });
+                grid.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+                setTimeout(gateCta, 300);
+
+                // Fetch each website's Open Graph metadata via the backend and render
+                // the Discord-style embed card (image/title/description) in its place.
+                grid.querySelectorAll('[data-embed-url]').forEach(box => loadEmbed(box));
             } catch (err) {
                 loading.classList.add('hidden');
                 empty.classList.remove('hidden');
                 empty.innerHTML = '<p class="text-red-400">Failed to load resellers. Please try again later.</p>';
+                setTimeout(gateCta, 300);
             }
         }
 
         loadDirectory();
+
+        // Scroll-reveal observer (mirrors the home page) — covers the hero and CTA card,
+        // plus cards injected after loadDirectory resolves. The CTA card is scroll-gated
+        // instead (see gateCta below), so it is excluded here.
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            if (!el.classList.contains('scroll-gated')) observer.observe(el);
+        });
+
+        // The "Interested in Selling Sheldon licenses?" CTA stays hidden until the user actually
+        // scrolls (like the landing-page info sections). It reveals once the user has
+        // scrolled and the card has entered the viewport — or immediately when the
+        // page ends up short enough that no scrolling is possible.
+        function gateCta() {
+            const cta = document.querySelector('.scroll-gated');
+            if (!cta || cta.classList.contains('visible')) return;
+            const rect = cta.getBoundingClientRect();
+            const canScroll = document.documentElement.scrollHeight > window.innerHeight + 1;
+            if ((window.scrollY > 10 && rect.top < window.innerHeight * 0.9) || !canScroll) {
+                cta.classList.add('visible');
+            }
+        }
+        window.addEventListener('scroll', gateCta, { passive: true });
+        window.addEventListener('resize', gateCta);
+        // Safety net: if the directory fetch never settles, the page stays short and
+        // unrevealed — check once everything has had time to render.
+        setTimeout(gateCta, 4000);
     </script>
 </body>
 

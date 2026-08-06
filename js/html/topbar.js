@@ -3,7 +3,7 @@
     function navMarkup()
     {
         return '<nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center">' +
-            '<div class="w-full max-w-[1100px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">' +
+            '<div class="w-full max-w-[1265px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">' +
                 '<div class="flex items-center gap-3 z-10 shrink-0">' +
                     '<div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">' +
                         '<img src="/favicon/favicon.ico" alt="Logo" class="w-8 h-8 rounded-lg">' +
@@ -12,9 +12,8 @@
                 '</div>' +
 
                 '<div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full nav-tabs-desktop">' +
-                    '<a href="/" class="nav-tab active">Home</a>' +
+                    '<a href="/" class="nav-tab">Home</a>' +
                     '<a href="/luavm/" class="nav-tab">Lua VM</a>' +
-                    '<a href="/resellers/" class="nav-tab">Resell</a>' +
                     '<a href="/resellers/directory/" class="nav-tab">Resellers</a>' +
                 '</div>' +
 
@@ -27,7 +26,6 @@
                 '<div class="mobile-menu" id="mobileMenu">' +
                     '<a href="/" class="nav-tab">Home</a>' +
                     '<a href="/luavm/" class="nav-tab">Lua VM</a>' +
-                    '<a href="/resellers/" class="nav-tab">Resell</a>' +
                     '<a href="/resellers/directory/" class="nav-tab">Resellers</a>' +
                 '</div>' +
 
@@ -76,6 +74,20 @@
         if(!placeholder || placeholder.dataset.topbarInjected) return;
         placeholder.dataset.topbarInjected = '1';
         placeholder.outerHTML = navMarkup();
+        markActiveTab();
+    }
+
+    // Highlight the nav tab matching the current path instead of hardcoding Home.
+    function markActiveTab()
+    {
+        const path = (window.location.pathname.replace(/\/+$/, '') || '/');
+        const tabForPath = path === '/luavm' || path.startsWith('/luavm/')
+            ? '/luavm/'
+            : (path.startsWith('/resellers') ? '/resellers/directory/' : '/');
+        document.querySelectorAll('.nav-tab').forEach(tab =>
+        {
+            tab.classList.toggle('active', tab.getAttribute('href') === tabForPath);
+        });
     }
 
     // Inject synchronously while the parser is still at the bottom of <body> (the placeholder

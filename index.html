@@ -608,37 +608,6 @@
             width: 100%;
         }
 
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .admin-table th, .admin-table td {
-            text-align: left;
-            padding: 0.75rem;
-            font-size: 0.875rem;
-            font-weight: 700;
-            color: #999;
-        }
-
-        .admin-table th {
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #c7b18f;
-            font-size: 0.65rem;
-        }
-
-        .admin-table td {
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .reseller-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
         .loading-spinner {
             border: 3px solid rgba(255, 255, 255, 0.1);
             border-top-color: #c7b18f;
@@ -662,7 +631,7 @@
 
     <nav class="fixed top-0 w-full z-[100] p-4 md:p-5 flex justify-center">
         <div
-            class="w-full max-w-[1100px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">
+            class="w-full max-w-[1265px] glass-nav h-14 md:h-16 px-6 md:px-8 rounded-full flex items-center justify-between relative">
             <div class="flex items-center gap-3 z-10 shrink-0">
                 <div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">
                     <img src="./favicon/favicon.ico" alt="Logo" class="w-8 h-8 rounded-lg">
@@ -673,7 +642,7 @@
             <div class="absolute left-1/2 -translate-x-1/2 flex items-center h-full nav-tabs-desktop">
                 <a href="./" class="nav-tab active">Home</a>
                 <a href="./luavm/" class="nav-tab">Lua VM</a>
-                <a href="./resellers/" class="nav-tab">Resell</a>
+                <a href="./resellers/directory/" class="nav-tab">Resellers</a>
             </div>
 
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
@@ -685,7 +654,7 @@
             <div class="mobile-menu" id="mobileMenu">
                 <a href="./" class="nav-tab active">Home</a>
                 <a href="./luavm/" class="nav-tab">Lua VM</a>
-                <a href="./resellers/" class="nav-tab">Resell</a>
+                <a href="./resellers/directory/" class="nav-tab">Resellers</a>
             </div>
 
             <div class="flex items-center gap-5 z-10 shrink-0">
@@ -747,7 +716,7 @@
             </div>
             <a href="javascript:void(0)" onclick="RedirectToPlatform('discord_invite')"
                 class="discord-status-badge flex items-center gap-2 hero-animate hero-animate-delay-3">
-                <svg class="w-4 h-4" fill="#5865F2" viewBox="0 0 24 24">
+                <svg class="w-3.5 h-3.5" fill="#5865F2" viewBox="0 0 24 24">
                     <path
                         d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
                 </svg>
@@ -775,20 +744,6 @@
                         quickly find what they need without getting lost. It also includes a wide range of features,
                         ensuring that everyone can enjoy it regardless of their preferred game genre.
                     </p>
-                    <ul class="space-y-3">
-                        <li class="feature-bullet">
-                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            Simple, clean, no-nonsense interface
-                        </li>
-                        <li class="feature-bullet">
-                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            Wide range of features for every genre
-                        </li>
-                        <li class="feature-bullet">
-                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            Actively maintained & kept up to date
-                        </li>
-                    </ul>
                 </div>
 
                 <div class="glass-card feature-card p-8 md:p-12 rounded-[2rem] animate-on-scroll stagger-1">
@@ -805,71 +760,41 @@
                         Project Sheldon is developed based on feedback from the community as well as my own ideas. I
                         also do my best to implement requested features and fix any bugs that are reported.
                     </p>
-                    <ul class="space-y-3">
-                        <li class="feature-bullet">
-                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            Built on community feedback & ideas
-                        </li>
-                        <li class="feature-bullet">
-                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            Requested features get implemented
-                        </li>
-                        <li class="feature-bullet">
-                            <svg class="bullet-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            Reported bugs get fixed fast
-                        </li>
-                    </ul>
                 </div>
             </div>
 
             <div class="glass-card p-6 md:p-10 rounded-[3rem] overflow-hidden animate-on-scroll stagger-2">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
                     <div>
-                        <h4 class="text-3xl md:text-5xl font-black uppercase tracking-tighter">Showcase</h4>
+                        <h4 class="text-3xl md:text-5xl font-black uppercase tracking-tighter">Showcases</h4>
                         <p class="text-neutral-500 text-sm mt-3 max-w-lg leading-relaxed">
-                            See Sheldon in action — official footage straight from the newest updates.
+                            Check Project Sheldon on Youtube so you can see it before trying it out! Ye
                         </p>
                     </div>
-                    <span class="inline-flex items-center px-4 py-2 rounded-full bg-[#c7b18f]/10 border border-[#c7b18f]/25 text-[0.6rem] font-black uppercase tracking-[0.2em] text-[#c7b18f] whitespace-nowrap">YouTube Official</span>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                     <div class="space-y-4 animate-on-scroll stagger-1">
                         <div class="showcase-video group cursor-pointer">
-                            <span class="video-chip">Update 1</span>
                             <iframe src="https://www.youtube.com/embed/9I19HYIgYPk?rel=0&modestbranding=1&playsinline=1"
-                                title="Sheldon Update 1" frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowfullscreen></iframe>
-                        </div>
-                        <div class="showcase-title-row">
-                            <span class="video-label">Update <b>01</b></span>
                         </div>
                     </div>
 
                     <div class="space-y-4 animate-on-scroll stagger-2">
                         <div class="showcase-video group cursor-pointer">
-                            <span class="video-chip">Update 2</span>
                             <iframe src="https://www.youtube.com/embed/B0awFbYrX9k?rel=0&modestbranding=1&playsinline=1"
-                                title="Sheldon Update 2" frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowfullscreen></iframe>
-                        </div>
-                        <div class="showcase-title-row">
-                            <span class="video-label">Update <b>02</b></span>
                         </div>
                     </div>
 
                     <div class="space-y-4 animate-on-scroll stagger-3">
                         <div class="showcase-video group cursor-pointer">
-                            <span class="video-chip">Update 3</span>
                             <iframe src="https://www.youtube.com/embed/t4T-H4nwTC8?rel=0&modestbranding=1&playsinline=1"
-                                title="Sheldon Update 3" frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowfullscreen></iframe>
-                        </div>
-                        <div class="showcase-title-row">
-                            <span class="video-label">Update <b>03</b></span>
                         </div>
                     </div>
                 </div>
@@ -885,114 +810,6 @@
                 <p class="text-neutral-500 text-lg">They all have the same features. But support me :D</p>
             </div>
             <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-        </div>
-    </section>
-
-    <section id="resell" class="py-20 px-6" style="display: none;">
-        <div class="max-w-6xl mx-auto">
-            <div id="resellers-loading" class="flex flex-col items-center justify-center" style="min-height: 60vh;">
-                <div class="loading-spinner mb-4"></div>
-                <p class="text-neutral-500">Loading...</p>
-            </div>
-            
-            <div id="resellers-login" class="hidden" style="display: none;">
-                <div class="glass-card p-12 rounded-2xl text-center" style="max-width: 480px; margin: 0 auto; min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <h2 class="text-3xl font-black mb-4 tracking-tighter uppercase">Reseller Access</h2>
-                    <p class="text-neutral-500 mb-8">Log in with Discord to check your reseller status.</p>
-                    <button onclick="DiscordAuth.LoginPopup()" class="btn-discord px-8 py-4 rounded-xl text-sm font-bold uppercase inline-flex items-center gap-3">
-                        <svg class="w-5 h-5" viewBox="0 0 127.14 96.36" fill="#ffffff">
-                            <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a.41.41,0,0,0-.43.2,72.48,72.48,0,0,0-3.17,6.52,97.26,97.26,0,0,0-29,0,72.84,72.84,0,0,0-3.19-6.52.4.4,0,0,0-.43-.2A105.09,105.09,0,0,0,19.44,8.07a.44.44,0,0,0-.2.07C2.12,34,1.15,59.39,3.46,84.41a.48.48,0,0,0,.19.34A105.77,105.77,0,0,0,35.77,96.36a.42.42,0,0,0,.46-.22,74.22,74.22,0,0,0,6.42-10.38.4.4,0,0,0-.22-.56,68.7,68.7,0,0,1-10-4.76.41.41,0,0,1,0-.69c.83-.62,1.67-1.28,2.46-1.95a.39.39,0,0,1,.41-.05,73.4,73.4,0,0,0,57.48,0,.39.39,0,0,1,.41.05c.79.67,1.63,1.33,2.46,1.95a.41.41,0,0,1,0,.69,68.61,68.61,0,0,1-10,4.76.41.41,0,0,0-.22.56,74.8,74.8,0,0,0,6.43,10.38.42.42,0,0,0,.46.22,105.48,105.48,0,0,0,32.11-11.61.45.45,0,0,0,.19-.34c2.72-28.53-4.67-53.59-20-76.27A.39.39,0,0,0,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.07,65.69,84.69,65.69Z" />
-                        </svg>
-                        Login with Discord
-                    </button>
-                </div>
-            </div>
-            
-            <div id="resellers-not-member" class="hidden" style="display: none;">
-                <div class="glass-card p-12 rounded-2xl text-center" style="max-width: 480px; margin: 0 auto; min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <h2 class="text-3xl font-black mb-4 tracking-tighter uppercase">Not a Reseller</h2>
-                    <p class="text-neutral-500 mb-8">You are not registered as a reseller. Contact an administrator to join the Project Sheldon reseller program.</p>
-                    <button onclick="ResellersModule.logout()" class="btn-secondary">Logout</button>
-                </div>
-            </div>
-            
-            <div id="resellers-dashboard" class="hidden" style="display: none;">
-                <div class="text-center mb-12 animate-on-scroll">
-                    <h2 class="text-5xl md:text-6xl font-black mb-6 tracking-tighter uppercase">Reseller Dashboard</h2>
-                    <p class="text-neutral-500 text-lg">Manage your reseller status</p>
-                </div>
-                
-                <div id="resellers-admin-tabs" class="hidden mb-6 flex gap-2 justify-center">
-                    <button class="nav-tab active" onclick="ResellersModule.switchTab('verified')">Verified</button>
-                    <button class="nav-tab" onclick="ResellersModule.switchTab('unverified')">Unverified</button>
-                    <button class="nav-tab" onclick="ResellersModule.switchTab('deleted')">Deleted</button>
-                </div>
-                
-                <div id="resellers-public" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                </div>
-                
-                <div id="resellers-verified" class="hidden" style="display: none;">
-                    <div class="glass-card p-6 rounded-2xl overflow-x-auto">
-                        <table class="admin-table w-full">
-                            <thead>
-                                <tr>
-                                    <th>Avatar</th>
-                                    <th>Username</th>
-                                    <th>Verified At</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="verified-resellers-tbody">
-                                <tr><td colspan="4" class="text-center py-8 text-neutral-500">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div id="resellers-unverified" class="hidden" style="display: none;">
-                    <div class="glass-card p-6 rounded-2xl mb-6">
-                        <div class="flex gap-3 mb-4">
-                            <input type="text" id="new-reseller-discord-id" placeholder="Enter Discord ID" 
-                                class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-white/20">
-                            <button onclick="ResellersModule.createReseller()" class="btn-primary px-4 py-2 rounded-lg text-xs font-bold uppercase">Add Reseller</button>
-                        </div>
-                    </div>
-                    <div class="glass-card p-6 rounded-2xl overflow-x-auto">
-                        <table class="admin-table w-full">
-                            <thead>
-                                <tr>
-                                    <th>Avatar</th>
-                                    <th>Username</th>
-                                    <th>Created At</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="unverified-resellers-tbody">
-                                <tr><td colspan="4" class="text-center py-8 text-neutral-500">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="resellers-deleted" class="hidden" style="display: none;">
-                    <div class="glass-card p-6 rounded-2xl overflow-x-auto">
-                        <table class="admin-table w-full">
-                            <thead>
-                                <tr>
-                                    <th>Avatar</th>
-                                    <th>Username</th>
-                                    <th>Deleted At</th>
-                                    <th>Cooldown</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="deleted-resellers-tbody">
-                                <tr><td colspan="5" class="text-center py-8 text-neutral-500">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -1043,7 +860,6 @@
     <script src="./js/html/render/canvas.js"></script>
     <script type="module" src="./js/html/frontpage/index.js"></script>
     <script type="module" src="./js/discord/topbar_buttons.js"></script>
-    <script type="module" src="./js/discord/resellers.js"></script>
     <script type="module" src="./js/util/redirect.js"></script>
 
     <script>
@@ -1078,28 +894,6 @@
                 });
             }
             
-            // Handle resell tab click
-            const resellTab = document.querySelector('a[href="#resell"]');
-            if (resellTab) {
-                resellTab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const resellSection = document.getElementById('resell');
-                    if (resellSection) {
-                        resellSection.style.display = 'block';
-                        resellSection.scrollIntoView({ behavior: 'smooth' });
-                        
-                        // Update active tab
-                        document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-                        resellTab.classList.add('active');
-                        
-                        // Load resellers (checks auth and shows correct state)
-                        if (window.ResellersModule) {
-                            window.ResellersModule.loadResellers();
-                        }
-                    }
-                });
-            }
-
             // Handle View Plans smooth scroll
             const viewPlansLink = document.querySelector('a[href="#pricing"]');
             if (viewPlansLink) {
