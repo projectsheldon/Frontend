@@ -1152,6 +1152,40 @@ if (window.couponCode && window.currentPricing) {
                             <div id="ticket-status" style="display: none; margin-top: 10px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700;"></div>
                         </div>
                     </div>
+
+                    <div id="planb-section" style="display: none; width: 100%; max-width: 500px; margin-top: -16px;">
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 24px 28px 20px; text-align: left;">
+                            <h3 style="font-size: 15px; font-weight: 800; color: white; margin-bottom: 8px; text-align: center;">Pay with Crypto — Plan B</h3>
+                            <p style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 12px;">
+                                Send the exact amount to one of the wallets below, then confirm your payment.
+                            </p>
+
+                            <div id="planb-step-pay">
+                                <div id="planb-wallets" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;"></div>
+                                <button id="planb-paid-btn" style="background: #c7b18f; color: black; font-weight: 800; width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s;">
+                                    I've Paid — Confirm Payment
+                                </button>
+                            </div>
+
+                            <div id="planb-step-submit" style="display: none;">
+                                <label style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Coin Used</label>
+                                <select id="planb-coin-select" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 10px 12px; color: white; font-size: 13px; outline: none; margin-bottom: 14px;"></select>
+
+                                <label style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Transaction Hash or Explorer URL</label>
+                                <input type="text" id="planb-tx-hash" placeholder="0x… or https://mempool.space/tx/…" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 10px 12px; color: white; font-size: 13px; outline: none; margin-bottom: 14px;">
+
+                                <label style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Proof of Payment (screenshot)</label>
+                                <input type="file" id="planb-proof" accept="image/*" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 10px 12px; color: rgba(255,255,255,0.8); font-size: 12px; outline: none; margin-bottom: 16px;">
+
+                                <button id="planb-submit-btn" style="background: #c7b18f; color: black; font-weight: 800; width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s;">
+                                    Submit Payment Proof
+                                </button>
+                            </div>
+
+                            <div id="planb-result" style="display: none; margin-top: 12px; padding: 12px 14px; border-radius: 10px; font-size: 12px; font-weight: 600; line-height: 1.5;"></div>
+                            <div id="planb-status" style="display: none; margin-top: 10px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700;"></div>
+                        </div>
+                    </div>
                 </div>
 
                 </div>

@@ -201,6 +201,79 @@
             box-shadow: 0 10px 30px rgba(88, 101, 242, 0.3);
         }
 
+        /* Plan A/B toggle with sliding highlight */
+        .plan-toggle {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 4px;
+            overflow: hidden;
+        }
+
+        .plan-toggle-slider {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            background: rgba(199, 177, 143, 0.15);
+            border: 1px solid rgba(199, 177, 143, 0.4);
+            border-radius: 9px;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .plan-toggle-slider.ondemand {
+            transform: translateX(100%);
+        }
+
+        .plan-toggle-option {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.9rem 1rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #737373;
+            text-align: left;
+            transition: color 0.3s ease;
+        }
+
+        .plan-toggle-option:hover {
+            color: #a3a3a3;
+        }
+
+        .plan-toggle-option.active {
+            color: #e8ddcb;
+        }
+
+        .plan-toggle-icon {
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+
+        .plan-toggle-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .plan-toggle-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .plan-toggle-desc {
+            font-size: 0.7rem;
+            color: inherit;
+            opacity: 0.75;
+        }
+
         /* Icon slots: only the icon relevant to the current state is shown. */
         .discord-logout-icon,
         .discord-login-spinner {
@@ -889,6 +962,9 @@
                     <button id="tab-settings" class="dashboard-tab pb-3 text-base font-medium transition-all" onclick="switchDashboardTab('settings')" style="color: #737373;">
                         Settings
                     </button>
+                    <button id="tab-orders" class="dashboard-tab pb-3 text-base font-medium transition-all" onclick="switchDashboardTab('orders')" style="color: #737373;">
+                        Orders
+                    </button>
                 </div>
 
                 <!-- Tab Content -->
@@ -910,6 +986,32 @@
                             <div>
                                 <h3 class="text-white font-bold text-lg mb-2">Account Settings</h3>
                                 <p class="text-neutral-500 text-sm">Manage your reseller account preferences.</p>
+                            </div>
+
+                            <!-- Plan Selection -->
+                            <div class="border-t border-white/5 pt-6">
+                                <h4 class="text-white font-bold text-sm mb-3">Plan</h4>
+                                <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                                    <p class="text-neutral-500 text-xs mb-4">Choose how you buy licenses. You can switch at any time.</p>
+                                    <div class="plan-toggle" id="plan-toggle">
+                                        <div class="plan-toggle-slider" id="plan-toggle-slider"></div>
+                                        <button type="button" class="plan-toggle-option" id="plan-option-stock" onclick="setResellerPlan('stock')">
+                                            <span class="plan-toggle-icon">📦</span>
+                                            <div class="plan-toggle-text">
+                                                <span class="plan-toggle-name">Plan A</span>
+                                                <span class="plan-toggle-desc">Buy stock in bulk &amp; resell later</span>
+                                            </div>
+                                        </button>
+                                        <button type="button" class="plan-toggle-option" id="plan-option-ondemand" onclick="setResellerPlan('ondemand')">
+                                            <span class="plan-toggle-icon">🛒</span>
+                                            <div class="plan-toggle-text">
+                                                <span class="plan-toggle-name">Plan B</span>
+                                                <span class="plan-toggle-desc">Buy on demand with crypto, pay per order</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <p id="plan-toggle-status" class="text-neutral-500 text-xs mt-3"></p>
+                                </div>
                             </div>
                             
                             <!-- API Key Section -->
@@ -942,6 +1044,23 @@
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Orders Tab -->
+                    <div id="tab-content-orders" class="hidden p-6">
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-white font-bold text-lg mb-2">Plan B Orders</h3>
+                                <p class="text-neutral-500 text-sm">Track your on-demand purchase orders.</p>
+                            </div>
+                            <div id="orders-loading" class="text-center py-12">
+                                <div class="inline-block w-8 h-8 border-2 border-white/20 border-t-[#c7b18f] rounded-full animate-spin"></div>
+                            </div>
+                            <div id="orders-list" class="p-0"></div>
+                            <div id="orders-empty" class="hidden text-center py-12">
+                                <p class="text-neutral-500">No Plan B orders yet. Switch to Plan B and buy on demand.</p>
                             </div>
                         </div>
                     </div>
@@ -1179,12 +1298,14 @@
         window.switchDashboardTab = function(tab) {
             const licensesTab = document.getElementById('tab-licenses');
             const settingsTab = document.getElementById('tab-settings');
+            const ordersTab = document.getElementById('tab-orders');
             
             const resetTabs = () => {
                 licensesTab.style.color = '#737373';
                 licensesTab.style.borderBottom = 'none';
                 settingsTab.style.color = '#737373';
                 settingsTab.style.borderBottom = 'none';
+                if (ordersTab) { ordersTab.style.color = '#737373'; ordersTab.style.borderBottom = 'none'; }
             };
             
             resetTabs();
@@ -1195,15 +1316,21 @@
             } else if (tab === 'settings') {
                 settingsTab.style.color = '#c7b18f';
                 settingsTab.style.borderBottom = '2px solid #c7b18f';
+            } else if (tab === 'orders') {
+                if (ordersTab) { ordersTab.style.color = '#c7b18f'; ordersTab.style.borderBottom = '2px solid #c7b18f'; }
             }
             
             document.getElementById('tab-content-licenses')?.classList.toggle('hidden', tab !== 'licenses');
             document.getElementById('tab-content-settings')?.classList.toggle('hidden', tab !== 'settings');
+            document.getElementById('tab-content-orders')?.classList.toggle('hidden', tab !== 'orders');
             
             if (tab === 'licenses') {
                 loadAvailableLicenses();
             } else if (tab === 'settings') {
                 loadApiKeyStatus();
+                loadPlanStatus();
+            } else if (tab === 'orders') {
+                loadPlanOrders();
             }
         };
 
@@ -1973,6 +2100,160 @@
                 }
             } catch (e) {
                 console.error('Failed to load API key status:', e);
+            }
+        }
+
+        // Plan A/B toggle
+        async function loadPlanStatus() {
+            const apiUrl = await getApiUrl();
+            const token = DiscordAuth.GetSessionToken();
+            if (!token) return;
+
+            const slider = document.getElementById('plan-toggle-slider');
+            const stockOption = document.getElementById('plan-option-stock');
+            const ondemandOption = document.getElementById('plan-option-ondemand');
+            const statusEl = document.getElementById('plan-toggle-status');
+
+            try {
+                const response = await fetch(`${apiUrl}/resellers/plan-b/settings`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                const isPlanB = data.ok && data.planB === true;
+                const enabled = data.ok && data.settings?.enabled !== false;
+
+                slider?.classList.toggle('ondemand', isPlanB);
+                stockOption?.classList.toggle('active', !isPlanB);
+                ondemandOption?.classList.toggle('active', isPlanB);
+
+                if (statusEl) {
+                    if (!enabled) {
+                        statusEl.textContent = 'Plan B is temporarily unavailable.';
+                    } else if (isPlanB) {
+                        statusEl.textContent = 'You are on Plan B — buy on demand with crypto at checkout.';
+                    } else {
+                        statusEl.textContent = 'You are on Plan A — buy stock in bulk and resell.';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load plan status:', e);
+            }
+        }
+
+        window.setResellerPlan = async function(plan) {
+            const apiUrl = await getApiUrl();
+            const token = DiscordAuth.GetSessionToken();
+            if (!token) return;
+
+            const slider = document.getElementById('plan-toggle-slider');
+            const stockOption = document.getElementById('plan-option-stock');
+            const ondemandOption = document.getElementById('plan-option-ondemand');
+            const statusEl = document.getElementById('plan-toggle-status');
+
+            const apply = (isPlanB) => {
+                slider?.classList.toggle('ondemand', isPlanB);
+                stockOption?.classList.toggle('active', !isPlanB);
+                ondemandOption?.classList.toggle('active', isPlanB);
+            };
+
+            apply(plan === 'ondemand');
+
+            try {
+                const response = await fetch(`${apiUrl}/resellers/plan-b/plan`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ plan })
+                });
+                const data = await response.json();
+
+                if (data.ok && statusEl) {
+                    statusEl.textContent = plan === 'ondemand'
+                        ? 'Switched to Plan B. Your next purchase at checkout will use crypto payment.'
+                        : 'Switched to Plan A. Buy stock in bulk as usual.';
+                } else {
+                    apply(plan !== 'ondemand');
+                    if (statusEl) statusEl.textContent = data.message || 'Failed to switch plan.';
+                }
+            } catch (e) {
+                apply(plan !== 'ondemand');
+                if (statusEl) statusEl.textContent = 'Failed to switch plan. Please try again.';
+            }
+        };
+
+        // Plan B orders
+        const PLAN_B_STATUS = {
+            pending_payment: { label: 'Pending Payment', cls: 'text-yellow-400' },
+            processing: { label: 'Processing', cls: 'text-blue-400' },
+            fulfilled: { label: 'Fulfilled', cls: 'text-green-400' },
+            delivered: { label: 'Delivered', cls: 'text-green-400' },
+            declined: { label: 'Declined', cls: 'text-red-400' }
+        };
+
+        async function loadPlanOrders() {
+            const apiUrl = await getApiUrl();
+            const token = DiscordAuth.GetSessionToken();
+            if (!token) return;
+
+            const loadingEl = document.getElementById('orders-loading');
+            const listEl = document.getElementById('orders-list');
+            const emptyEl = document.getElementById('orders-empty');
+
+            if (loadingEl) loadingEl.classList.remove('hidden');
+            if (listEl) listEl.innerHTML = '';
+            if (emptyEl) emptyEl.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${apiUrl}/resellers/plan-b/orders`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (loadingEl) loadingEl.classList.add('hidden');
+
+                if (data.ok && data.orders && data.orders.length > 0) {
+                    if (listEl) {
+                        listEl.innerHTML = `
+                            <table class="licenses-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order</th>
+                                        <th>Product</th>
+                                        <th>Qty</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.orders.map(o => {
+                                        const st = PLAN_B_STATUS[o.status] || { label: o.status, cls: 'text-neutral-400' };
+                                        return `<tr>
+                                            <td class="text-white font-mono text-xs">${esc(o.order_id)}</td>
+                                            <td class="text-white">${esc(o.product_name)}</td>
+                                            <td class="text-neutral-400">${esc(String(o.quantity))}</td>
+                                            <td class="text-neutral-400">€${esc(Number(o.wholesale_total || 0).toFixed(2))} <span class="text-neutral-600 text-xs">(${esc(o.coin || '')})</span></td>
+                                            <td><span class="${st.cls}">${st.label}</span></td>
+                                            <td class="text-neutral-400">${esc(o.created_at ? new Date(o.created_at).toLocaleDateString() : '')}</td>
+                                        </tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>`;
+                    }
+                } else {
+                    if (listEl) listEl.innerHTML = '';
+                    if (emptyEl) emptyEl.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error('Failed to load orders:', e);
+                if (loadingEl) loadingEl.classList.add('hidden');
+                if (emptyEl) {
+                    emptyEl.classList.remove('hidden');
+                    emptyEl.querySelector('p').textContent = 'Failed to load orders.';
+                }
             }
         }
         

@@ -48,9 +48,201 @@ async function CheckResellerStatus() {
                     checkbox.checked = window.personalUse;
                 }
             }
+            await CheckPlanBStatus();
             await window.fetchPriceFromApi();
         }
     } catch (error) {
+    }
+}
+
+async function CheckPlanBStatus() {
+    const token = DiscordAuth.GetSessionToken();
+    if (!token) return;
+
+    try {
+        const response = await fetch(`${await Api.GetApiUrl()}/resellers/plan-b/settings`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        window.planBEnabled = !!(data.ok && data.planB === true);
+        window.planBCoinList = (data.ok && data.settings?.coins) || [];
+
+        const planbSection = document.getElementById('planb-section');
+        const ticketSection = document.getElementById('ticket-section');
+
+        if (window.planBEnabled && planbSection) {
+            // Plan B reseller: hide the resale toggle + classic ticket, show crypto flow.
+            if (personalUseSection) personalUseSection.style.display = 'none';
+            if (ticketSection) ticketSection.style.display = 'none';
+            planbSection.style.display = 'block';
+            SetupPlanB();
+        }
+    } catch (error) {
+    }
+}
+
+function SetupPlanB() {
+    const paidBtn = document.getElementById('planb-paid-btn');
+    const submitBtn = document.getElementById('planb-submit-btn');
+    const walletsEl = document.getElementById('planb-wallets');
+    const coinSelect = document.getElementById('planb-coin-select');
+    if (!walletsEl || !coinSelect) return;
+
+    const coins = window.planBCoinList || [];
+
+    // Refresh the on-screen amounts whenever the quantity changes.
+    const refreshAmounts = () => window.refreshPlanBQuote();
+    const qtyValue = document.getElementById('qty-value');
+    qtyValue?.addEventListener('change', refreshAmounts);
+    document.getElementById('qty-plus')?.addEventListener('click', refreshAmounts);
+    document.getElementById('qty-minus')?.addEventListener('click', refreshAmounts);
+
+    window.refreshPlanBQuote = async function() {
+        const token = DiscordAuth.GetSessionToken();
+        if (!token) return;
+        try {
+            const apiUrl = await Api.GetApiUrl();
+            const qty = parseInt(qtyValue?.value || window.quantity || '1', 10);
+            const res = await fetch(`${apiUrl}/resellers/plan-b/quote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ product_key: productKey, quantity: qty, coin: coins[0]?.coin || '' })
+            });
+            const data = await res.json();
+            if (!data.ok || !data.coins) return;
+            const quoteCoins = data.coins;
+            walletsEl.innerHTML = quoteCoins.map(c => `
+                <div class="crypto-option" data-coin="${escAttr(c.coin)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;cursor:pointer;" onclick="window.copyPlanBWallet('${escAttr(c.coin)}')">
+                    <span style="font-weight:800;color:#c7b18f;font-size:12px;">${esc(c.coin)}</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.9);font-weight:600;white-space:nowrap;">${c.coinAmount != null ? esc(String(c.coinAmount)) + ' ' + esc(c.coin) : '—'}</span>
+                    <span style="font-family:monospace;font-size:11px;color:rgba(255,255,255,0.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(c.address)}</span>
+                    <span style="font-size:10px;color:rgba(255,255,255,0.4);white-space:nowrap;">COPY</span>
+                </div>
+            `).join('');
+        } catch (e) {}
+    };
+
+    coinSelect.innerHTML = coins.map(c =>
+        `<option value="${escAttr(c.coin)}">${esc(c.coin)}</option>`
+    ).join('');
+
+    window.copyPlanBWallet = function(coin) {
+        const info = coins.find(c => c.coin === coin);
+        if (!info) return;
+        try { navigator.clipboard.writeText(info.address || ''); } catch(e) {}
+        const statusEl = document.getElementById('planb-status');
+        if (statusEl) {
+            statusEl.style.cssText = 'display:block;margin-top:10px;padding:10px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.2);';
+            statusEl.textContent = `${coin} wallet copied to clipboard.`;
+            setTimeout(() => { statusEl.style.display = 'none'; }, 2500);
+        }
+    };
+
+    refreshAmounts();
+
+    if (paidBtn) paidBtn.addEventListener('click', function() {
+        document.getElementById('planb-step-pay').style.display = 'none';
+        document.getElementById('planb-step-submit').style.display = 'block';
+    });
+
+    if (submitBtn) submitBtn.addEventListener('click', SubmitPlanB);
+}
+
+function escAttr(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;'
+    }[c]));
+}
+
+async function SubmitPlanB() {
+    const submitBtn = document.getElementById('planb-submit-btn');
+    const statusEl = document.getElementById('planb-status');
+    const resultEl = document.getElementById('planb-result');
+
+    const coin = document.getElementById('planb-coin-select')?.value || '';
+    const txHash = document.getElementById('planb-tx-hash')?.value?.trim() || '';
+    const proofFile = document.getElementById('planb-proof')?.files?.[0];
+
+    if (!coin) { showPlanBError('Select the coin you paid with.'); return; }
+    if (!txHash) { showPlanBError('Enter the transaction hash or explorer URL.'); return; }
+    if (!proofFile) { showPlanBError('Upload a screenshot as payment proof.'); return; }
+
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="install-spinner" style="border-top-color: #000;"></div> Verifying...';
+    if (statusEl) statusEl.style.display = 'none';
+
+    try {
+        const token = DiscordAuth.GetSessionToken();
+        if (!token) { showPlanBError('You must be logged in.'); submitBtn.disabled = false; submitBtn.innerHTML = originalText; return; }
+
+        const apiUrl = await Api.GetApiUrl();
+        const qty = parseInt(document.getElementById('qty-value')?.value || '1', 10);
+
+        // Step 1: create the order (server computes the price + quotes the coin amount).
+        const createRes = await fetch(`${apiUrl}/resellers/plan-b/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ product_key: productKey, quantity: qty, coin })
+        });
+        const createData = await createRes.json();
+        if (!createData.ok) {
+            showPlanBError(createData.message || 'Failed to start order.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            return;
+        }
+
+        // Step 2: submit proof as multipart (order_id + proof image + tx info).
+        const form = new FormData();
+        form.append('order_id', createData.order.order_id);
+        form.append('coin', coin);
+        form.append('tx_hash', txHash);
+        form.append('tx_url', txHash);
+        form.append('proof', proofFile);
+
+        const submitRes = await fetch(`${apiUrl}/resellers/plan-b/submit`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: form
+        });
+        const submitData = await submitRes.json();
+
+        if (statusEl) statusEl.style.display = 'none';
+        if (submitData.ok) {
+            const ver = submitData.verification || {};
+            if (resultEl) {
+                resultEl.style.cssText = 'display:block;margin-top:12px;padding:12px 14px;border-radius:10px;font-size:12px;font-weight:600;line-height:1.5;background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.2);';
+                resultEl.innerHTML = `<strong>${submitData.message || 'Order submitted!'}</strong><br>${ver.status === 'valid' ? 'Your licenses will be delivered in the ticket created on Discord.' : 'An admin will review the payment manually.'}`;
+            }
+            submitBtn.innerHTML = 'Submitted';
+            submitBtn.style.background = 'rgba(34,197,94,0.2)';
+            submitBtn.style.color = '#22c55e';
+            submitBtn.style.cursor = 'default';
+        } else {
+            showPlanBError(submitData.message || 'Failed to submit proof. Please make a ticket on Discord.');
+            if (resultEl) {
+                resultEl.style.cssText = 'display:block;margin-top:12px;padding:12px 14px;border-radius:10px;font-size:12px;font-weight:600;line-height:1.5;background:rgba(239,68,68,0.08);color:#ef4444;border:1px solid rgba(239,68,68,0.2);';
+                resultEl.textContent = submitData.message || 'Could not verify payment. Open a ticket on Discord if you believe this is a mistake.';
+            }
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    } catch (err) {
+        console.error('Plan B submit failed:', err);
+        showPlanBError('Something went wrong submitting your proof. Please try again.');
+        const statusEl2 = document.getElementById('planb-status');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+function showPlanBError(msg) {
+    const statusEl = document.getElementById('planb-status');
+    if (statusEl) {
+        statusEl.style.cssText = 'display:block;margin-top:10px;padding:10px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);';
+        statusEl.textContent = msg;
     }
 }
 
