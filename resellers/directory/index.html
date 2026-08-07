@@ -658,6 +658,11 @@
                 if (data.ok && (data.title || data.description || data.image)) {
                     box.innerHTML = embedCardHtml(data, url, domain);
                     if (card) setSiteIdentity(card, data);
+                } else if (data.ok && data.favicon) {
+                    // Curated fallback with only a favicon (site blocks scraping): keep
+                    // the fallback box but still apply the favicon to the card header.
+                    box.innerHTML = embedFallbackHtml(url, domain);
+                    if (card) setSiteIdentity(card, data);
                 } else {
                     box.innerHTML = embedFallbackHtml(url, domain);
                 }
