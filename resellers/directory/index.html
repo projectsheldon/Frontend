@@ -630,18 +630,32 @@
         }
 
         // Fill the card header's site identity (favicon + site name) once the embed
-        // metadata arrives. The favicon slot keeps a globe placeholder underneath, so
-        // a dead favicon URL just falls back to the globe.
-        function setSiteIdentity(card, d) {
-            const favicon = d.favicon && /^https?:\/\//i.test(d.favicon) ? d.favicon : null;
+        // metadata arrives. The favicon slot keeps a globe placeholder underneath.
+        // Favicon resolution is a fallback chain: the favicon returned by the backend
+        // (scraped or admin-curated) first, then Google's and DuckDuckGo's favicon
+        // caches for the domain. The cache services pass Cloudflare/Selldone-challenged
+        // sites because their own crawlers already passed the challenge. If every
+        // candidate fails to load, the globe placeholder stays visible.
+        function setSiteIdentity(card, d, domain) {
             const slot = card.querySelector('[data-favicon-slot]');
-            if (slot && favicon) {
-                const img = new Image();
-                img.className = 'site-favicon-img';
-                img.alt = '';
-                img.onerror = () => img.remove();
-                img.src = favicon;
-                slot.append(img);
+            if (slot) {
+                slot.querySelectorAll('.site-favicon-img').forEach(el => el.remove());
+                const candidates = [];
+                if (d.favicon && /^https?:\/\//i.test(d.favicon)) candidates.push(d.favicon);
+                if (domain) {
+                    candidates.push(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`);
+                    candidates.push(`https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`);
+                }
+                const tryNext = (i) => {
+                    if (i >= candidates.length) return;
+                    const img = new Image();
+                    img.className = 'site-favicon-img';
+                    img.alt = '';
+                    img.onload = () => slot.append(img);
+                    img.onerror = () => tryNext(i + 1);
+                    img.src = candidates[i];
+                };
+                tryNext(0);
             }
             const nameEl = card.querySelector('[data-site-name]');
             if (nameEl && d.siteName) nameEl.textContent = d.siteName;
@@ -657,17 +671,15 @@
                 const data = await response.json();
                 if (data.ok && (data.title || data.description || data.image)) {
                     box.innerHTML = embedCardHtml(data, url, domain);
-                    if (card) setSiteIdentity(card, data);
-                } else if (data.ok && data.favicon) {
-                    // Curated fallback with only a favicon (site blocks scraping): keep
-                    // the fallback box but still apply the favicon to the card header.
-                    box.innerHTML = embedFallbackHtml(url, domain);
-                    if (card) setSiteIdentity(card, data);
                 } else {
+                    // Scrape failed or only a curated favicon exists: keep the fallback
+                    // box, but the favicon chain below still runs for the card header.
                     box.innerHTML = embedFallbackHtml(url, domain);
                 }
+                if (card) setSiteIdentity(card, data.ok ? data : {}, domain);
             } catch (err) {
                 box.innerHTML = embedFallbackHtml(url, domain);
+                if (card) setSiteIdentity(card, {}, domain);
             }
         }
 
