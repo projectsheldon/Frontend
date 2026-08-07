@@ -21,6 +21,7 @@ window.addEventListener('message', function(event)
     }
 });
 
+
 async function DiscordBtnHandler(e)
 {
     const btn = e && e.currentTarget ? e.currentTarget : document.getElementById('discord-login-btn');
