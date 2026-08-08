@@ -90,7 +90,14 @@ export function installBackendFetchGuard()
         // and the 2nd try returns "expired or invalid"; for purchases it'd double-charge. So we
         // still run the clearance pass (sets cf_clearance for the NEXT request) but do not retry.
         const method = (init.method || 'GET').toUpperCase();
-        const canRetry = method === 'GET' || method === 'HEAD';
+        // Narrow allow-list of POST endpoints that are safe to retry after a clearance pass:
+        // consent choice recording and device identity are idempotent server-side, and init-auth
+        // merely mints a login code (a lost response costs nothing). Everything else keeps the
+        // no-retry rule.
+        const SAFE_RETRY_POST = /^\/(workink\/(consent|identity)|discord\/init-auth)(\?|$)/;
+        const canRetry = method === 'GET' || method === 'HEAD' || (
+            method === 'POST' && SAFE_RETRY_POST.test(new URL(url, location.href).pathname)
+        );
 
         try
         {
@@ -102,6 +109,9 @@ export function installBackendFetchGuard()
             // has no CORS headers, so the browser surfaces it as "Failed to fetch"), sometimes
             // a transient network blip. Clear once so the client is evaluated/cleared.
             try { await runClearance(); } catch (e) {}
+            // Let the page (banner / retry UI) know the backend is unreachable, and fire the
+            // operation-specific recovery callbacks once a probe succeeds.
+            try { window.SheldonBackend && window.SheldonBackend.NotifyBackendFailure(); } catch (e) {}
             if (!canRetry) throw err;
             for (let attempt = 0; attempt < 2; attempt++)
             {

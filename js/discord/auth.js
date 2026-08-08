@@ -447,6 +447,21 @@ const DiscordAuth = {
                 window.location.href = oauthUrl;
             }
         });
+
+        // /discord/init-auth failed (backend unreachable / challenged) — the code box will be
+        // missing from the modal. Tell the visitor instead of silently degrading.
+        if(!authCode)
+        {
+            setTimeout(() =>
+            {
+                const modal = document.querySelector('#discord-app-modal');
+                if(!modal) return;
+                const note = document.createElement('div');
+                note.textContent = "Can't reach the authentication server. Login may not complete — close this popup and try again.";
+                note.style.cssText = 'margin-top:14px;padding:10px 12px;border-radius:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.18);font-size:11px;color:rgba(255,255,255,0.75);';
+                modal.appendChild(note);
+            }, 60);
+        }
     },
 
     async _PollForToken(fallbackOauthUrl, authCode, apiUrl)

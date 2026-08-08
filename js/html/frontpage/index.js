@@ -36,13 +36,38 @@ if (isHomepage) {
 // pricing
 const productsContainer = document.getElementById('products-grid');
 
+function RenderProductsError()
+{
+    if(!productsContainer) return;
+
+    productsContainer.innerHTML = `
+        <div class="glass-card p-5 rounded-2xl flex flex-col items-center justify-center text-center col-span-full min-h-[200px]">
+            <div class="text-[10px] font-bold uppercase tracking-widest text-[#c7b18f] mb-2">Couldn't load products</div>
+            <div class="text-neutral-400 text-sm mb-4">The game servers aren't reachable right now. Once the connection recovers, the page reloads automatically.</div>
+            <button class="products-retry-btn bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg px-5 py-2.5 font-bold uppercase text-[10px] tracking-wider transition-all">Retry</button>
+        </div>
+    `;
+
+    const retryBtn = productsContainer.querySelector('.products-retry-btn');
+    if(retryBtn) retryBtn.addEventListener('click', () => { LoadProducts(); });
+}
+
 async function LoadProducts()
 {
     if(!productsContainer) return;
 
-    const products = await ProductsManager.FetchProducts();
-
     productsContainer.innerHTML = '';
+
+    let products;
+    try
+    {
+        products = await ProductsManager.FetchProducts();
+    }
+    catch(e)
+    {
+        RenderProductsError();
+        return;
+    }
 
     products.forEach((product, index) =>
     {
@@ -157,6 +182,16 @@ async function updateMemberCount()
 
 updateMemberCount();
 setInterval(updateMemberCount, 600000);
+
+// Backend came back (visitor solved the connection check) — reload what failed.
+if(window.SheldonBackend)
+{
+    window.SheldonBackend.OnRecovered(() =>
+    {
+        LoadProducts();
+        updateMemberCount();
+    });
+}
 
 // ─── WorkInk reward claim, handled inline on the homepage ────────────────────────────
 // When WorkInk redirects here with ?token=… (point its destination at

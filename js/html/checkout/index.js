@@ -16,6 +16,7 @@ const personalUseSection = document.getElementById('personal-use-section');
 document.addEventListener("DOMContentLoaded", async function()
 {
     await LoadProductInfo();
+    if(window.productUnavailable) return;
 
     const isLoggedIn = await CheckAuthStatus();
 
@@ -303,6 +304,7 @@ async function LoadProductInfo()
         try
         {
             const response = await fetch(`${await Api.GetApiUrl()}/products/get?product=free`);
+            if(!response.ok) { ShowProductUnavailable(); return; }
             const product = await response.json();
             if(product && product.price)
             {
@@ -310,7 +312,10 @@ async function LoadProductInfo()
                 const totalEl = document.getElementById('final-total-price');
                 if(totalEl) totalEl.textContent = `${(window.basePrice * window.quantity).toFixed(1)} Balance`;
             }
-        } catch(e) {}
+        } catch(e)
+        {
+            ShowProductUnavailable();
+        }
 
         return;
     }
@@ -321,6 +326,7 @@ async function LoadProductInfo()
     try
     {
         const response = await fetch(`${await Api.GetApiUrl()}/products/get?product=${productKey}`);
+        if(response.status === 404) { ShowProductUnavailable(); return; }
         const product = await response.json();
 
         if(product && product.name)
@@ -330,10 +336,66 @@ async function LoadProductInfo()
             window.basePrice = parseFloat(product.price) || 0;
             await window.fetchPriceFromApi();
         }
+        else
+        {
+            // Unknown / stale product key (e.g. an old ?product=… link) — no product data.
+            ShowProductUnavailable();
+        }
     } catch(error)
     {
         console.error('Failed to load product:', error);
+        ShowProductUnavailable();
     }
+}
+
+// Covers the checkout when the requested product no longer exists (stale links such as
+// ?product=monthly) or the backend is unreachable — no disabled buttons left hanging.
+function ShowProductUnavailable()
+{
+    if(window.productUnavailable) return;
+    window.productUnavailable = true;
+
+    const loginEl = document.getElementById('login-required');
+    TogglePaymentForm(false); // hides payment form — note this re-shows login-required, so hide it after
+    if(loginEl) loginEl.style.display = 'none';
+    const ticket = document.getElementById('ticket-section');
+    if(ticket) ticket.style.display = 'none';
+
+    const existing = document.getElementById('product-unavailable-card');
+    if(existing) existing.remove();
+
+    const mainContent = document.querySelector('.main-content');
+    const card = document.createElement('div');
+    card.id = 'product-unavailable-card';
+    card.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+        'min-height:400px;text-align:center;padding:40px;';
+
+    const title = document.createElement('h2');
+    title.textContent = 'Product unavailable';
+    title.style.cssText = 'font-size:20px;font-weight:800;color:#fff;margin-bottom:10px;';
+
+    const body = document.createElement('p');
+    body.textContent = "This product can't be found right now. The listed products are always up to date on the homepage.";
+    body.style.cssText = 'color:rgba(255,255,255,0.55);font-size:13px;line-height:1.6;margin-bottom:24px;max-width:420px;';
+
+    const backBtn = document.createElement('a');
+    backBtn.href = '/#pricing';
+    backBtn.textContent = 'View available products';
+    backBtn.style.cssText = 'background:#c7b18f;color:#050505;border:none;border-radius:10px;padding:12px 26px;' +
+        'font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;text-decoration:none;';
+    backBtn.addEventListener('mouseenter', () => backBtn.style.background = '#d9c29e');
+    backBtn.addEventListener('mouseleave', () => backBtn.style.background = '#c7b18f');
+
+    card.append(title, body, backBtn);
+
+    if(mainContent) mainContent.prepend(card);
+}
+
+function HideProductUnavailable()
+{
+    window.productUnavailable = false;
+    const card = document.getElementById('product-unavailable-card');
+    if(card) card.remove();
 }
 
 async function ShowCheckout()
@@ -763,4 +825,17 @@ async function ShowBalanceCheckout()
         console.error('Failed to load balance:', error);
         renderBalanceState('Couldn\'t load your balance. Check your connection and try again.', 'retry');
     }
+}
+
+// Backend came back (visitor solved the connection check) — reload what failed.
+if(window.SheldonBackend)
+{
+    window.SheldonBackend.OnRecovered(async () =>
+    {
+        HideProductUnavailable();
+        await LoadProductInfo();
+        if(window.productUnavailable) return;
+        const loggedIn = await CheckAuthStatus();
+        if(loggedIn) await ShowCheckout();
+    });
 }
