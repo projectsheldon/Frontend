@@ -444,7 +444,26 @@ const DiscordAuth = {
             }
             else if(choice === 'browser')
             {
-                window.location.href = oauthUrl;
+                // Open the consent page in a POPUP so this site tab (and its poll loop below)
+                // stays alive. `window.location.href` here used to navigate this tab away
+                // mid-login: the poll loop and the login overlay died with it, and the user was
+                // stranded on the backend's "enter the code" page with no site left to finish
+                // the login. The popup resolves two ways: Discord redirects back through
+                // /discord/callback with our auth code as `state`, and the poll below consumes
+                // the pending result; or, when the callback cookie is missing, the backend's
+                // fallback exchange hands the token back through this same tab's URL hash.
+                const popup = window.open(oauthUrl, 'sheldon_discord_auth', 'popup=1,width=480,height=680');
+                if(!popup)
+                {
+                    // Popup blocked (no user gesture / blocker extension): fall back to
+                    // navigating the current tab, matching the old behaviour.
+                    window.location.href = oauthUrl;
+                    return;
+                }
+                // Start consuming the login result regardless of which path the popup takes.
+                // Without this the browser flow just hung: nothing ever polled /discord/poll-auth,
+                // so the token in the pending login was claimed by nobody.
+                DiscordAuth._PollForToken(oauthUrl, authCode, apiUrl);
             }
         });
 
