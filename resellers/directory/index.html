@@ -322,6 +322,12 @@
             background: rgba(255, 255, 255, 0.03);
         }
 
+        /* Discord summary-card layout: image banner on top, text below. */
+        .embed-card-link--stacked {
+            flex-direction: column;
+            min-height: 0;
+        }
+
         .embed-card-image-link {
             display: block;
             position: relative;
@@ -605,15 +611,28 @@
             const hasText = !!(d.title || d.description);
             const image = d.image && /^https?:\/\//i.test(d.image) ? esc(d.image) : null;
 
-            // Text takes priority: a card with title/description shows text only.
-            if (hasText) {
-                return `
-                    <a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="embed-card-link">
+            const textBlock = `
                         <div class="embed-card-body">
                             <p class="embed-card-domain">${esc(domain)}</p>
                             ${d.title ? `<h4 class="embed-card-title">${esc(d.title)}</h4>` : ''}
                             ${d.description ? `<p class="embed-card-desc">${esc(d.description)}</p>` : ''}
-                        </div>
+                        </div>`;
+
+            // Both text and image: Discord summary-card style — image banner on
+            // top, domain/title/description underneath.
+            if (hasText && image) {
+                return `
+                    <a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="embed-card-link embed-card-link--stacked">
+                        <img class="embed-card-image" src="${image}" alt="" loading="lazy" onerror="this.remove()">
+                        ${textBlock}
+                    </a>`;
+            }
+
+            // Text only.
+            if (hasText) {
+                return `
+                    <a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="embed-card-link">
+                        ${textBlock}
                     </a>`;
             }
 
