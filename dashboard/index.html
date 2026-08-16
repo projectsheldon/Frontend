@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- hi user, im not an website makere so please dont judge because i use ai to code my website. -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Sheldon - Dashboard</title>
+    <link rel="icon" href="../favicon/favicon.ico" type="image/x-icon">
+    <meta name="description" content="Manage your Sheldon account, licenses and usage.">
+    <meta name="theme-color" content="#c7b18f">
+    <link rel="canonical" href="https://www.projectsheldon.me/dashboard/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Project Sheldon">
+    <meta property="og:title" content="Project Sheldon — Advanced Roblox Development">
+    <meta property="og:description" content="A feature-rich, actively maintained developer tool for Roblox.">
+    <meta property="og:url" content="https://www.projectsheldon.me/dashboard/">
+    <meta property="og:image" content="https://www.projectsheldon.me/favicon/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Project Sheldon — Advanced Roblox Development">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Project Sheldon — Advanced Roblox Development">
+    <meta name="twitter:description" content="A feature-rich, actively maintained developer tool for Roblox.">
+    <meta name="twitter:image" content="https://www.projectsheldon.me/favicon/og-image.png">
+    <script src="https://cdn.tailwindcss.com?warn=false"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            background-color: #050505;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto;
+        }
+
+        /* Background Elements */
+        .bg-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 1) 0%, rgba(5, 5, 5, 1) 100%);
+            z-index: -2;
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -1;
+            animation: float 20s infinite alternate;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .glass-nav.scrolled {
+            background: rgba(5, 5, 5, 0.8);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: #c7b18f;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-tab.active,
+        .nav-tab:hover {
+            color: white;
+        }
+
+        .nav-tab.active::after,
+        .nav-tab:hover::after {
+            width: 60%;
+        }
+
+        .btn-discord {
+            background: #5865F2;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-discord:hover {
+            background: #4752c4;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(88, 101, 242, 0.3);
+        }
+
+        /* Icon slots: only the icon relevant to the current state is shown. */
+        .discord-logout-icon,
+        .discord-login-spinner {
+            display: none;
+        }
+
+        /* Logged-in ("Logout") state: swap to the light/gold treatment + logout glyph. */
+        .btn-discord.is-authed {
+            background: white;
+            color: black;
+        }
+
+        .btn-discord.is-authed:hover {
+            background: #c7b18f;
+            box-shadow: 0 10px 30px rgba(199, 177, 143, 0.3);
+        }
+
+        .btn-discord.is-authed .discord-login-icon {
+            display: none;
+        }
+
+        .btn-discord.is-authed .discord-logout-icon {
+            display: inline-block;
+        }
+
+        /* Busy state while the OAuth popup is being prepared / logout is in flight. */
+        .btn-discord.is-loading {
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        .btn-discord.is-loading .discord-login-icon,
+        .btn-discord.is-loading .discord-logout-icon {
+            display: none;
+        }
+
+        .btn-discord.is-loading .discord-login-spinner {
+            display: inline-block;
+            animation: discordSpin 0.7s linear infinite;
+        }
+
+        @keyframes discordSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .logo-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mobile-menu-btn { display: none; background: none; border: none; color: white; cursor: pointer; padding: 8px; }
+        .mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(5, 5, 5, 0.98); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 1rem; z-index: 999; flex-direction: column; gap: 0.5rem; }
+        .mobile-menu.show { display: flex; }
+        .mobile-menu .nav-tab { text-align: center; padding: 1rem; border-radius: 8px; }
+        .mobile-menu .nav-tab.active { background: rgba(199, 177, 143, 0.1); color: #c7b18f; }
+
+        @media (max-width: 768px) {
+            .nav-tabs-desktop { display: none; }
+            .mobile-menu-btn { display: block; }
+
+            nav {
+                padding: 0.5rem !important;
+            }
+
+            nav > div {
+                height: 3rem !important;
+                padding: 0 0.75rem !important;
+                border-radius: 0.75rem !important;
+            }
+
+            .logo-box {
+                width: 2rem !important;
+                height: 2rem !important;
+            }
+
+            .logo-box img {
+                width: 1.5rem !important;
+                height: 1.5rem !important;
+            }
+
+            #discord-login-btn {
+                padding: 0.5rem 0.75rem !important;
+            }
+        }
+
+        /* ── Dashboard layout ─────────────────────────────────────────── */
+        .dash-wrap {
+            position: relative;
+            z-index: 10;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 110px 24px 40px;
+            display: flex;
+            gap: 28px;
+            align-items: flex-start;
+        }
+
+        .dash-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 110px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 20px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .dash-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 6px;
+        }
+
+        .dash-profile .dash-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .dash-profile .dash-username {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dash-profile .dash-profile-sub {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .dash-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .dash-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 11px 13px;
+            border-radius: 11px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: left;
+            width: 100%;
+        }
+
+        .dash-nav-item svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            color: rgba(255, 255, 255, 0.35);
+            transition: color 0.25s;
+        }
+
+        .dash-nav-item:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .dash-nav-item:hover svg {
+            color: #c7b18f;
+        }
+
+        .dash-nav-item.active {
+            background: rgba(199, 177, 143, 0.1);
+            border-color: rgba(199, 177, 143, 0.28);
+            color: #fff;
+        }
+
+        .dash-nav-item.active svg {
+            color: #c7b18f;
+        }
+
+        .dash-main {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .dash-tab.hidden {
+            display: none;
+        }
+
+        .dash-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 26px;
+        }
+
+        .dash-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .dash-card-header svg {
+            width: 15px;
+            height: 15px;
+            color: #c7b18f;
+            flex-shrink: 0;
+            opacity: 0.85;
+        }
+
+        /* Profile summary */
+        .dash-summary {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 34px 26px;
+        }
+
+        .dash-summary .dash-avatar-lg {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(199, 177, 143, 0.4);
+            box-shadow: 0 0 40px rgba(199, 177, 143, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .dash-summary .dash-summary-name {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            margin-top: 16px;
+        }
+
+        .dash-summary .dash-summary-sub {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        /* Stat cards */
+        .dash-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        .dash-stat {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 18px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .dash-stat:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .dash-stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 700;
+        }
+
+        .dash-stat-value {
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            margin-top: 7px;
+            color: #fff;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .dash-stat-value.gold {
+            color: #c7b18f;
+        }
+
+        .dash-stat-value.green {
+            color: #22c55e;
+        }
+
+        .dash-stat-value.red {
+            color: #ef4444;
+        }
+
+        /* Range select (admin-style) */
+        .stats-select {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: #c9c9c9 !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 10px !important;
+            box-sizing: border-box !important;
+            height: 34px !important;
+            min-width: 4.5rem !important;
+            padding: 0 10px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.05em !important;
+            font-family: 'Inter', sans-serif !important;
+            cursor: pointer !important;
+            outline: none !important;
+        }
+
+        .stats-select:focus {
+            border-color: #c7b18f !important;
+        }
+
+        .stats-select option {
+            font-size: 13px !important;
+            padding: 6px 10px !important;
+        }
+
+        /* Chart (exact copy of the admin statistics chart) */
+        .stats-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 190px;
+            padding-top: 22px;
+            position: relative;
+        }
+
+        .stats-chart .chart-gridline {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.05);
+            pointer-events: none;
+        }
+
+        .stats-chart .chart-gridline-base {
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .stats-chart .chart-max {
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.35);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .bar-col {
+            flex: 1;
+            height: 100%;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .bar-col .bar {
+            width: 100%;
+            max-width: 36px;
+            min-height: 3px;
+            background: linear-gradient(180deg, #f0e2c4 0%, #c7b18f 60%, rgba(199, 177, 143, 0.45) 100%);
+            border-radius: 6px 6px 2px 2px;
+            cursor: default;
+            transition: background 0.3s, transform 0.3s, height 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .bar-col .bar:hover {
+            background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
+            transform: translateY(-2px);
+        }
+
+        .bar-col:hover .bar {
+            background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
+            transform: translateY(-2px);
+        }
+
+        .bar-col .bar.bar-today {
+            background: linear-gradient(180deg, #fff7e3 0%, #c7b18f 55%, #a0813d 100%);
+            box-shadow: 0 0 14px rgba(199, 177, 143, 0.35);
+        }
+
+        .bar-col .bar-empty {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-empty {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+        }
+
+        .bar-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 9.5px;
+            color: rgba(255, 255, 255, 0.35);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .bar-labels span {
+            flex: 1;
+            text-align: center;
+        }
+
+        .bar-labels span:first-child {
+            text-align: left;
+        }
+
+        .bar-labels span:last-child {
+            text-align: right;
+        }
+
+        .bar-tooltip {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            background: rgba(8, 9, 13, 0.96);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 8px 11px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.12s ease;
+            white-space: nowrap;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bar-tooltip-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .bar-tooltip-count {
+            font-size: 15px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .bar-tooltip-sub {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.45);
+            margin-top: 2px;
+        }
+
+        .hourly-wrap {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            animation: hourlyIn 0.28s ease;
+        }
+
+        @keyframes hourlyIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hourly-back {
+            border: 0;
+            background: none;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .bar-col .bar { transition: none; }
+            .hourly-wrap { animation: none; }
+        }
+
+        /* Weekly usage progress */
+        .weekly-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .weekly-bar > div {
+            height: 100%;
+            background: linear-gradient(90deg, #c7b18f, #e6d3b5);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Licenses */
+        .dash-filter {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 4px;
+            gap: 2px;
+        }
+
+        .dash-filter-btn {
+            border: 0;
+            border-radius: 9px;
+            padding: 8px 16px;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.25s;
+        }
+
+        .dash-filter-btn:hover {
+            color: #fff;
+        }
+
+        .dash-filter-btn.active {
+            background: #c7b18f;
+            color: #000;
+        }
+
+        .license-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .license-item:hover {
+            background: rgba(255, 255, 255, 0.035);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .license-item-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .license-item-key {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #c7b18f;
+            word-break: break-all;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .license-status {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .license-status.active { background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.25); }
+        .license-status.expired { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); }
+        .license-status.disabled { background: rgba(234, 179, 8, 0.12); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.25); }
+
+        .copy-btn {
+            color: rgba(255, 255, 255, 0.25);
+            cursor: pointer;
+            padding: 7px;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .copy-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .copy-btn.success {
+            background: rgba(199, 177, 143, 0.3);
+            border-color: rgba(199, 177, 143, 0.4);
+            color: #c7b18f;
+        }
+
+        .copy-btn .check-icon {
+            position: absolute;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn.success .copy-icon {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        .copy-btn.success .check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .license-item-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .license-meta {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 10px 13px;
+        }
+
+        .license-meta-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .license-meta-value {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            word-break: break-word;
+        }
+
+        /* Footer */
+        .footer-spacer {
+            height: 12vh;
+        }
+
+        footer {
+            padding-top: 4rem;
+            padding-bottom: 4rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            position: relative;
+            z-index: 10;
+        }
+
+        footer a {
+            position: relative;
+        }
+
+        footer a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: #c7b18f;
+            transition: width 0.3s ease;
+        }
+
+        footer a:hover::after {
+            width: 100%;
+        }
+
+        @media (max-width: 900px) {
+            .dash-wrap {
+                flex-direction: column;
+                padding-top: 100px;
+            }
+
+            .dash-sidebar {
+                width: 100%;
+                position: static;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 14px 16px;
+                gap: 14px;
+            }
+
+            .dash-nav {
+                flex-direction: row;
+            }
+
+            .dash-nav-item {
+                width: auto;
+                padding: 9px 14px;
+            }
+
+            .dash-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .license-item-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 560px) {
+            .dash-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .license-item-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dash-card {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <script src="../js/discord/auth_loading.js"></script>
+
+    <div id="shared-topbar"></div>
+
+    <div class="bg-mesh"></div>
+    <div class="orb w-[30rem] h-[30rem] bg-[#c7b18f]" style="top: -10%; left: -15%;"></div>
+    <div class="orb w-[35rem] h-[35rem] bg-[#1a1a1a]" style="bottom: -20%; right: -10%; animation-delay: -7s;"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="dash-wrap">
+
+        <!-- Sidebar -->
+        <aside class="dash-sidebar">
+            <div class="dash-profile">
+                <img id="dash-avatar" class="dash-avatar" src="" alt="Avatar" style="display:none;">
+                <div id="dash-avatar-fallback" class="dash-avatar"
+                    style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:16px;font-weight:800;">
+                    ?
+                </div>
+                <div style="min-width:0;">
+                    <div id="dash-username" class="dash-username">Loading...</div>
+                    <div class="dash-profile-sub">Sheldon Account</div>
+                </div>
+            </div>
+            <nav class="dash-nav">
+                <button class="dash-nav-item active" data-tab="overview">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span>Overview</span>
+                </button>
+                <button class="dash-nav-item" data-tab="licenses">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                    <span>Licenses</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <main class="dash-main">
+
+            <!-- Overview tab -->
+            <div id="tab-overview" class="dash-tab">
+
+                <div class="dash-card dash-summary">
+                    <img id="dash-avatar-lg" class="dash-avatar-lg" src="" alt="Avatar" style="display:none;">
+                    <div id="dash-avatar-lg-fallback" class="dash-avatar-lg"
+                        style="display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:32px;font-weight:800;">
+                        ?
+                    </div>
+                    <div id="dash-summary-name" class="dash-summary-name">Loading...</div>
+                    <div class="dash-summary-sub">Sheldon Account</div>
+                </div>
+
+                <div class="dash-stats" id="dash-stats">
+                    <div class="dash-stat">
+                        <div class="dash-stat-label">Member since</div>
+                        <div class="dash-stat-value">—</div>
+                    </div>
+                    <div class="dash-stat">
+                        <div class="dash-stat-label">Total usage</div>
+                        <div class="dash-stat-value">—</div>
+                    </div>
+                    <div class="dash-stat">
+                        <div class="dash-stat-label">Licenses</div>
+                        <div class="dash-stat-value">—</div>
+                    </div>
+                    <div class="dash-stat">
+                        <div class="dash-stat-label">Status</div>
+                        <div class="dash-stat-value">—</div>
+                    </div>
+                </div>
+
+                <div class="dash-card">
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <div>
+                            <p class="dash-card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                Activity
+                            </p>
+                            <p id="dash-activity-sub" class="text-neutral-500 text-xs mt-1.5 font-medium" style="color:rgba(255,255,255,0.4);">Your activity over the last 2 weeks.</p>
+                        </div>
+                        <select id="dash-activity-range" class="stats-select" aria-label="Activity range">
+                            <option value="1">1 day</option>
+                            <option value="3">3 days</option>
+                            <option value="7">1 week</option>
+                            <option value="14" selected>2 weeks</option>
+                            <option value="30">1 month</option>
+                            <option value="90">3 months</option>
+                            <option value="365">Year</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <p id="dash-activity-date-range" class="text-[10px] font-mono mb-3 mt-2" style="color:rgba(255,255,255,0.35);">No data yet.</p>
+                    <div id="dash-activity-chart">
+                        <div class="chart-empty">
+                            <p class="text-xs text-neutral-500">Loading...</p>
+                        </div>
+                    </div>
+                    <div class="bar-labels" id="dash-activity-labels"></div>
+                </div>
+
+                <div class="dash-card" id="dash-weekly-card" style="display:none;">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <p class="dash-card-header">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Weekly usage
+                        </p>
+                        <span id="dash-weekly-count" class="text-xs font-bold" style="color:#c7b18f;">0 / 0 hours</span>
+                    </div>
+                    <div class="weekly-bar"><div id="dash-weekly-fill" style="width:0%"></div></div>
+                    <p id="dash-weekly-note" class="text-xs mt-2.5" style="color:rgba(255,255,255,0.4);"></p>
+                </div>
+
+            </div>
+
+            <!-- Licenses tab -->
+            <div id="tab-licenses" class="dash-tab hidden">
+                <div class="dash-card">
+                    <div class="flex items-center justify-between flex-wrap gap-3 mb-5">
+                        <div>
+                            <p class="dash-card-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                                Your Licenses
+                            </p>
+                            <p class="text-xs mt-1.5 font-medium" style="color:rgba(255,255,255,0.4);">All licenses tied to your Discord account.</p>
+                        </div>
+                        <div class="dash-filter">
+                            <button class="dash-filter-btn active" data-filter="all">All</button>
+                            <button class="dash-filter-btn" data-filter="active">Active</button>
+                            <button class="dash-filter-btn" data-filter="inactive">Inactive</button>
+                        </div>
+                    </div>
+                    <div id="dash-license-list">
+                        <p class="text-neutral-500 text-sm py-4">Loading...</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div class="footer-spacer" aria-hidden="true"></div>
+
+    <footer>
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-8">
+                <div class="space-y-6 max-w-sm">
+                    <div class="text-3xl font-black tracking-tighter text-white flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm">
+                            <div class="logo-box w-8 h-8 rounded-lg flex items-center justify-center">
+                                <img src="../favicon/favicon.ico" alt="Logo" class="w-8 h-8 rounded-lg">
+                            </div>
+                        </div>SHELDON
+                    </div>
+                    <p class="text-neutral-500 text-sm font-medium leading-relaxed">
+                        Have fun using Project Sheldon, and also if you can support me by purchasing a license!
+                    </p>
+                </div>
+                <div class="grid grid-cols-2 gap-16 md:gap-24">
+                    <div class="space-y-6">
+                        <h4 class="text-[0.65rem] font-black text-white uppercase tracking-[0.2em]">Community</h4>
+                        <ul class="space-y-4 text-sm font-bold">
+                            <li><a href="javascript:void(0)" onclick="RedirectToPlatform('personal_youtube')"
+                                    class="text-neutral-400 hover:text-white transition-colors">YouTube</a></li>
+                            <li><a href="javascript:void(0)" onclick="RedirectToPlatform('discord_invite')"
+                                    class="text-neutral-400 hover:text-white transition-colors">Discord Server</a></li>
+                        </ul>
+                    </div>
+                    <div class="space-y-6">
+                        <h4 class="text-[0.65rem] font-black text-white uppercase tracking-[0.2em]">Legal</h4>
+                        <ul class="space-y-4 text-sm font-bold">
+                            <li><a href="/terms" class="text-neutral-400 hover:text-white transition-colors">Terms of
+                                    Service</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-4 border-t border-white/5 flex justify-center md:justify-start">
+                <p class="text-neutral-600 text-[0.6rem] font-bold tracking-[0.1em] uppercase">&copy; 2026 PROJECT
+                    SHELDON • ALL RIGHTS RESERVED</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/html/render/canvas.js"></script>
+    <script src="/js/html/topbar.js"></script>
+    <script type="module" src="../js/html/dashboard/index.js"></script>
+    <script src="../js/util/notify.js"></script>
+    <script type="module" src="../js/discord/topbar_buttons.js"></script>
+    <script type="module" src="../js/util/redirect.js"></script>
+
+</body>
+
+</html>
