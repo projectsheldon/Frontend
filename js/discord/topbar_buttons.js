@@ -65,7 +65,7 @@ if(discordBtn)
     discordBtn.addEventListener("click", DiscordBtnHandler);
 }
 
-function CreateLicensesMenu()
+function CreateAccountMenu()
 {
     if(userMenu) return userMenu;
 
@@ -73,7 +73,7 @@ function CreateLicensesMenu()
     userMenu.id = 'user-dropdown-menu';
     userMenu.style.cssText = `
         position: fixed;
-        width: 360px;
+        width: 320px;
         background: rgba(30, 30, 30, 0.98);
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.15);
@@ -86,9 +86,9 @@ function CreateLicensesMenu()
     document.body.appendChild(userMenu);
     return userMenu;
 }
-function ToggleLicensesMenu(show)
+function ToggleAccountMenu(show)
 {
-    const menu = CreateLicensesMenu();
+    const menu = CreateAccountMenu();
 
     if(show)
     {
@@ -96,29 +96,35 @@ function ToggleLicensesMenu(show)
         if(trigger)
         {
             const rect = trigger.getBoundingClientRect();
-            menu.style.left = (rect.right - 320) + 'px';
+            menu.style.left = (rect.right - 280) + 'px';
             menu.style.top = (rect.bottom + 10) + 'px';
             menu.style.right = 'auto';
         }
         menu.style.display = 'block';
-        LoadLicenses();
+        RenderAccountMenu();
     } else
     {
         menu.style.display = 'none';
     }
 }
-function getCachedLicenses() {
-    try {
-        const raw = localStorage.getItem('cache_licenses');
-        if (!raw) return null;
-        const item = JSON.parse(raw);
-        if (Date.now() - item.timestamp < 600000) return item.data;
-        localStorage.removeItem('cache_licenses');
-    } catch (e) {}
-    return null;
+
+function SignOut()
+{
+    const close = () => { if(userMenu) userMenu.style.display = 'none'; };
+    if(!window.DiscordAuth.currentUser) { close(); return; }
+
+    DiscordAuth.Logout().catch(() => {})
+        .finally(() =>
+        {
+            DiscordAuth.DeleteSessionToken();
+            DiscordAuth.currentUser = null;
+            UpdateUI();
+            close();
+            if(typeof window.Notify !== 'undefined') window.Notify('Logged out', 'info', 2500);
+        });
 }
 
-// "Cookie settings" row in the licenses menu: shown while consent is undecided or declined
+// "Cookie settings" row in the account menu: shown while consent is undecided or declined
 // (a way to read/re-open the prompt without the banner auto-showing). Once the user
 // proceeds with Sure or No, the row is removed forever.
 function appendCookieSettingsButton(menu)
@@ -161,213 +167,61 @@ window.addEventListener('sheldon-consent-state', function(e)
     }
 });
 
-function setCachedLicenses(licenses) {
-    try {
-        localStorage.setItem('cache_licenses', JSON.stringify({ data: licenses, timestamp: Date.now() }));
-    } catch (e) {}
+function accountMenuIcon(svg)
+{
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">${svg}</svg>`;
 }
 
-async function LoadLicenses()
+async function RenderAccountMenu()
 {
-    const menu = CreateLicensesMenu();
+    const menu = CreateAccountMenu();
 
     const token = DiscordAuth.GetSessionToken();
     if(!token)
     {
         menu.innerHTML = `
-            <div class="text-neutral-400 text-sm text-center py-4">Please log in to view licenses</div>
+            <div class="text-neutral-400 text-sm text-center py-4">Please log in to view your account</div>
         `;
         return;
     }
 
-    const cached = getCachedLicenses();
-    if (cached) {
-        RenderLicenses(menu, cached, token);
-        return;
+    let user = window.DiscordAuth.currentUser;
+    if(!user)
+    {
+        try { user = await DiscordAuth.GetUser(); } catch(e) {}
     }
 
-    const user = await DiscordAuth.GetUser();
-    if (!user) {
-        menu.innerHTML = `
-            <div class="text-neutral-400 text-sm text-center py-4">Failed to load user</div>
-        `;
-        return;
-    }
-    
-    const discordId = user.id;
+    const name = (user && (user.globalName || user.username)) || 'Account';
+    const avatar = user && user.avatar
+        ? `<img src="${user.avatar}" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.12);flex:none;">`
+        : `<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;flex:none;color:rgba(255,255,255,0.4);font-size:14px;font-weight:700;">${window.escapeHtml ? window.escapeHtml(name.charAt(0).toUpperCase()) : name.charAt(0).toUpperCase()}</div>`;
 
     menu.innerHTML = `
-        <div class="text-white font-bold text-sm mb-2">Your Licenses</div>
-        <div id="licenses-scroll-rect" style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
-            <div class="text-neutral-400 text-xs text-center py-4">Loading...</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:4px 2px 14px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
+            ${avatar}
+            <div style="min-width:0;">
+                <div style="font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${window.escapeHtml ? window.escapeHtml(name) : name}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-top:2px;">Account Menu</div>
+            </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:6px;">
+            <a href="/dashboard/" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.85);text-decoration:none;font-size:13px;font-weight:600;transition:all .2s;cursor:pointer;" onmouseover="this.style.background='rgba(199,177,143,0.1)';this.style.borderColor='rgba(199,177,143,0.3)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='rgba(255,255,255,0.85)'">
+                ${accountMenuIcon('<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>')}
+                <span style="flex:1;">Dashboard</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,0.25)"><polyline points="9 18 15 12 9 6"/></svg>
+            </a>
+            <button id="account-menu-signout" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.85);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;" onmouseover="this.style.background='rgba(239,68,68,0.1)';this.style.borderColor='rgba(239,68,68,0.3)';this.style.color='#fca5a5'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='rgba(255,255,255,0.85)'">
+                ${accountMenuIcon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>')}
+                <span style="flex:1;">Sign out</span>
+            </button>
         </div>
     `;
 
-    try
-    {
-        const response = await fetch(`${await Api.GetApiUrl()}/auth/user-licenses`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                discordId: discordId,
-                loginToken: token
-            })
-        });
-        const data = await response.json();
+    const signOutBtn = document.getElementById('account-menu-signout');
+    if(signOutBtn) signOutBtn.addEventListener('click', SignOut);
 
-        const licenses = data.ok && data.licenses ? data.licenses : [];
-        setCachedLicenses(licenses);
-        RenderLicenses(menu, licenses, token);
-        return true;
-    } catch(e)
-    {
-        menu.innerHTML = `
-            <div class="text-white font-bold text-sm mb-2">Your Licenses</div>
-            <div id="licenses-scroll-rect" style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
-                <div class="text-neutral-400 text-xs text-center py-4">Failed to load licenses</div>
-            </div>
-        `;
-
-        return false;
-    }
-}
-
-async function loadWeeklyProgress(token)
-{
-    const slot = document.getElementById('weekly-progress-slot');
-    if(!slot || !token) return;
-    try
-    {
-        const res = await fetch(`${await Api.GetApiUrl()}/workink/usage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sessionToken: token })
-        });
-        const data = await res.json();
-        if(!data.ok || !data.threshold_seconds) { slot.innerHTML = ''; return; }
-
-        const seconds = Math.max(0, Number(data.seconds) || 0);
-        const threshold = data.threshold_seconds;
-        const pct = Math.min(100, Math.round((seconds / threshold) * 100));
-        const hours = Math.floor(seconds / 3600);
-        const thresholdHours = Math.round(threshold / 3600);
-        const remaining = Math.max(0, thresholdHours - hours);
-        const note = pct >= 100
-            ? 'Milestone reached — a free key is ready!'
-            : `Use Sheldon ${remaining} more hour${remaining === 1 ? '' : 's'} this week for a free key.`;
-
-        slot.innerHTML = `
-            <div style="margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px;">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-                    <span style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.5); font-weight:700;">Weekly usage</span>
-                    <span style="font-size:12px; color:#c7b18f; font-weight:700;">${hours} / ${thresholdHours} hours</span>
-                </div>
-                <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
-                    <div style="height:100%; width:${pct}%; background:linear-gradient(90deg,#c7b18f,#e6d3b5); border-radius:3px;"></div>
-                </div>
-                <div style="font-size:10px; color:rgba(255,255,255,0.35); margin-top:6px;">${note}</div>
-            </div>
-        `;
-    }
-    catch(e)
-    {
-        if(slot) slot.innerHTML = '';
-    }
-}
-
-function RenderLicenses(menu, licenses, token)
-{
-    const validLicenses = (licenses || []).filter(l =>
-    {
-        if (l.banned || l.disabled) return false;
-        if (l.expires_at && l.expires_at !== -1 && Date.now() > l.expires_at) return false;
-        return true;
-    });
-
-    if(validLicenses.length > 0)
-    {
-        const licensesHtml = validLicenses.map(lic => `
-            <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                <div style="flex: 1; min-width: 0;">
-                    <div style="font-size: 13px; color: #c7b18f; word-break: break-all;">${lic.key}</div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 1px;">${lic.product}</div>
-                </div>
-                <button class="copy-license-btn" data-key="${lic.key}" style="background: rgba(255,255,255,0.1); border: none; border-radius: 6px; padding: 6px; cursor: pointer; color: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 28px; height: 28px; position: relative;">
-                    <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: all 0.2s;">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                    <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c7b18f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; opacity: 0; transform: scale(0.5); transition: all 0.2s;">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                </button>
-            </div>
-        `).join('');
-
-        menu.innerHTML = `
-            <div id="weekly-progress-slot"></div>
-            <div class="text-white font-bold text-sm mb-2">Your Licenses</div>
-            <div id="licenses-scroll-rect" style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
-                ${licensesHtml}
-            </div>
-        `;
-        loadWeeklyProgress(token);
-
-        document.querySelectorAll('.copy-license-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const key = this.getAttribute('data-key');
-                navigator.clipboard.writeText(key).then(() => {
-                    const copyIcon = this.querySelector('.copy-icon');
-                    const checkIcon = this.querySelector('.check-icon');
-                    
-                    this.style.background = 'rgba(199, 177, 143, 0.3)';
-                    copyIcon.style.opacity = '0';
-                    copyIcon.style.transform = 'scale(0.5)';
-                    checkIcon.style.opacity = '1';
-                    checkIcon.style.transform = 'scale(1)';
-                    
-                    setTimeout(() => {
-                        copyIcon.style.opacity = '1';
-                        copyIcon.style.transform = 'scale(1)';
-                        checkIcon.style.opacity = '0';
-                        checkIcon.style.transform = 'scale(0.5)';
-                        this.style.background = 'rgba(255,255,255,0.1)';
-                    }, 1200);
-                });
-            });
-        });
-
-        const scrollRect = document.getElementById('licenses-scroll-rect');
-        if (scrollRect) {
-            scrollRect.style.scrollbarWidth = 'thin';
-            scrollRect.style.scrollbarColor = 'rgba(255,255,255,0.2) transparent';
-            scrollRect.style.msOverflowStyle = 'none';
-            scrollRect.style.overflowY = 'auto';
-            scrollRect.style.paddingRight = '4px';
-        }
-        
-        const style = document.createElement('style');
-        style.textContent = `
-            #licenses-scroll-rect::-webkit-scrollbar { width: 6px; }
-            #licenses-scroll-rect::-webkit-scrollbar-track { background: transparent; }
-            #licenses-scroll-rect::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
-            #licenses-scroll-rect::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
-        `;
-        document.head.appendChild(style);
-        appendCookieSettingsButton(menu);
-    }
-    else
-    {
-        menu.innerHTML = `
-            <div id="weekly-progress-slot"></div>
-            <div class="text-white font-bold text-sm mb-2">Your Licenses</div>
-            <div id="licenses-scroll-rect" style="max-height: 280px; overflow-y: auto; margin-top: 8px;">
-                <div class="text-neutral-400 text-xs text-center py-4">No licenses found</div>
-            </div>
-        `;
-        loadWeeklyProgress(token);
-        appendCookieSettingsButton(menu);
-    }
+    appendCookieSettingsButton(menu);
 }
 
 if(userProfileTrigger)
@@ -375,10 +229,10 @@ if(userProfileTrigger)
     userProfileTrigger.addEventListener("click", function(e)
     {
         e.stopPropagation();
-        const menu = CreateLicensesMenu();
+        const menu = CreateAccountMenu();
         const isVisible = menu.style.display === 'block';
 
-        ToggleLicensesMenu(!isVisible);
+        ToggleAccountMenu(!isVisible);
     });
 }
 
