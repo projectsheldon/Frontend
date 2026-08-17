@@ -206,14 +206,13 @@ async function RenderAccountMenu()
         </div>
 
         <div style="display:flex;flex-direction:column;gap:6px;">
-            <a href="/dashboard/" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.85);text-decoration:none;font-size:13px;font-weight:600;transition:all .2s;cursor:pointer;" onmouseover="this.style.background='rgba(199,177,143,0.1)';this.style.borderColor='rgba(199,177,143,0.3)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='rgba(255,255,255,0.85)'">
+            <a href="/dashboard/" style="display:flex;align-items:center;justify-content:center;gap:10px;position:relative;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.85);text-decoration:none;font-size:13px;font-weight:600;transition:all .2s;cursor:pointer;" onmouseover="this.style.background='rgba(199,177,143,0.1)';this.style.borderColor='rgba(199,177,143,0.3)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='rgba(255,255,255,0.85)'">
                 ${accountMenuIcon('<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>')}
-                <span style="flex:1;">Dashboard</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,0.25)"><polyline points="9 18 15 12 9 6"/></svg>
+                <span>Dashboard</span>
             </a>
-            <button id="account-menu-signout" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.85);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;" onmouseover="this.style.background='rgba(239,68,68,0.1)';this.style.borderColor='rgba(239,68,68,0.3)';this.style.color='#fca5a5'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='rgba(255,255,255,0.85)'">
+            <button id="account-menu-signout" style="display:flex;align-items:center;justify-content:center;gap:10px;position:relative;padding:11px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.85);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;" onmouseover="this.style.background='rgba(239,68,68,0.1)';this.style.borderColor='rgba(239,68,68,0.3)';this.style.color='#fca5a5'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='rgba(255,255,255,0.85)'">
                 ${accountMenuIcon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>')}
-                <span style="flex:1;">Sign out</span>
+                <span>Sign out</span>
             </button>
         </div>
     `;

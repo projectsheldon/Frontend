@@ -6,12 +6,8 @@ let state = {
     data: null,
     filter: 'all',
     range: 14,
+    end: '',
     expanded: null
-};
-
-const RANGE_SUB = {
-    1: 'day', 3: '3 days', 7: 'week', 14: '2 weeks', 30: 'month',
-    90: '3 months', 365: 'year', all: 'year'
 };
 
 function escapeHtml(s)
@@ -63,6 +59,12 @@ function formatLastSeen(ts)
     return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Athens YYYY-MM-DD from a timestamp (the server buckets by Europe/Athens).
+function athensDateStrClient(ts)
+{
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Athens', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Number(ts)));
+}
+
 function licenseStatus(lic)
 {
     if(lic.banned || lic.disabled) return 'disabled';
@@ -99,17 +101,22 @@ function renderProfile()
     const name = user.globalName || user.username || 'Account';
 
     setAvatar(document.getElementById('dash-avatar'), document.getElementById('dash-avatar-fallback'), user.avatar, name);
-    setAvatar(document.getElementById('dash-avatar-lg'), document.getElementById('dash-avatar-lg-fallback'), user.avatar, name);
     document.getElementById('dash-username').textContent = name;
-    document.getElementById('dash-summary-name').textContent = name;
+    document.getElementById('dash-user-sub').textContent = '@' + (user.username || 'unknown');
+
+    const dot = document.getElementById('dash-status-dot');
+    if(dot)
+    {
+        dot.className = 'dash-status-dot ' + (banned ? 'red' : 'green');
+        dot.title = banned ? 'Banned' : 'Active';
+    }
 
     const stats = document.getElementById('dash-stats');
     stats.innerHTML = '';
     const cards = [
         { label: 'Member since', value: formatDate(memberSince), cls: '' },
         { label: 'Total usage', value: formatDuration(usage.totalSeconds), cls: 'gold' },
-        { label: 'Licenses', value: String(licenses.length), cls: '' },
-        { label: 'Status', value: banned ? 'Banned' : 'Not banned', cls: banned ? 'red' : 'green' }
+        { label: 'Licenses', value: String(licenses.length), cls: '' }
     ];
     cards.forEach(card =>
     {
@@ -122,7 +129,7 @@ function renderProfile()
 
         const value = document.createElement('div');
         value.className = 'dash-stat-value' + (card.cls ? ' ' + card.cls : '');
-        value.textContent = card.value;
+        value.appendChild(document.createTextNode(card.value));
 
         el.appendChild(label);
         el.appendChild(value);
@@ -130,25 +137,34 @@ function renderProfile()
     });
 }
 
-function renderWeekly()
-{
-    const { usage } = state.data;
-    const card = document.getElementById('dash-weekly-card');
-    if(!usage.thresholdSeconds || usage.thresholdSeconds <= 0) { card.style.display = 'none'; return; }
+// ── Weekly usage → free license progress ─────────────────────────────
 
-    const seconds = Math.max(0, Number(usage.weeklySeconds) || 0);
-    const threshold = usage.thresholdSeconds;
+function renderUsageProgress()
+{
+    const card = document.getElementById('dash-usage-card');
+    if(!card || !state.data || !state.data.usage) return;
+
+    const seconds = Number(state.data.usage.weeklySeconds) || 0;
+    const threshold = Number(state.data.usage.thresholdSeconds) || 0;
+    if(!threshold || threshold <= 0)
+    {
+        card.style.display = 'none';
+        return;
+    }
+
     const pct = Math.min(100, Math.round((seconds / threshold) * 100));
     const hours = Math.floor(seconds / 3600);
     const thresholdHours = Math.round(threshold / 3600);
+    const rewarded = sessionStorage.getItem('usage_reward') === '1';
     const remaining = Math.max(0, thresholdHours - hours);
-    const note = pct >= 100
-        ? 'Milestone reached — a free key is ready!'
-        : `Use Sheldon ${remaining} more hour${remaining === 1 ? '' : 's'} this week for a free key.`;
 
-    document.getElementById('dash-weekly-count').textContent = `${hours} / ${thresholdHours} hours`;
-    document.getElementById('dash-weekly-fill').style.width = pct + '%';
-    document.getElementById('dash-weekly-note').textContent = note;
+    document.getElementById('dash-usage-ratio').textContent = hours + ' / ' + thresholdHours + ' hours';
+    document.getElementById('dash-usage-fill').style.width = pct + '%';
+    document.getElementById('dash-usage-caption').textContent = rewarded
+        ? 'Free key claimed. Counter reset — use Sheldon another ' + thresholdHours + ' hours this week for the next.'
+        : (remaining > 0
+            ? 'Use Sheldon ' + remaining + ' more hour' + (remaining === 1 ? '' : 's') + ' this week to earn a free license without watching an ad.'
+            : 'Threshold met! Your next ad grants a free license.');
     card.style.display = 'block';
 }
 
@@ -367,7 +383,6 @@ function renderChart(el)
     {
         el.innerHTML = emptyStateHtml('No activity yet.');
         document.getElementById('dash-activity-date-range').textContent = 'No data yet.';
-        document.getElementById('dash-activity-labels').innerHTML = '';
         return;
     }
     el.innerHTML = barChartHtml(daily, d => d.count > 0
@@ -379,9 +394,6 @@ function renderChart(el)
     const rangeText = dateRangeText(daily);
     document.getElementById('dash-activity-date-range').textContent =
         rangeText === 'No data yet.' ? rangeText : `${rangeText} · EU/Athens`;
-
-    const labels = document.getElementById('dash-activity-labels');
-    labels.innerHTML = `<span>${escapeHtml(daily[0].label)}</span><span>${escapeHtml(daily[daily.length - 1].label)}</span>`;
 }
 
 // ── Licenses tab ──────────────────────────────────────────────────────
@@ -446,65 +458,97 @@ function renderLicenses()
         return;
     }
 
+    const wrapper = document.createElement('div');
+    wrapper.className = 'admin-table-wrapper';
+
+    const table = document.createElement('table');
+    table.className = 'admin-table';
+    table.setAttribute('data-resizable', '');
+    table.style.minWidth = '900px';
+
+    const colgroup = document.createElement('colgroup');
+    ['30%', '12%', '12%', '15%', '15%', '16%', '44px'].forEach(w =>
+    {
+        const col = document.createElement('col');
+        col.style.width = w;
+        colgroup.appendChild(col);
+    });
+    table.appendChild(colgroup);
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    ['Key', 'Product', 'Status', 'Expires', 'Created', 'Last activity', ''].forEach(label =>
+    {
+        const th = document.createElement('th');
+        th.textContent = label;
+        if(label)
+        {
+            const resizer = document.createElement('span');
+            resizer.className = 'col-resizer';
+            th.appendChild(resizer);
+        }
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
     filtered.forEach(lic =>
     {
-        const item = document.createElement('div');
-        item.className = 'license-item';
+        const tr = document.createElement('tr');
 
-        // Header: key + status + copy
-        const head = document.createElement('div');
-        head.className = 'license-item-head';
+        const tdKey = document.createElement('td');
+        tdKey.className = 'td-mono';
+        tdKey.textContent = lic.key;
+        tdKey.title = lic.key;
 
-        const key = document.createElement('div');
-        key.className = 'license-item-key';
-        key.textContent = lic.key;
+        const tdProd = document.createElement('td');
+        tdProd.textContent = lic.product || 'License';
 
+        let status;
+        if(lic.banned) status = 'banned';
+        else if(lic.disabled) status = 'disabled';
+        else if(lic.expires_at !== -1 && Date.now() > lic.expires_at) status = 'expired';
+        else status = 'active';
+
+        const tdStatus = document.createElement('td');
         const badge = document.createElement('span');
-        const status = licenseStatus(lic);
         badge.className = 'license-status ' + status;
-        badge.textContent = status === 'active' ? 'Active' : status === 'expired' ? 'Expired' : 'Disabled';
+        badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        tdStatus.appendChild(badge);
 
+        const tdExp = document.createElement('td');
+        tdExp.textContent = lic.expires_at === -1 ? 'Never' : formatDate(lic.expires_at);
+
+        const tdCr = document.createElement('td');
+        tdCr.textContent = formatDate(lic.created_at);
+
+        const tdLa = document.createElement('td');
+        tdLa.textContent = formatLastSeen(lic.last_activity);
+
+        const tdCopy = document.createElement('td');
         const copyBtn = document.createElement('button');
         copyBtn.className = 'copy-btn';
         copyBtn.title = 'Copy Key';
         copyBtn.dataset.key = lic.key;
         copyBtn.innerHTML = copyIcon + checkIcon;
         copyBtn.addEventListener('click', function() { copyKey(this, this.dataset.key); });
+        tdCopy.appendChild(copyBtn);
 
-        head.appendChild(key);
-        head.appendChild(badge);
-        head.appendChild(copyBtn);
-        item.appendChild(head);
-
-        // Meta grid: product / expires / created / last activity
-        const grid = document.createElement('div');
-        grid.className = 'license-item-grid';
-        const metas = [
-            { label: 'Product', value: lic.product || 'License' },
-            { label: 'Expires', value: lic.expires_at === -1 ? 'Never' : formatDate(lic.expires_at) },
-            { label: 'Created', value: formatDate(lic.created_at) },
-            { label: 'Last activity', value: formatLastSeen(lic.last_activity) }
-        ];
-        metas.forEach(m =>
-        {
-            const box = document.createElement('div');
-            box.className = 'license-meta';
-
-            const lbl = document.createElement('div');
-            lbl.className = 'license-meta-label';
-            lbl.textContent = m.label;
-
-            const val = document.createElement('div');
-            val.className = 'license-meta-value';
-            val.textContent = m.value;
-
-            box.appendChild(lbl);
-            box.appendChild(val);
-            grid.appendChild(box);
-        });
-        item.appendChild(grid);
-        list.appendChild(item);
+        tr.appendChild(tdKey);
+        tr.appendChild(tdProd);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdExp);
+        tr.appendChild(tdCr);
+        tr.appendChild(tdLa);
+        tr.appendChild(tdCopy);
+        tbody.appendChild(tr);
     });
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    list.appendChild(wrapper);
+
+    if(window.ResizableColumns) window.ResizableColumns.attach(table);
 }
 
 // ── Data loading ──────────────────────────────────────────────────────
@@ -520,6 +564,7 @@ async function loadDashboard(extra)
         loginToken: token,
         days: String(state.range)
     };
+    if(state.end) body.end = state.end;
     if(extra && extra.day) body.day = extra.day;
 
     const apiUrl = await Api.GetApiUrl();
@@ -561,7 +606,7 @@ async function loadAll()
         }
         state.data = data;
         renderProfile();
-        renderWeekly();
+        renderUsageProgress();
         renderChart(chart);
         renderLicenses();
     } catch(e)
@@ -587,11 +632,11 @@ window.onload = () =>
     loadAll();
 };
 
-document.querySelectorAll('.dash-nav-item').forEach(btn =>
+document.querySelectorAll('.dash-tab-btn').forEach(btn =>
 {
     btn.addEventListener('click', () =>
     {
-        document.querySelectorAll('.dash-nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.dash-tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const tab = btn.dataset.tab;
         document.getElementById('tab-overview').classList.toggle('hidden', tab !== 'overview');
@@ -615,8 +660,6 @@ document.getElementById('dash-activity-range').addEventListener('change', async 
     const raw = this.value;
     state.range = raw === 'all' ? 'all' : (parseInt(raw, 10) || 14);
     state.expanded = null;
-    document.getElementById('dash-activity-sub').textContent =
-        `Your activity over the last ${RANGE_SUB[state.range]}.`;
     const chart = document.getElementById('dash-activity-chart');
     chart.innerHTML = '<div class="chart-empty"><p class="text-xs text-neutral-500">Loading...</p></div>';
     try
@@ -631,3 +674,28 @@ document.getElementById('dash-activity-range').addEventListener('change', async 
         showError();
     }
 });
+
+// End-date picker (admin statistics style): YYYY-MM-DD in the Athens calendar.
+const endInput = document.getElementById('dash-activity-end');
+if(endInput)
+{
+    endInput.max = athensDateStrClient(Date.now());
+    endInput.addEventListener('change', async function()
+    {
+        state.end = this.value;
+        state.expanded = null;
+        const chart = document.getElementById('dash-activity-chart');
+        chart.innerHTML = '<div class="chart-empty"><p class="text-xs text-neutral-500">Loading...</p></div>';
+        try
+        {
+            const data = await loadDashboard();
+            if(!data) { window.location.href = '/'; return; }
+            state.data = data;
+            renderChart(chart);
+            renderLicenses();
+        } catch(e)
+        {
+            showError();
+        }
+    });
+}
