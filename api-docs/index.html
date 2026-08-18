@@ -107,13 +107,12 @@
         .mobile-menu { display: none; }
 
         @media (max-width: 768px) {
-            .nav-tabs-desktop { display: none; }
+            .nav-tabs-desktop { display: none !important; }
             .mobile-menu-btn { display: block; background: none; border: none; color: white; cursor: pointer; padding: 8px; }
             .mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(5,5,5,0.98); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 1rem; z-index: 999; flex-direction: column; gap: 0.5rem; }
             .mobile-menu.show { display: flex; }
             .mobile-menu .nav-tab { text-align: center; padding: 1rem; }
             .mobile-menu .nav-tab.active { background: rgba(199,177,143,0.1); color: #c7b18f; }
-            .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 1rem; }
 
             nav {
@@ -419,7 +418,21 @@
 
         @media (max-width: 1024px) {
             .sidebar {
-                display: none;
+                display: flex;
+                flex-direction: column;
+                background: rgba(5, 5, 5, 0.98);
+                backdrop-filter: blur(12px);
+                border-right: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+                z-index: 998;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            #docsSidebarToggle {
+                display: block;
             }
             .main-content {
                 margin-left: 0;
@@ -436,8 +449,13 @@
 
     <div id="shared-topbar"></div>
 
+    <button id="docsSidebarToggle" class="fixed left-4 top-24 z-[997] glass-nav hidden items-center gap-2 px-3 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-widest text-neutral-300 cursor-pointer" onclick="document.getElementById('docsSidebar').classList.toggle('open')">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        Contents
+    </button>
+
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="docsSidebar">
         <div class="sidebar-section">
             <div class="sidebar-title">Getting Started</div>
             <a class="sidebar-link" href="#introduction">Introduction</a>
@@ -849,6 +867,9 @@ print(response.json())</code></pre>
                             behavior: 'smooth'
                         });
                     }
+                    // Close the mobile drawer after choosing a section.
+                    const docsSidebar = document.getElementById('docsSidebar');
+                    if (docsSidebar) docsSidebar.classList.remove('open');
                 });
             });
             

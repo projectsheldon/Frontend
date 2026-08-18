@@ -327,7 +327,7 @@ if (window.couponCode && window.currentPricing) {
         .mobile-menu { display: none; }
 
         @media (max-width: 768px) {
-            .nav-tabs-desktop { display: none; }
+            .nav-tabs-desktop { display: none !important; }
             .mobile-menu-btn { display: block; background: none; border: none; color: white; cursor: pointer; padding: 8px; }
             .mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(5,5,5,0.98); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 1rem; z-index: 999; flex-direction: column; gap: 0.5rem; }
             .mobile-menu.show { display: flex; }

@@ -56,13 +56,13 @@ function UpdateUI(loggedIn, user = null)
     const discordBtn = document.getElementById('discord-login-btn');
     const userProfileTrigger = document.getElementById('user-profile-trigger');
 
-    // Hero call-to-action: logged-in users see the "Install" button (fetches the link from
-    // the server on demand); logged-out users keep the "Join Discord" invite. The button's
+    // Hero call-to-action: logged-in users see the "Download" button; logged-out users keep
+    // "Get Sheldon" so the button never promises a download that requires a login. The button's
     // click behaviour reads login state at click time, so we only need to swap the label here.
     const heroCta = document.getElementById('hero-cta');
     if(heroCta)
     {
-        heroCta.textContent = "DOWNLOAD";
+        heroCta.textContent = loggedIn ? "DOWNLOAD" : "GET SHELDON";
     }
 
     if(loggedIn)
@@ -342,8 +342,22 @@ const DiscordAuth = {
     {
         if(window._discordLoginPopupOpen) return;
         window._discordLoginPopupOpen = true;
-        const apiUrl = await Api.GetApiUrl();
-        const clientId = await this.GetClientId();
+
+        // If either fetch below rejects, the popup never opens — clear the flag so the
+        // next click can actually try again. Without this the flag stayed `true` forever
+        // after a backend hiccup, and every later login attempt silently did nothing.
+        let apiUrl, clientId;
+        try
+        {
+            apiUrl = await Api.GetApiUrl();
+            clientId = await this.GetClientId();
+        }
+        catch(e)
+        {
+            window._discordLoginPopupOpen = false;
+            return;
+        }
+
         const redirectUri = encodeURIComponent(`${apiUrl.replace(/\/+$/, '')}/discord/callback`);
         const scope = "identify";
         const origin = window.location.origin;

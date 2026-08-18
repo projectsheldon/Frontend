@@ -124,7 +124,37 @@ document.getElementById('hero-cta')?.addEventListener('click', async () =>
     if(!loggedIn)
     {
         if(typeof window.Notify === 'function') window.Notify('You must log in with Discord to download Sheldon.', 'warning', 6000);
-        try { window.DiscordAuth?.LoginPopup?.(); } catch(e) {}
+
+        // Give the auth module a moment to load (it registers window.DiscordAuth) before
+        // giving up on the popup flow. If it never arrives — module load failure, adblocker —
+        // fall back to a full-page Discord OAuth redirect via /discord/login so the click
+        // ALWAYS lands the user in a login flow instead of doing nothing.
+        if(!window.DiscordAuth)
+        {
+            const startedAt = Date.now();
+            while(!window.DiscordAuth && Date.now() - startedAt < 3000)
+            {
+                await new Promise(r => setTimeout(r, 100));
+            }
+        }
+
+        if(window.DiscordAuth && typeof window.DiscordAuth.LoginPopup === 'function')
+        {
+            try { await window.DiscordAuth.LoginPopup(); } catch(e) {}
+        }
+        else
+        {
+            try
+            {
+                const apiUrl = await Api.GetApiUrl();
+                const res = await fetch(`${apiUrl}/discord/login`);
+                const data = await res.json();
+                if(data && typeof data.url === 'string' && /^https:\/\/discord\.com\//i.test(data.url))
+                {
+                    window.location.href = data.url;
+                }
+            } catch(e) {}
+        }
         return;
     }
 
