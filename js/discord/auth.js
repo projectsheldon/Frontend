@@ -108,19 +108,11 @@ function UpdateUI(loggedIn, user = null)
 
         if(discordBtn)
         {
-            // Toggle state via classes only — never rebuild the button. The old code
-            // removed the Discord <svg> on login and never restored it, so the icon
-            // stayed gone after a login→logout cycle until a full page reload.
-            discordBtn.classList.remove('hidden', 'is-loading');
-            discordBtn.classList.add('is-authed');
-            discordBtn.setAttribute('aria-label', 'Log out');
-
-            const loginTxt = discordBtn.querySelector('#discord-login-txt');
-            if(loginTxt)
-            {
-                loginTxt.textContent = 'Logout';
-                loginTxt.classList.remove('hidden');
-            }
+            // Logged in: hide the button — the account menu's "Sign out" is the
+            // logout path now. The logged-out branch below removes `hidden` and
+            // restores the "Login" label, so the button reappears after sign-out.
+            discordBtn.classList.add('hidden');
+            discordBtn.classList.remove('is-authed', 'is-loading');
         }
     }
     else
