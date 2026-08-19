@@ -95,6 +95,46 @@ function setAvatar(imgEl, fallbackEl, avatarUrl, name)
     }
 }
 
+function sparklineSvg(values, w, h)
+{
+    w = w || 96;
+    h = h || 28;
+    const max = Math.max(...values, 1);
+    const pts = values.map((v, i) =>
+    {
+        const x = values.length > 1 ? (i / (values.length - 1)) * (w - 2) + 1 : 1;
+        const y = h - 2 - (v / max) * (h - 4);
+        return x.toFixed(1) + ',' + y.toFixed(1);
+    });
+    return `
+        <svg class="dash-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+            <polygon points="0,${h} ${pts.join(' ')} ${w},${h}" fill="rgba(199,177,143,0.08)"/>
+            <polyline points="${pts.join(' ')}" fill="none" stroke="#c7b18f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+}
+
+// Compare the last 7 days against the 7 before them, from the already-fetched daily array.
+function last7vsPrev7(daily)
+{
+    if(!Array.isArray(daily) || daily.length < 14) return null;
+    const bySecond = daily.map(d => Number(d.seconds) || 0);
+    const recent = bySecond.slice(-7).reduce((a, b) => a + b, 0);
+    const prev = bySecond.slice(-14, -7).reduce((a, b) => a + b, 0);
+    if(prev <= 0) return null;
+    const pct = Math.round(((recent - prev) / prev) * 100);
+    if(pct === 0) return { dir: 'flat', pct: 0 };
+    return { dir: pct > 0 ? 'up' : 'down', pct };
+}
+
+function deltaHtml(delta)
+{
+    if(!delta) return '';
+    if(delta.dir === 'flat') return '<span class="dash-delta flat">— no change</span>';
+    const arrow = delta.dir === 'up' ? '▲' : '▼';
+    return `<span class="dash-delta ${delta.dir}">${arrow} ${Math.abs(delta.pct)}% last 7d</span>`;
+}
+
 function renderProfile()
 {
     const { user, banned, memberSince, usage, licenses } = state.data;
@@ -104,6 +144,9 @@ function renderProfile()
     document.getElementById('dash-username').textContent = name;
     document.getElementById('dash-user-sub').textContent = '@' + (user.username || 'unknown');
 
+    const balanceEl = document.getElementById('dash-side-balance');
+    if(balanceEl) balanceEl.textContent = '$' + Number(user.balance || 0).toFixed(2);
+
     const dot = document.getElementById('dash-status-dot');
     if(dot)
     {
@@ -111,12 +154,15 @@ function renderProfile()
         dot.title = banned ? 'Banned' : 'Active';
     }
 
+    const daily = (state.data.activity && state.data.activity.daily) || [];
+    const dailySeconds = daily.map(d => Number(d.seconds) || 0);
+
     const stats = document.getElementById('dash-stats');
     stats.innerHTML = '';
     const cards = [
-        { label: 'Member since', value: formatDate(memberSince), cls: '' },
-        { label: 'Total usage', value: formatDuration(usage.totalSeconds), cls: 'gold' },
-        { label: 'Licenses', value: String(licenses.length), cls: '' }
+        { label: 'Member since', value: formatDate(memberSince) },
+        { label: 'Total usage', value: formatDuration(usage.totalSeconds), cls: 'gold', spark: dailySeconds, delta: last7vsPrev7(daily) },
+        { label: 'Balance', value: Number(user.balance || 0).toFixed(2), sub: 'wallet credits', cls: 'gold' }
     ];
     cards.forEach(card =>
     {
@@ -133,8 +179,39 @@ function renderProfile()
 
         el.appendChild(label);
         el.appendChild(value);
+
+        if(card.spark && card.spark.length) el.insertAdjacentHTML('beforeend', sparklineSvg(card.spark));
+        if(card.delta) el.insertAdjacentHTML('beforeend', deltaHtml(card.delta));
+        if(card.sub)
+        {
+            const sub = document.createElement('div');
+            sub.className = 'dash-stat-sub';
+            sub.textContent = card.sub;
+            el.appendChild(sub);
+        }
+
         stats.appendChild(el);
     });
+
+    const actions = document.getElementById('dash-quick-actions');
+    if(actions) actions.style.display = 'flex';
+
+    const copyBtn = document.getElementById('dash-action-copykey');
+    if(copyBtn && licenses.length > 0)
+    {
+        const newest = licenses
+            .filter(isActiveLicense)
+            .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))[0] || licenses[0];
+        copyBtn.disabled = false;
+        copyBtn.style.opacity = '';
+        copyBtn.style.cursor = '';
+        copyBtn.title = 'Copy key: ' + newest.key;
+        copyBtn.onclick = () =>
+        {
+            copyKey(copyBtn, newest.key);
+            if(window.NotifySuccess) window.NotifySuccess('License key copied');
+        };
+    }
 }
 
 // ── Weekly usage → free license progress ─────────────────────────────
@@ -314,6 +391,26 @@ function dateRangeText(daily)
     return first === last ? first : `${first} – ${last}`;
 }
 
+// X-axis labels under the bars; thins out on long ranges so they never crowd.
+function chartLabelsHtml(daily)
+{
+    const step = Math.max(1, Math.ceil(daily.length / 7));
+    const items = daily.map((d, i) =>
+    {
+        const show = i % step === 0 || i === daily.length - 1;
+        return `<span>${show ? escapeHtml(d.label) : ''}</span>`;
+    }).join('');
+    return `<div class="chart-xlabels">${items}</div>`;
+}
+
+function skeletonChartHtml()
+{
+    const bars = [38, 62, 45, 78, 54, 68, 40, 64, 50, 72, 34, 58, 70, 46].map(h =>
+        `<div class="bar-col"><div class="bar skel-bar" style="height:${h}%"></div></div>`
+    ).join('');
+    return `<div class="stats-chart"><span class="chart-gridline" style="top:25%"></span><span class="chart-gridline" style="top:50%"></span><span class="chart-gridline" style="top:75%"></span><span class="chart-gridline chart-gridline-base"></span>${bars}</div>`;
+}
+
 function emptyStateHtml(text)
 {
     return `
@@ -388,12 +485,14 @@ function renderChart(el)
     el.innerHTML = barChartHtml(daily, d => d.count > 0
         ? `${d.count}h · ${d.sessions} session${d.sessions === 1 ? '' : 's'}`
         : '');
+    el.insertAdjacentHTML('beforeend', chartLabelsHtml(daily));
     bindChartTooltips(el, bar => expandHourly(Number(bar.dataset.ts), bar));
     animateBars(el);
 
     const rangeText = dateRangeText(daily);
+    const totalSessions = daily.reduce((a, d) => a + (d.sessions || 0), 0);
     document.getElementById('dash-activity-date-range').textContent =
-        rangeText === 'No data yet.' ? rangeText : `${rangeText} · EU/Athens`;
+        rangeText === 'No data yet.' ? rangeText : `${rangeText} · ${totalSessions} session${totalSessions === 1 ? '' : 's'} · EU/Athens`;
 }
 
 // ── Licenses tab ──────────────────────────────────────────────────────
@@ -429,6 +528,11 @@ function fallbackCopy(val, done)
     done();
 }
 
+function licenseStatusBadge(status)
+{
+    return `<span class="license-status ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+}
+
 function renderLicenses()
 {
     const list = document.getElementById('dash-license-list');
@@ -447,6 +551,17 @@ function renderLicenses()
         if(sa !== sb) return sa - sb;
         return (b.created_at || 0) - (a.created_at || 0);
     });
+
+    // Summary line: what the user owns at a glance.
+    const summary = document.getElementById('dash-license-summary');
+    if(summary)
+    {
+        const active = licenses.filter(isActiveLicense).length;
+        const inactive = licenses.length - active;
+        summary.textContent = licenses.length === 0
+            ? 'No licenses yet.'
+            : `${licenses.length} key${licenses.length === 1 ? '' : 's'} · ${active} active · ${inactive} inactive`;
+    }
 
     list.innerHTML = '';
     if(filtered.length === 0)
@@ -467,7 +582,7 @@ function renderLicenses()
     table.style.minWidth = '900px';
 
     const colgroup = document.createElement('colgroup');
-    ['30%', '12%', '12%', '15%', '15%', '16%', '44px'].forEach(w =>
+    ['26%', '14%', '11%', '15%', '14%', '15%', '5%'].forEach(w =>
     {
         const col = document.createElement('col');
         col.style.width = w;
@@ -477,11 +592,21 @@ function renderLicenses()
 
     const thead = document.createElement('thead');
     const headRow = document.createElement('tr');
-    ['Key', 'Product', 'Status', 'Expires', 'Created', 'Last activity', ''].forEach(label =>
+    const headCells = [
+        { label: 'Key', cls: '' },
+        { label: 'Product', cls: '' },
+        { label: 'Status', cls: '' },
+        { label: 'Expires', cls: 'td-num' },
+        { label: 'Created', cls: 'td-num' },
+        { label: 'Last activity', cls: 'td-num' },
+        { label: '', cls: '' }
+    ];
+    headCells.forEach(cell =>
     {
         const th = document.createElement('th');
-        th.textContent = label;
-        if(label)
+        th.textContent = cell.label;
+        if(cell.cls) th.classList.add(cell.cls);
+        if(cell.label)
         {
             const resizer = document.createElement('span');
             resizer.className = 'col-resizer';
@@ -512,18 +637,18 @@ function renderLicenses()
         else status = 'active';
 
         const tdStatus = document.createElement('td');
-        const badge = document.createElement('span');
-        badge.className = 'license-status ' + status;
-        badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-        tdStatus.appendChild(badge);
+        tdStatus.innerHTML = licenseStatusBadge(status);
 
         const tdExp = document.createElement('td');
+        tdExp.className = 'td-num';
         tdExp.textContent = lic.expires_at === -1 ? 'Never' : formatDate(lic.expires_at);
 
         const tdCr = document.createElement('td');
+        tdCr.className = 'td-num';
         tdCr.textContent = formatDate(lic.created_at);
 
         const tdLa = document.createElement('td');
+        tdLa.className = 'td-num';
         tdLa.textContent = formatLastSeen(lic.last_activity);
 
         const tdCopy = document.createElement('td');
@@ -618,6 +743,37 @@ async function loadAll()
 
 // ── Init ──────────────────────────────────────────────────────────────
 
+function switchTab(tab)
+{
+    document.querySelectorAll('.side-nav-btn[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.getElementById('tab-overview').classList.toggle('hidden', tab !== 'overview');
+    document.getElementById('tab-licenses').classList.toggle('hidden', tab !== 'licenses');
+    const title = document.getElementById('dash-page-title');
+    const sub = document.getElementById('dash-page-sub');
+    if(title) title.textContent = tab === 'licenses' ? 'Licenses' : 'Overview';
+    if(sub) sub.textContent = tab === 'licenses' ? 'View and copy your license keys' : 'Your usage, stats and licenses';
+}
+
+// Bridge for the command palette (and anything else) to reuse dashboard internals.
+window.DashBridge = {
+    switchTab,
+    copyKey,
+    getLicenses: () => (state.data && state.data.licenses) || [],
+    getState: () => state,
+    copyText: function(val)
+    {
+        const done = () => window.NotifySuccess && window.NotifySuccess('Copied to clipboard');
+        if(navigator.clipboard && navigator.clipboard.writeText)
+        {
+            navigator.clipboard.writeText(val).then(done).catch(() => fallbackCopy(val, done));
+        }
+        else
+        {
+            fallbackCopy(val, done);
+        }
+    }
+};
+
 window.onload = () =>
 {
     if(typeof initParticles === 'function')
@@ -632,17 +788,55 @@ window.onload = () =>
     loadAll();
 };
 
-document.querySelectorAll('.dash-tab-btn').forEach(btn =>
+document.querySelectorAll('.side-nav-btn[data-tab]').forEach(btn =>
 {
     btn.addEventListener('click', () =>
     {
-        document.querySelectorAll('.dash-tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const tab = btn.dataset.tab;
-        document.getElementById('tab-overview').classList.toggle('hidden', tab !== 'overview');
-        document.getElementById('tab-licenses').classList.toggle('hidden', tab !== 'licenses');
+        switchTab(btn.dataset.tab);
+        closeSidebarDrawer();
     });
 });
+
+// ── Sidebar: desktop collapse (icon rail) + mobile drawer ─────────────
+
+function closeSidebarDrawer()
+{
+    const sb = document.getElementById('dash-sidebar');
+    const bd = document.getElementById('dash-sidebar-backdrop');
+    if(sb) sb.classList.remove('open');
+    if(bd) bd.classList.remove('show');
+}
+
+(function initSidebar()
+{
+    const sb = document.getElementById('dash-sidebar');
+    const toggle = document.getElementById('dash-sidebar-toggle');
+    const backdrop = document.getElementById('dash-sidebar-backdrop');
+    const drawerBtn = document.getElementById('dash-drawer-btn');
+
+    if(sb && toggle)
+    {
+        if(localStorage.getItem('dash_sidebar_collapsed') === '1')
+        {
+            document.body.classList.add('sidebar-collapsed');
+        }
+        toggle.addEventListener('click', () =>
+        {
+            const collapsed = document.body.classList.toggle('sidebar-collapsed');
+            localStorage.setItem('dash_sidebar_collapsed', collapsed ? '1' : '0');
+        });
+    }
+
+    if(sb && drawerBtn && backdrop)
+    {
+        drawerBtn.addEventListener('click', () =>
+        {
+            sb.classList.add('open');
+            backdrop.classList.add('show');
+        });
+        backdrop.addEventListener('click', closeSidebarDrawer);
+    }
+})();
 
 document.querySelectorAll('.dash-filter-btn').forEach(btn =>
 {
@@ -661,7 +855,7 @@ document.getElementById('dash-activity-range').addEventListener('change', async 
     state.range = raw === 'all' ? 'all' : (parseInt(raw, 10) || 14);
     state.expanded = null;
     const chart = document.getElementById('dash-activity-chart');
-    chart.innerHTML = '<div class="chart-empty"><p class="text-xs text-neutral-500">Loading...</p></div>';
+    chart.innerHTML = skeletonChartHtml();
     try
     {
         const data = await loadDashboard();
@@ -685,7 +879,7 @@ if(endInput)
         state.end = this.value;
         state.expanded = null;
         const chart = document.getElementById('dash-activity-chart');
-        chart.innerHTML = '<div class="chart-empty"><p class="text-xs text-neutral-500">Loading...</p></div>';
+        chart.innerHTML = skeletonChartHtml();
         try
         {
             const data = await loadDashboard();

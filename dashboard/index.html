@@ -228,49 +228,136 @@
             }
         }
 
-        /* ── Dashboard layout ─────────────────────────────────────────── */
-        .dash-wrap {
+        /* ── Dashboard shell: left sidebar + content ──────────────────── */
+        .dash-shell {
             position: relative;
             z-index: 10;
-            max-width: 1152px;
-            margin: 0 auto;
-            padding: 120px 24px 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
             min-height: 100vh;
         }
 
-        /* Header: tabs left, user right */
-        .dash-head {
+        .dash-sidebar {
+            position: fixed;
+            top: 84px;
+            bottom: 0;
+            left: 0;
+            width: 240px;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 18px;
+            flex-direction: column;
+            padding: 16px 14px 20px;
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            background: rgba(10, 10, 12, 0.72);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            z-index: 40;
+            transition: width 0.25s ease, transform 0.25s ease;
         }
 
-        .dash-user {
+        .side-top {
             display: flex;
-            flex-direction: row;
+            justify-content: flex-end;
+            padding: 0 6px 14px;
+        }
+
+        .side-toggle {
+            display: flex;
             align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .side-toggle:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .side-toggle svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.25s ease;
+        }
+
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .side-section-label {
+            margin: 14px 10px 6px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.28);
+            white-space: nowrap;
+        }
+
+        .side-nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 9px 12px;
+            border: 0;
+            border-radius: 9px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 13.5px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
             text-align: left;
-            gap: 14px;
-            min-width: 0;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.2s;
         }
 
+        .side-nav-btn svg {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+            color: rgba(255, 255, 255, 0.4);
+            transition: color 0.2s;
+        }
+
+        .side-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .side-nav-btn.active {
+            background: rgba(199, 177, 143, 0.12);
+            color: #fff;
+        }
+
+        .side-nav-btn.active svg {
+            color: #c7b18f;
+        }
+
+        /* Sidebar footer: user card */
         .dash-avatar-wrap {
             position: relative;
             flex-shrink: 0;
         }
 
         .dash-avatar {
-            width: 64px;
-            height: 64px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             object-fit: cover;
             background: rgba(255, 255, 255, 0.05);
-            font-size: 20px;
+            font-size: 15px;
             font-weight: 800;
             color: rgba(255, 255, 255, 0.5);
         }
@@ -279,10 +366,10 @@
             position: absolute;
             right: -1px;
             bottom: 1px;
-            width: 13px;
-            height: 13px;
+            width: 11px;
+            height: 11px;
             border-radius: 50%;
-            border: 3px solid #050505;
+            border: 2px solid #050505;
             background: #6b7280;
         }
 
@@ -295,8 +382,8 @@
         }
 
         .dash-user-name {
-            font-size: 21px;
-            font-weight: 800;
+            font-size: 13px;
+            font-weight: 700;
             letter-spacing: -0.01em;
             color: #fff;
             white-space: nowrap;
@@ -305,77 +392,142 @@
         }
 
         .dash-user-sub {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.4);
-            margin-top: -2px;
+            margin-top: 0;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .dash-tabs {
-            display: inline-flex;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 4px;
-            gap: 2px;
-        }
-
-        .dash-tab-btn {
+        .side-user {
             display: flex;
             align-items: center;
-            gap: 8px;
-            border: 0;
-            border-radius: 9px;
-            padding: 9px 16px;
-            font-size: 11.5px;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            background: transparent;
-            color: rgba(255, 255, 255, 0.5);
+            gap: 12px;
+            margin-top: 16px;
+            padding: 12px 10px 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            min-width: 0;
+        }
+
+        .side-user-info {
+            min-width: 0;
+        }
+
+        .dash-side-balance {
+            margin-top: 3px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #c7b18f;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dash-sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 39;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        /* Collapsed icon rail (desktop only) */
+        @media (min-width: 901px) {
+            body.sidebar-collapsed .dash-sidebar {
+                width: 68px;
+            }
+
+            body.sidebar-collapsed .side-top {
+                justify-content: center;
+            }
+
+            body.sidebar-collapsed .side-nav-btn {
+                justify-content: center;
+                padding: 9px 0;
+            }
+
+            body.sidebar-collapsed .side-section-label,
+            body.sidebar-collapsed .side-label,
+            body.sidebar-collapsed .side-user-info {
+                display: none;
+            }
+
+            body.sidebar-collapsed .side-user {
+                justify-content: center;
+                padding: 12px 0 4px;
+            }
+
+            body.sidebar-collapsed .side-toggle svg {
+                transform: rotate(180deg);
+            }
+
+            body.sidebar-collapsed .dash-main-wrap {
+                margin-left: 68px;
+            }
+        }
+
+        /* Main content column */
+        .dash-main-wrap {
+            margin-left: 240px;
+            min-width: 0;
+            padding: 104px 24px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-height: 100vh;
+            transition: margin-left 0.25s ease;
+        }
+
+        .dash-page-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .dash-page-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .dash-page-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            color: #fff;
+        }
+
+        .dash-page-sub {
+            margin-top: 2px;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .dash-drawer-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.7);
             cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.25s;
-            position: relative;
         }
 
-        .dash-tab-btn::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 2px;
-            background: #c7b18f;
-            transition: all 0.3s ease;
-            transform: translateX(-50%);
-        }
-
-        .dash-tab-btn svg {
-            width: 14px;
-            height: 14px;
-            color: rgba(255, 255, 255, 0.35);
-            transition: color 0.25s;
-        }
-
-        .dash-tab-btn:hover {
-            color: #fff;
-        }
-
-        .dash-tab-btn.active {
-            color: #fff;
-        }
-
-        .dash-tab-btn.active::after,
-        .dash-tab-btn:hover::after {
-            width: 60%;
-        }
-
-        .dash-tab-btn.active svg {
-            color: #fff;
+        .dash-drawer-btn svg {
+            width: 18px;
+            height: 18px;
         }
 
         .dash-main {
@@ -914,6 +1066,12 @@
             color: white;
             position: relative;
             z-index: 10;
+            margin-left: 240px;
+            transition: margin-left 0.25s ease;
+        }
+
+        body.sidebar-collapsed footer {
+            margin-left: 68px;
         }
 
         footer a {
@@ -936,22 +1094,44 @@
         }
 
         @media (max-width: 900px) {
-            .dash-wrap {
-                padding-top: 100px;
+            .dash-shell {
+                display: block;
             }
 
-            .dash-head {
-                align-items: flex-start;
-                flex-direction: column;
+            footer {
+                margin-left: 0;
             }
 
-            .dash-tabs {
-                width: 100%;
+            .dash-sidebar {
+                position: fixed;
+                top: 72px;
+                bottom: 0;
+                left: 0;
+                width: 240px;
+                height: auto;
+                transform: translateX(-100%);
+                box-shadow: none;
             }
 
-            .dash-tab-btn {
-                flex: 1;
-                justify-content: center;
+            .dash-sidebar.open {
+                transform: translateX(0);
+                box-shadow: 24px 0 60px rgba(0, 0, 0, 0.5);
+            }
+
+            .dash-sidebar-backdrop.show {
+                display: block;
+            }
+
+            .side-toggle {
+                display: none;
+            }
+
+            .dash-main-wrap {
+                padding-top: 88px;
+            }
+
+            .dash-drawer-btn {
+                display: inline-flex;
             }
 
             .dash-stats {
@@ -966,6 +1146,282 @@
 
             .dash-card {
                 padding: 18px;
+            }
+        }
+    /* Stat card upgrades */
+        .dash-spark {
+            display: block;
+            width: 100%;
+            height: 30px;
+            margin-top: 12px;
+        }
+
+        .dash-delta {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            margin-top: 9px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        .dash-delta.up { color: #4ade80; }
+        .dash-delta.down { color: #f87171; }
+        .dash-delta.flat { color: rgba(255, 255, 255, 0.35); }
+
+        .dash-stat-sub {
+            margin-top: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        /* Skeleton loading */
+        .skel {
+            border-radius: 6px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+            background-size: 200% 100%;
+            animation: shimmer 1.2s infinite;
+        }
+
+        .skel-bar {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)) !important;
+            background-size: 200% 100% !important;
+            animation: shimmer 1.2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% center; }
+            100% { background-position: -200% center; }
+        }
+
+        /* Chart x-axis labels */
+        .chart-xlabels {
+            display: flex;
+            gap: 3px;
+            margin-top: 7px;
+        }
+
+        .chart-xlabels span {
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        /* License table polish */
+        .td-num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .td-mono {
+
+        .copy-btn {
+            opacity: 0.55;
+        }
+
+        tr:hover .copy-btn,
+        .copy-btn:focus-visible,
+        .copy-btn.success {
+            opacity: 1;
+        }
+
+        @media (max-width: 1100px) {
+            .admin-table th:nth-child(5),
+            .admin-table td:nth-child(5),
+            .admin-table th:nth-child(6),
+            .admin-table td:nth-child(6) {
+                display: none;
+            }
+        }
+
+        /* Quick actions */
+        .dash-actions {
+            display: none;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .dash-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.75);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .dash-action svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .dash-action:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .dash-action.gold {
+            background: #c7b18f;
+            border-color: #c7b18f;
+            color: #000;
+        }
+
+        .dash-action.gold:hover {
+            background: #b59f7d;
+        }
+
+        /* Command palette */
+        .cmdp-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 14vh 16px 16px;
+        }
+
+        .cmdp-overlay.show {
+            display: flex;
+        }
+
+        .cmdp {
+            width: 100%;
+            max-width: 560px;
+            background: #0d0d0d;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            animation: cmdpIn 0.18s ease-out;
+        }
+
+        @keyframes cmdpIn {
+            from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .cmdp-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .cmdp-input {
+            flex: 1;
+            min-width: 0;
+            background: transparent;
+            border: 0;
+            outline: 0;
+            color: #fff;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .cmdp-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .cmdp-kbd {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 5px;
+            padding: 2px 6px;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        .cmdp-list {
+            max-height: 340px;
+            overflow-y: auto;
+            padding: 6px;
+        }
+
+        .cmdp-empty {
+            padding: 28px 16px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 13px;
+        }
+
+        .cmdp-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 9px;
+            cursor: pointer;
+        }
+
+        .cmdp-item.active,
+        .cmdp-item:hover {
+            background: rgba(199, 177, 143, 0.1);
+        }
+
+        .cmdp-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.6);
+            flex-shrink: 0;
+        }
+
+        .cmdp-item.active .cmdp-icon {
+            background: rgba(199, 177, 143, 0.15);
+            color: #c7b18f;
+        }
+
+        .cmdp-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .cmdp-sub {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 1px;
+        }
+
+        .cmdp-kbd-enter {
+            margin-left: auto;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .cmdp-overlay {
+                padding-top: 10vh;
             }
         }
     </style>
@@ -983,11 +1439,36 @@
     <div class="orb w-[35rem] h-[35rem] bg-[#1a1a1a]" style="bottom: -20%; right: -10%; animation-delay: -7s;"></div>
     <canvas id="particle-canvas"></canvas>
 
-    <div class="dash-wrap">
+    <div class="dash-shell">
 
-        <!-- Header: user left, tabs right -->
-        <header class="dash-head">
-            <div class="dash-user">
+        <!-- Left sidebar -->
+        <aside class="dash-sidebar" id="dash-sidebar">
+            <div class="side-top">
+                <button id="dash-sidebar-toggle" class="side-toggle" title="Collapse sidebar" aria-label="Collapse sidebar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+            </div>
+            <nav class="side-nav">
+                <p class="side-section-label">General</p>
+                <button class="side-nav-btn active" data-tab="overview" title="Overview">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                    <span class="side-label">Overview</span>
+                </button>
+                <button class="side-nav-btn" data-tab="licenses" title="Licenses">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                    <span class="side-label">Licenses</span>
+                </button>
+                <p class="side-section-label">Links</p>
+                <a class="side-nav-btn" href="/checkout/" title="Buy a license">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+                    <span class="side-label">Buy a license</span>
+                </a>
+                <a class="side-nav-btn" href="javascript:void(0)" onclick="RedirectToPlatform('discord_invite')" title="Discord">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.32 4.37a19.8 19.8 0 00-4.89-1.52.07.07 0 00-.08.04c-.21.37-.44.85-.6 1.23a18.27 18.27 0 00-5.5 0 12.6 12.6 0 00-.6-1.23.08.08 0 00-.08-.04 19.74 19.74 0 00-4.88 1.52.07.07 0 00-.04.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 00.03.05 19.9 19.9 0 006 3.03.08.08 0 00.08-.03c.46-.63.87-1.3 1.23-2a.08.08 0 00-.04-.11 13.1 13.1 0 01-1.87-.9.08.08 0 010-.13c.13-.09.25-.19.37-.29a.07.07 0 01.08-.01 14.2 14.2 0 0012.1 0 .07.07 0 01.08.01c.12.1.25.2.37.29a.08.08 0 010 .13 13.2 13.2 0 01-1.87.9.08.08 0 00-.04.11c.36.7.77 1.37 1.23 2a.08.08 0 00.08.03 19.83 19.83 0 006-3.03.08.08 0 00.03-.05c.5-5.18-.84-9.68-3.55-13.66a.06.06 0 00-.03-.03zM8.02 15.33c-1.18 0-2.16-1.08-2.16-2.42 0-1.33.95-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.34-.95 2.42-2.16 2.42zm7.97 0c-1.18 0-2.15-1.08-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.22 0 2.18 1.1 2.16 2.42 0 1.34-.94 2.42-2.16 2.42z"/></svg>
+                    <span class="side-label">Discord</span>
+                </a>
+            </nav>
+            <div class="side-user">
                 <div class="dash-avatar-wrap">
                     <img id="dash-avatar" class="dash-avatar" src="" alt="Avatar" style="display:none;">
                     <div id="dash-avatar-fallback" class="dash-avatar"
@@ -996,41 +1477,58 @@
                     </div>
                     <span id="dash-status-dot" class="dash-status-dot" title=""></span>
                 </div>
-                <div style="min-width:0;">
+                <div class="side-user-info">
                     <div id="dash-username" class="dash-user-name">Loading...</div>
                     <div id="dash-user-sub" class="dash-user-sub">Loading...</div>
+                    <div id="dash-side-balance" class="dash-side-balance"></div>
                 </div>
             </div>
-            <nav class="dash-tabs">
-                <button class="dash-tab-btn active" data-tab="overview">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Overview
-                </button>
-                <button class="dash-tab-btn" data-tab="licenses">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                    Licenses
-                </button>
-            </nav>
-        </header>
+        </aside>
 
-        <!-- Main content -->
-        <main class="dash-main">
+        <div class="dash-main-wrap">
+
+            <!-- Page header: title + quick actions -->
+            <header class="dash-page-head">
+                <div class="dash-page-title-wrap">
+                    <button id="dash-drawer-btn" class="dash-drawer-btn" title="Open navigation" aria-label="Open navigation">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+                    </button>
+                    <div>
+                        <h1 id="dash-page-title" class="dash-page-title">Overview</h1>
+                        <p id="dash-page-sub" class="dash-page-sub">Your usage, stats and licenses</p>
+                    </div>
+                </div>
+                <div class="dash-actions" id="dash-quick-actions">
+                    <button class="dash-action" id="dash-cmdp-btn" title="Command palette (Ctrl+K)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        Search
+                        <span class="cmdp-kbd">Ctrl K</span>
+                    </button>
+                    <button class="dash-action" id="dash-action-copykey" title="Copy your newest license key" disabled style="opacity:0.4;cursor:not-allowed;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                        Copy key
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main content -->
+            <main class="dash-main">
 
             <!-- Overview tab -->
             <div id="tab-overview" class="dash-tab">
 
                 <div class="dash-stats" id="dash-stats">
                     <div class="dash-stat">
-                        <div class="dash-stat-label">Member since</div>
-                        <div class="dash-stat-value">—</div>
+                        <div class="skel" style="width:65%;height:11px;"></div>
+                        <div class="skel" style="width:85%;height:24px;margin-top:12px;"></div>
                     </div>
                     <div class="dash-stat">
-                        <div class="dash-stat-label">Total usage</div>
-                        <div class="dash-stat-value">—</div>
+                        <div class="skel" style="width:55%;height:11px;"></div>
+                        <div class="skel" style="width:75%;height:24px;margin-top:12px;"></div>
                     </div>
                     <div class="dash-stat">
-                        <div class="dash-stat-label">Licenses</div>
-                        <div class="dash-stat-value">—</div>
+                        <div class="skel" style="width:60%;height:11px;"></div>
+                        <div class="skel" style="width:80%;height:24px;margin-top:12px;"></div>
                     </div>
                 </div>
 
@@ -1068,9 +1566,7 @@
                             </div>
                             <p id="dash-activity-date-range" class="text-[10px] text-neutral-500 font-mono mb-3">No data yet.</p>
                             <div id="dash-activity-chart">
-                                <div class="chart-empty">
-                                    <p class="text-xs text-neutral-500">Loading...</p>
-                                </div>
+                                <div class="stats-chart"><span class="chart-gridline" style="top:25%"></span><span class="chart-gridline" style="top:50%"></span><span class="chart-gridline" style="top:75%"></span><span class="chart-gridline chart-gridline-base"></span><div class="bar-col"><div class="bar skel-bar" style="height:38%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:62%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:45%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:78%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:54%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:68%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:40%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:64%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:50%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:72%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:34%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:58%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:70%"></div></div><div class="bar-col"><div class="bar skel-bar" style="height:46%"></div></div></div>
                             </div>
                         </div>
 
@@ -1085,7 +1581,7 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
                                 Your Licenses
                             </p>
-                            <p class="text-xs mt-1.5 font-medium" style="color:rgba(255,255,255,0.4);">All licenses tied to your Discord account.</p>
+                            <p id="dash-license-summary" class="text-xs mt-1.5 font-medium" style="color:rgba(255,255,255,0.4);">Loading...</p>
                         </div>
                         <div class="dash-filter">
                             <button class="dash-filter-btn active" data-filter="all">All</button>
@@ -1094,12 +1590,40 @@
                         </div>
                     </div>
                     <div id="dash-license-list">
-                        <p class="text-neutral-500 text-sm py-4">Loading...</p>
+                        <div class="admin-table-wrapper">
+                            <table class="admin-table" style="min-width:820px;">
+                                <thead>
+                                    <tr>
+                                        <th>Key</th><th>Product</th><th>Status</th><th>Expires</th><th>Created</th><th>Last activity</th><th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><div class="skel" style="width:90%;height:13px;"></div></td><td><div class="skel" style="width:70%;height:13px;"></div></td><td><div class="skel" style="width:50%;height:13px;"></div></td><td><div class="skel" style="width:60%;height:13px;"></div></td><td><div class="skel" style="width:60%;height:13px;"></div></td><td><div class="skel" style="width:60%;height:13px;"></div></td><td></td></tr>
+                                    <tr><td><div class="skel" style="width:80%;height:13px;"></div></td><td><div class="skel" style="width:65%;height:13px;"></div></td><td><div class="skel" style="width:50%;height:13px;"></div></td><td><div class="skel" style="width:60%;height:13px;"></div></td><td><div class="skel" style="width:60%;height:13px;"></div></td><td><div class="skel" style="width:60%;height:13px;"></div></td><td></td></tr>
+                                    <tr><td><div class="skel" style="width:85%;height:13px;"></div></td><td><div class="skel" style="width:70%;height:13px;"></div></td><td><div class="skel" style="width:50%;height:13px;"></div></td><td><div class="skel" style="width:60%;height:13px;"></div></td><td><div class="skel" style="width:60%;height:13px;"></div></td><td><div class="skel" style="width:60%;height:13px;"></div></td><td></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
         </main>
+        </div>
+    </div>
+
+    <div class="dash-sidebar-backdrop" id="dash-sidebar-backdrop" aria-hidden="true"></div>
+
+    <!-- Command palette -->
+    <div class="cmdp-overlay" id="commandPalette" aria-hidden="true">
+        <div class="cmdp" role="dialog" aria-label="Command palette">
+            <div class="cmdp-input-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,0.35);flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="cmdp-input" id="cmdpInput" placeholder="Search actions, license keys…" autocomplete="off" spellcheck="false" aria-label="Command palette search">
+                <span class="cmdp-kbd">ESC</span>
+            </div>
+            <div class="cmdp-list" id="cmdpList"></div>
+        </div>
     </div>
 
     <div class="footer-spacer" aria-hidden="true"></div>
@@ -1148,6 +1672,7 @@
     <script src="../js/html/render/canvas.js"></script>
     <script src="/js/html/topbar.js"></script>
     <script type="module" src="../js/html/dashboard/index.js"></script>
+    <script src="../js/html/dashboard/command-palette.js"></script>
     <script src="../js/util/notify.js"></script>
     <script type="module" src="../js/discord/topbar_buttons.js"></script>
     <script type="module" src="../js/util/redirect.js"></script>
