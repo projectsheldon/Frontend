@@ -339,6 +339,19 @@
             cursor: pointer;
             font-family: 'Inter', sans-serif;
             transition: all 0.25s;
+            position: relative;
+        }
+
+        .dash-tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: #c7b18f;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
         }
 
         .dash-tab-btn svg {
@@ -353,12 +366,16 @@
         }
 
         .dash-tab-btn.active {
-            background: #c7b18f;
-            color: #000;
+            color: #fff;
+        }
+
+        .dash-tab-btn.active::after,
+        .dash-tab-btn:hover::after {
+            width: 60%;
         }
 
         .dash-tab-btn.active svg {
-            color: #000;
+            color: #fff;
         }
 
         .dash-main {
