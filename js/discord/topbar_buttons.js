@@ -4,10 +4,13 @@ import "../util/site_notice.js"; // sets window.SheldonCookies; auto-shows the p
 
 let cookieChoiceFinal = false; // a Sure/No choice was recorded → the menu button never returns
 
-const discordBtn = document.getElementById('discord-login-btn');
-const userProfileTrigger = document.getElementById('user-profile-trigger');
-
 let userMenu = null;
+
+// Resolve elements lazily — topbar may be injected asynchronously via topbar.js
+function getDiscordBtn(){ return document.getElementById('discord-login-btn'); }
+function getUserProfileTrigger(){ return document.getElementById('user-profile-trigger'); }
+const discordBtn = getDiscordBtn();
+const userProfileTrigger = getUserProfileTrigger();
 
 window.addEventListener('message', function(event)
 {
@@ -24,10 +27,19 @@ window.addEventListener('message', function(event)
 
 async function DiscordBtnHandler(e)
 {
-    const btn = e && e.currentTarget ? e.currentTarget : document.getElementById('discord-login-btn');
+    // Use the closest discord button so clicks on inner SVG/span still resolve
+    const btn = (e && e.currentTarget && e.currentTarget.closest) ? e.currentTarget.closest('#discord-login-btn, .discord-login-btn') : null
+        || (e && e.target ? e.target.closest?.('#discord-login-btn, .discord-login-btn') : null)
+        || document.getElementById('discord-login-btn');
 
     // Guard against double-clicks while an action is already in flight.
     if(btn && btn.classList.contains('is-loading')) return;
+    // If the login popup is already open, bring it to focus instead of ignoring silently
+    if(window._discordLoginPopupOpen && !window.DiscordAuth?.currentUser)
+    {
+        const overlay = document.getElementById('discord-app-overlay');
+        if(overlay) { overlay.style.opacity='1'; try{ overlay.querySelector('button')?.focus(); }catch(e){} return; }
+    }
 
     if(window.DiscordAuth.currentUser)
     {
@@ -49,10 +61,34 @@ async function DiscordBtnHandler(e)
     {
         // Login: show a spinner while the OAuth popup is being prepared (client id +
         // init-auth fetches). The popup itself drives the rest of the flow.
+        // If DiscordAuth hasn't loaded yet (module load race), wait briefly before failing.
+        if(!window.DiscordAuth || typeof window.DiscordAuth.LoginPopup !== 'function')
+        {
+            if(btn) btn.classList.add('is-loading');
+            const start = Date.now();
+            while((!window.DiscordAuth || typeof window.DiscordAuth.LoginPopup !== 'function') && Date.now() - start < 2500)
+            {
+                await new Promise(r => setTimeout(r, 120));
+            }
+        }
         if(btn) btn.classList.add('is-loading');
         try
         {
-            await window.DiscordAuth.LoginPopup();
+            if(window.DiscordAuth && typeof window.DiscordAuth.LoginPopup === 'function')
+            {
+                await window.DiscordAuth.LoginPopup();
+            }
+            else
+            {
+                // Fallback: direct redirect via backend so the click always does something
+                try {
+                    const apiUrl = await Api.GetApiUrl();
+                    const res = await fetch(`${apiUrl}/discord/login`);
+                    const data = await res.json();
+                    if(data && typeof data.url === 'string' && /^https:\/\/discord\.com\//i.test(data.url)) window.location.href = data.url;
+                    else if(typeof Notify !== 'undefined') Notify('Login unavailable — please try again.', 'error', 3500);
+                } catch(err) { if(typeof Notify !== 'undefined') Notify('Could not reach login server.', 'error', 3500); }
+            }
         }
         finally
         {
@@ -60,9 +96,46 @@ async function DiscordBtnHandler(e)
         }
     }
 }
+function attachDiscordButtons()
+{
+    // id button (topbar)
+    const mainBtn = document.getElementById('discord-login-btn');
+    if(mainBtn && !mainBtn.dataset.sheldonBound)
+    {
+        mainBtn.dataset.sheldonBound = '1';
+        mainBtn.addEventListener('click', DiscordBtnHandler);
+    }
+    // any .discord-login-btn (checkout, etc.)
+    document.querySelectorAll('.discord-login-btn').forEach(btn =>
+    {
+        if(btn.dataset.sheldonBound) return;
+        btn.dataset.sheldonBound = '1';
+        btn.addEventListener('click', DiscordBtnHandler);
+    });
+}
 if(discordBtn)
 {
-    discordBtn.addEventListener("click", DiscordBtnHandler);
+    attachDiscordButtons();
+}
+// Delegated fallback — catches buttons added after this module ran (shared-topbar injection, dynamic content)
+document.addEventListener('click', function(e)
+{
+    const target = e.target && e.target.closest ? e.target.closest('#discord-login-btn, .discord-login-btn') : null;
+    if(!target) return;
+    // If this button already has a direct listener, let that handle it and don't double-fire.
+    // We detect by checking if the click already propagated via direct handler — to avoid
+    // double-login, just ensure we only handle when direct didn't run. Simplest: if
+    // target has dataset bound, the direct handler will already run, so we no-op here.
+    // But for buttons that were missed (no dataset), handle here.
+    if(target.dataset.sheldonBound) return;
+    e.preventDefault();
+    DiscordBtnHandler(e);
+});
+// Re-attach when topbar is injected later
+if(typeof MutationObserver !== 'undefined')
+{
+    const obs = new MutationObserver(() => { attachDiscordButtons(); attachProfileTrigger(); });
+    obs.observe(document.documentElement, { childList: true, subtree: true });
 }
 
 function CreateAccountMenu()
@@ -223,30 +296,46 @@ async function RenderAccountMenu()
     appendCookieSettingsButton(menu);
 }
 
-if(userProfileTrigger)
+function attachProfileTrigger()
 {
-    userProfileTrigger.addEventListener("click", function(e)
+    const trg = getUserProfileTrigger();
+    if(trg && !trg.dataset.sheldonBound)
     {
+        trg.dataset.sheldonBound = '1';
+        trg.addEventListener("click", function(e)
+        {
+            e.stopPropagation();
+            const menu = CreateAccountMenu();
+            const isVisible = menu.style.display === 'block';
+            ToggleAccountMenu(!isVisible);
+        });
+    }
+}
+attachProfileTrigger();
+// Delegated fallback for profile trigger that wasn't bound yet
+document.addEventListener('click', function(e)
+{
+    const trg = e.target && e.target.closest ? e.target.closest('#user-profile-trigger') : null;
+    if(trg)
+    {
+        if(trg.dataset.sheldonBound) return;
         e.stopPropagation();
         const menu = CreateAccountMenu();
         const isVisible = menu.style.display === 'block';
-
         ToggleAccountMenu(!isVisible);
-    });
-}
-
-document.addEventListener('click', function(e)
-{
-    if(userMenu && !userMenu.contains(e.target) && !userProfileTrigger?.contains(e.target))
+        return;
+    }
+    const curTrigger = getUserProfileTrigger();
+    if(userMenu && !userMenu.contains(e.target) && !curTrigger?.contains(e.target))
     {
         userMenu.style.display = 'none';
     }
 });
-document.querySelectorAll('.discord-login-btn').forEach(btn =>
-{
-    btn.addEventListener("click", DiscordBtnHandler);
-});
-document.addEventListener('DOMContentLoaded', CheckAuthStatus);
+// Ensure both button types are bound after topbar injection
+attachDiscordButtons();
+document.addEventListener('DOMContentLoaded', () => { attachDiscordButtons(); attachProfileTrigger(); CheckAuthStatus(); });
+// Also run immediately if DOM already ready
+if(document.readyState !== 'loading') { attachDiscordButtons(); attachProfileTrigger(); }
 
 // Presence heartbeat: while a logged-in tab is open, keep touching /discord/me
 // so the backend's "Website Active Now" counts the visitor the whole time they

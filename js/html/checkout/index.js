@@ -252,11 +252,23 @@ function ShowLoginForm()
     TogglePaymentForm(false);
 
     const loginBtn = loginRequiredEl?.querySelector('.discord-login-btn');
-    if(loginBtn)
+    if(loginBtn && !loginBtn.dataset.sheldonBound)
     {
-        loginBtn.addEventListener('click', () =>
+        // Mark as bound so the delegated handler in topbar_buttons.js doesn't double-fire,
+        // but use the same robust popup flag handling there. This local handler is a
+        // fallback for pages where topbar_buttons hasn't loaded yet.
+        loginBtn.dataset.sheldonBound = '1';
+        loginBtn.addEventListener('click', async () =>
         {
-            window.DiscordAuth.LoginPopup();
+            if(loginBtn.classList.contains('is-loading')) return;
+            if(window._discordLoginPopupOpen)
+            {
+                const ov = document.getElementById('discord-app-overlay');
+                if(ov){ try{ ov.querySelector('button')?.focus(); }catch(e){} return; }
+            }
+            loginBtn.classList.add('is-loading');
+            try { await window.DiscordAuth.LoginPopup(); } catch(e) {}
+            finally { loginBtn.classList.remove('is-loading'); }
         });
     }
 
