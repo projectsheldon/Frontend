@@ -418,13 +418,12 @@ const DiscordAuth = {
                 if(modal)
                 {
                     modal.innerHTML = '<h3 style="color:white;font-size:18px;margin:0 0 8px;">Opening Discord...</h3>' +
-                        '<p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0 0 16px;">Authorize in the Discord app. If a new tab opened, copy the code below.</p>' +
+                        '<p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0 0 16px;">Authorize in the Discord app.</p>' +
                         (authCode
                             ? '<div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.08);">' +
-                                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><span style="color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;">Your code</span><span style="color:rgba(255,255,255,0.35);font-size:11px;">expires in 5 min</span></div>' +
-                                '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;"><code style="font-size:22px;letter-spacing:4px;font-weight:800;color:#c7b18f;font-family:monospace;">' + authCode + '</code><button id="auth-code-copy" title="Copy code" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:white;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copy</button></div>' +
+                                '<p style="color:rgba(255,255,255,0.5);font-size:11px;margin:0 0 8px;text-align:left;">If a new browser tab opens, enter the code from there:</p>' +
                                 '<div style="display:flex;gap:8px;">' +
-                                    '<input id="auth-code-input" type="text" maxlength="6" placeholder="Paste code from other browser" style="flex:1;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 12px;color:white;font-size:14px;text-align:center;letter-spacing:3px;text-transform:uppercase;outline:none;">' +
+                                    '<input id="auth-code-input" type="text" maxlength="6" placeholder="Enter code" style="flex:1;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 12px;color:white;font-size:14px;text-align:center;letter-spacing:3px;text-transform:uppercase;outline:none;">' +
                                     '<button id="auth-code-submit" style="background:#5865F2;color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Verify</button>' +
                                 '</div>' +
                                 '<div id="auth-code-hint" style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.45);min-height:14px;"></div>' +
@@ -432,11 +431,6 @@ const DiscordAuth = {
                             : '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.18);border-radius:8px;padding:12px;margin-bottom:8px;font-size:12px;color:rgba(255,255,255,0.75);">Could not reach the authentication server. You can still try the browser flow — it may recover.</div>');
                 }
 
-                // Copy button
-                const copyBtn = document.getElementById('auth-code-copy');
-                if(copyBtn) copyBtn.onclick = async () => {
-                    try { await navigator.clipboard.writeText(authCode); copyBtn.textContent = 'Copied!'; setTimeout(()=>copyBtn.textContent='Copy', 1500); } catch(e) { const inp=document.getElementById('auth-code-input'); if(inp){ inp.value=authCode; inp.select(); } }
-                };
 
                 if(authCode)
                 {
