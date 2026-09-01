@@ -465,6 +465,21 @@ if (window.couponCode && window.currentPricing) {
             box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
         }
 
+        @media (max-width: 767px) {
+            .sidebar {
+                padding: 24px;
+            }
+            .main-content {
+                padding: 24px;
+            }
+            .checkout-card {
+                min-height: auto;
+            }
+            .crypto-options {
+                flex-direction: column;
+            }
+        }
+
         @media (min-width: 768px) {
             .checkout-card {
                 flex-direction: row;
@@ -1265,6 +1280,7 @@ if (window.couponCode && window.currentPricing) {
     <script type="module" src="../js/html/checkout/index.js"></script>
     <script src="../js/html/checkout/quantity.js"></script>
     <script src="../js/util/notify.js"></script>
+    <script src="/js/html/bottom-nav.js"></script>
 </body>
 
 </html>

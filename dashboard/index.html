@@ -1131,6 +1131,7 @@
 
             .dash-main-wrap {
                 padding-top: 88px;
+                margin-left: 0 !important;
             }
 
             .dash-drawer-btn {
@@ -1139,6 +1140,31 @@
 
             .dash-stats {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            .dash-page-head {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .dash-page-head .dash-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .dash-card {
+                padding: 16px;
+            }
+
+            .admin-table-wrapper {
+                max-height: none;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            footer {
+                margin-left: 0 !important;
+                padding-bottom: 80px !important;
             }
         }
 
@@ -1677,6 +1703,7 @@
     <script src="../js/util/notify.js"></script>
     <script type="module" src="../js/discord/topbar_buttons.js"></script>
     <script type="module" src="../js/util/redirect.js"></script>
+    <script src="/js/html/bottom-nav.js"></script>
 
 </body>
 
