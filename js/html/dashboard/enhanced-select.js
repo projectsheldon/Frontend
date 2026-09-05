@@ -201,8 +201,7 @@
             }
         }
 
-        // Intercept programmatic .value assignments so external code that does
-        // `select.value = "x"` also updates our custom UI.
+        // Intercept programmatic .value sets so `select.value = "x"` updates the UI.
         try {
             const desc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
             Object.defineProperty(nativeSelect, 'value', {
@@ -210,7 +209,7 @@
                 get: function() { return desc.get.call(this); },
                 set: function(v) { desc.set.call(this, v); syncValueDisplay(); }
             });
-        } catch(e) { /* older browsers: skip */ }
+        } catch (e) { /* older browsers: skip */ }
 
         // Also refresh when options are replaced (e.g. innerHTML swap on native).
         const optionsObserver = new MutationObserver(() => { buildOptions(); syncValueDisplay(); positionMenu(); });

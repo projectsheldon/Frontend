@@ -1,8 +1,8 @@
-import Api from "../../util/backend.js";
-import { DiscordAuth } from "../../discord/auth.js";
-import StripeManager from "./manager.js";
+import Api from '../../util/backend.js';
+import { DiscordAuth } from '../../discord/auth.js';
+import StripeManager from './manager.js';
 
-const STRIPE_PUBLIC_KEY = "pk_test_...";
+const STRIPE_PUBLIC_KEY = 'pk_test_...';
 
 let stripeInstance = null;
 let elementsInstance = null;
@@ -15,17 +15,17 @@ let priceHookBound = false;
 
 function getPayButton()
 {
-    return document.getElementById("pay-btn");
+    return document.getElementById('pay-btn');
 }
 
 function getPaymentElementContainer()
 {
-    return document.getElementById("payment-element");
+    return document.getElementById('payment-element');
 }
 
 function getErrorContainer()
 {
-    let errorEl = document.getElementById("stripe-error");
+    let errorEl = document.getElementById('stripe-error');
     if(errorEl)
     {
         return errorEl;
@@ -37,10 +37,10 @@ function getErrorContainer()
         return null;
     }
 
-    errorEl = document.createElement("div");
-    errorEl.id = "stripe-error";
-    errorEl.className = "text-xs text-red-300 mt-3 text-center";
-    errorEl.style.display = "none";
+    errorEl = document.createElement('div');
+    errorEl.id = 'stripe-error';
+    errorEl.className = 'text-xs text-red-300 mt-3 text-center';
+    errorEl.style.display = 'none';
     payBtn.parentElement.insertBefore(errorEl, payBtn);
 
     return errorEl;
@@ -59,8 +59,8 @@ function showError(message)
         return;
     }
 
-    errorEl.textContent = message || "";
-    errorEl.style.display = message ? "block" : "none";
+    errorEl.textContent = message || '';
+    errorEl.style.display = message ? 'block' : 'none';
 }
 
 function setPayButtonDisabled(disabled)
@@ -72,8 +72,8 @@ function setPayButtonDisabled(disabled)
     }
 
     payBtn.disabled = disabled;
-    payBtn.style.opacity = disabled ? "0.7" : "1";
-    payBtn.style.cursor = disabled ? "not-allowed" : "pointer";
+    payBtn.style.opacity = disabled ? '0.7' : '1';
+    payBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
 }
 
 function clearMountedElement()
@@ -85,18 +85,16 @@ function clearMountedElement()
 
     try
     {
-        if(typeof paymentElementInstance.unmount === "function")
+        if(typeof paymentElementInstance.unmount === 'function')
         {
             paymentElementInstance.unmount();
         }
 
-        if(typeof paymentElementInstance.destroy === "function")
+        if(typeof paymentElementInstance.destroy === 'function')
         {
             paymentElementInstance.destroy();
         }
-    } catch(e)
-    {
-    }
+    } catch(e) {}
 
     paymentElementInstance = null;
     elementsInstance = null;
@@ -108,7 +106,7 @@ async function createPaymentIntentRequest()
     const sessionToken = DiscordAuth.GetSessionToken();
 
     const headers = {
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json'
     };
 
     if(sessionToken)
@@ -117,7 +115,7 @@ async function createPaymentIntentRequest()
     }
 
     const response = await fetch(`${apiUrl}/stripe/create-payment-intent`, {
-        method: "POST",
+        method: 'POST',
         headers,
         body: JSON.stringify({
             product_key: window.productKey,
@@ -130,7 +128,7 @@ async function createPaymentIntentRequest()
     const data = await response.json().catch(() => ({}));
     if(!response.ok || !data.client_secret)
     {
-        throw new Error(data.error || data.message || "Failed to initialize payment.");
+        throw new Error(data.error || data.message || 'Failed to initialize payment.');
     }
 
     return data.client_secret;
@@ -152,14 +150,14 @@ function scheduleRefresh()
     {
         refreshStripe().catch((error) =>
         {
-            showError(error.message || "Failed to refresh payment form.");
+            showError(error.message || 'Failed to refresh payment form.');
         });
     }, 250);
 }
 
 function bindPriceRefreshHook()
 {
-    if(priceHookBound || typeof window.fetchPriceFromApi !== "function")
+    if(priceHookBound || typeof window.fetchPriceFromApi !== 'function')
     {
         return;
     }
@@ -182,13 +180,13 @@ function bindPriceRefreshHook()
 function bindPayButton()
 {
     const payBtn = getPayButton();
-    if(!payBtn || payBtn.dataset.stripeBound === "true")
+    if(!payBtn || payBtn.dataset.stripeBound === 'true')
     {
         return;
     }
 
-    payBtn.dataset.stripeBound = "true";
-    payBtn.addEventListener("click", handlePayment);
+    payBtn.dataset.stripeBound = 'true';
+    payBtn.addEventListener('click', handlePayment);
 }
 
 export async function initStripe()
@@ -198,24 +196,24 @@ export async function initStripe()
         return true;
     }
 
-    if(typeof window.Stripe !== "function")
+    if(typeof window.Stripe !== 'function')
     {
-        showError("Stripe SDK failed to load.");
+        showError('Stripe SDK failed to load.');
         return false;
     }
 
-    const remotePublicKey = await StripeManager.GetPublicKey().catch(() => "");
+    const remotePublicKey = await StripeManager.GetPublicKey().catch(() => '');
     const publishableKey = remotePublicKey || STRIPE_PUBLIC_KEY;
-    if(!publishableKey || !publishableKey.startsWith("pk_"))
+    if(!publishableKey || !publishableKey.startsWith('pk_'))
     {
-        showError("Missing Stripe public key.");
+        showError('Missing Stripe public key.');
         return false;
     }
 
     stripeInstance = window.Stripe(publishableKey);
     if(!stripeInstance)
     {
-        showError("Failed to initialize Stripe.");
+        showError('Failed to initialize Stripe.');
         return false;
     }
 
@@ -248,24 +246,24 @@ export async function refreshStripe()
 
     refreshPromise = (async () =>
     {
-        showError("");
+        showError('');
         setPayButtonDisabled(true);
 
         const clientSecret = await createPaymentIntentRequest();
         const container = getPaymentElementContainer();
         if(!container)
         {
-            throw new Error("Payment element container was not found.");
+            throw new Error('Payment element container was not found.');
         }
 
         clearMountedElement();
         elementsInstance = stripeInstance.elements({ clientSecret });
-        paymentElementInstance = elementsInstance.create("payment");
-        paymentElementInstance.mount("#payment-element");
+        paymentElementInstance = elementsInstance.create('payment');
+        paymentElementInstance.mount('#payment-element');
     })()
         .catch((error) =>
         {
-            showError(error.message || "Failed to load payment form.");
+            showError(error.message || 'Failed to load payment form.');
             throw error;
         })
         .finally(() =>
@@ -297,7 +295,7 @@ export async function handlePayment(event)
 
     isSubmitting = true;
     setPayButtonDisabled(true);
-    showError("");
+    showError('');
 
     try
     {
@@ -310,11 +308,11 @@ export async function handlePayment(event)
 
         if(result.error)
         {
-            showError(result.error.message || "Payment failed. Please try again.");
+            showError(result.error.message || 'Payment failed. Please try again.');
         }
     } catch(error)
     {
-        showError(error.message || "Payment failed. Please try again.");
+        showError(error.message || 'Payment failed. Please try again.');
     } finally
     {
         isSubmitting = false;

@@ -10,19 +10,17 @@ let state = {
     expanded: null
 };
 
-function escapeHtml(s)
-{
+function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[c]);
 }
 
-// ── Formatting helpers ────────────────────────────────────────────────
+// Formatting helpers
 
-function formatDuration(totalSeconds)
-{
+function formatDuration(totalSeconds) {
     const s = Math.max(0, Math.round(Number(totalSeconds) || 0));
-    if(s < 60) return '<1 minute';
+    if (s < 60) return '<1 minute';
     const units = [
         [ 31536000, 'year' ],
         [ 2592000, 'month' ],
@@ -31,10 +29,8 @@ function formatDuration(totalSeconds)
         [ 3600, 'hour' ],
         [ 60, 'minute' ]
     ];
-    for(const [ secs, name ] of units)
-    {
-        if(s >= secs)
-        {
+    for (const [ secs, name ] of units) {
+        if (s >= secs) {
             const v = Math.floor(s / secs);
             return v + ' ' + name + (v === 1 ? '' : 's');
         }
@@ -42,66 +38,55 @@ function formatDuration(totalSeconds)
     return s + ' seconds';
 }
 
-function formatDate(ms)
-{
-    if(!ms || ms <= 0) return 'Unknown';
+function formatDate(ms) {
+    if (!ms || ms <= 0) return 'Unknown';
     return new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function formatLastSeen(ts)
-{
-    if(!ts || ts <= 0) return 'Never';
+function formatLastSeen(ts) {
+    if (!ts || ts <= 0) return 'Never';
     const diff = Date.now() - ts;
-    if(diff < 60 * 1000) return 'now';
-    if(diff < 60 * 60 * 1000) return Math.floor(diff / 60000) + 'm ago';
-    if(diff < 24 * 60 * 60 * 1000) return Math.floor(diff / 3600000) + 'h ago';
-    if(diff < 30 * 24 * 60 * 60 * 1000) return Math.floor(diff / 86400000) + 'd ago';
+    if (diff < 60 * 1000) return 'now';
+    if (diff < 60 * 60 * 1000) return Math.floor(diff / 60000) + 'm ago';
+    if (diff < 24 * 60 * 60 * 1000) return Math.floor(diff / 3600000) + 'h ago';
+    if (diff < 30 * 24 * 60 * 60 * 1000) return Math.floor(diff / 86400000) + 'd ago';
     return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 // Athens YYYY-MM-DD from a timestamp (the server buckets by Europe/Athens).
-function athensDateStrClient(ts)
-{
+function athensDateStrClient(ts) {
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Athens', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Number(ts)));
 }
 
-function licenseStatus(lic)
-{
-    if(lic.banned || lic.disabled) return 'disabled';
-    if(lic.expires_at !== -1 && Date.now() > lic.expires_at) return 'expired';
+function licenseStatus(lic) {
+    if (lic.banned || lic.disabled) return 'disabled';
+    if (lic.expires_at !== -1 && Date.now() > lic.expires_at) return 'expired';
     return 'active';
 }
 
-function isActiveLicense(lic)
-{
+function isActiveLicense(lic) {
     return licenseStatus(lic) === 'active';
 }
 
-// ── Profile / stats ───────────────────────────────────────────────────
+// Profile / stats
 
-function setAvatar(imgEl, fallbackEl, avatarUrl, name)
-{
-    if(avatarUrl)
-    {
+function setAvatar(imgEl, fallbackEl, avatarUrl, name) {
+    if (avatarUrl) {
         imgEl.src = avatarUrl;
         imgEl.style.display = 'block';
         fallbackEl.style.display = 'none';
-    }
-    else
-    {
+    } else {
         fallbackEl.textContent = (name || '?').charAt(0).toUpperCase();
         imgEl.style.display = 'none';
         fallbackEl.style.display = 'flex';
     }
 }
 
-function sparklineSvg(values, w, h)
-{
+function sparklineSvg(values, w, h) {
     w = w || 96;
     h = h || 28;
     const max = Math.max(...values, 1);
-    const pts = values.map((v, i) =>
-    {
+    const pts = values.map((v, i) => {
         const x = values.length > 1 ? (i / (values.length - 1)) * (w - 2) + 1 : 1;
         const y = h - 2 - (v / max) * (h - 4);
         return x.toFixed(1) + ',' + y.toFixed(1);
@@ -114,29 +99,26 @@ function sparklineSvg(values, w, h)
     `;
 }
 
-// Compare the last 7 days against the 7 before them, from the already-fetched daily array.
-function last7vsPrev7(daily)
-{
-    if(!Array.isArray(daily) || daily.length < 14) return null;
+// Last 7 days vs the previous 7, from the daily array.
+function last7vsPrev7(daily) {
+    if (!Array.isArray(daily) || daily.length < 14) return null;
     const bySecond = daily.map(d => Number(d.seconds) || 0);
     const recent = bySecond.slice(-7).reduce((a, b) => a + b, 0);
     const prev = bySecond.slice(-14, -7).reduce((a, b) => a + b, 0);
-    if(prev <= 0) return null;
+    if (prev <= 0) return null;
     const pct = Math.round(((recent - prev) / prev) * 100);
-    if(pct === 0) return { dir: 'flat', pct: 0 };
+    if (pct === 0) return { dir: 'flat', pct: 0 };
     return { dir: pct > 0 ? 'up' : 'down', pct };
 }
 
-function deltaHtml(delta)
-{
-    if(!delta) return '';
-    if(delta.dir === 'flat') return '<span class="dash-delta flat">— no change</span>';
+function deltaHtml(delta) {
+    if (!delta) return '';
+    if (delta.dir === 'flat') return '<span class="dash-delta flat">— no change</span>';
     const arrow = delta.dir === 'up' ? '▲' : '▼';
     return `<span class="dash-delta ${delta.dir}">${arrow} ${Math.abs(delta.pct)}% last 7d</span>`;
 }
 
-function renderProfile()
-{
+function renderProfile() {
     const { user, banned, memberSince, usage, licenses } = state.data;
     const name = user.globalName || user.username || 'Account';
 
@@ -145,11 +127,10 @@ function renderProfile()
     document.getElementById('dash-user-sub').textContent = '@' + (user.username || 'unknown');
 
     const balanceEl = document.getElementById('dash-side-balance');
-    if(balanceEl) balanceEl.textContent = '$' + Number(user.balance || 0).toFixed(2);
+    if (balanceEl) balanceEl.textContent = '$' + Number(user.balance || 0).toFixed(2);
 
     const dot = document.getElementById('dash-status-dot');
-    if(dot)
-    {
+    if (dot) {
         dot.className = 'dash-status-dot ' + (banned ? 'red' : 'green');
         dot.title = banned ? 'Banned' : 'Active';
     }
@@ -164,8 +145,7 @@ function renderProfile()
         { label: 'Total usage', value: formatDuration(usage.totalSeconds), cls: 'gold', spark: dailySeconds, delta: last7vsPrev7(daily) },
         { label: 'Balance', value: Number(user.balance || 0).toFixed(2), sub: 'wallet credits', cls: 'gold' }
     ];
-    cards.forEach(card =>
-    {
+    cards.forEach(card => {
         const el = document.createElement('div');
         el.className = 'dash-stat';
 
@@ -180,10 +160,9 @@ function renderProfile()
         el.appendChild(label);
         el.appendChild(value);
 
-        if(card.spark && card.spark.length) el.insertAdjacentHTML('beforeend', sparklineSvg(card.spark));
-        if(card.delta) el.insertAdjacentHTML('beforeend', deltaHtml(card.delta));
-        if(card.sub)
-        {
+        if (card.spark && card.spark.length) el.insertAdjacentHTML('beforeend', sparklineSvg(card.spark));
+        if (card.delta) el.insertAdjacentHTML('beforeend', deltaHtml(card.delta));
+        if (card.sub) {
             const sub = document.createElement('div');
             sub.className = 'dash-stat-sub';
             sub.textContent = card.sub;
@@ -194,11 +173,10 @@ function renderProfile()
     });
 
     const actions = document.getElementById('dash-quick-actions');
-    if(actions) actions.style.display = 'flex';
+    if (actions) actions.style.display = 'flex';
 
     const copyBtn = document.getElementById('dash-action-copykey');
-    if(copyBtn && licenses.length > 0)
-    {
+    if (copyBtn && licenses.length > 0) {
         const newest = licenses
             .filter(isActiveLicense)
             .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))[0] || licenses[0];
@@ -206,25 +184,22 @@ function renderProfile()
         copyBtn.style.opacity = '';
         copyBtn.style.cursor = '';
         copyBtn.title = 'Copy key: ' + newest.key;
-        copyBtn.onclick = () =>
-        {
+        copyBtn.onclick = () => {
             copyKey(copyBtn, newest.key);
-            if(window.NotifySuccess) window.NotifySuccess('License key copied');
+            if (window.NotifySuccess) window.NotifySuccess('License key copied');
         };
     }
 }
 
-// ── Weekly usage → free license progress ─────────────────────────────
+// Weekly usage progress
 
-function renderUsageProgress()
-{
+function renderUsageProgress() {
     const card = document.getElementById('dash-usage-card');
-    if(!card || !state.data || !state.data.usage) return;
+    if (!card || !state.data || !state.data.usage) return;
 
     const seconds = Number(state.data.usage.weeklySeconds) || 0;
     const threshold = Number(state.data.usage.thresholdSeconds) || 0;
-    if(!threshold || threshold <= 0)
-    {
+    if (!threshold || threshold <= 0) {
         card.style.display = 'none';
         return;
     }
@@ -245,10 +220,9 @@ function renderUsageProgress()
     card.style.display = 'block';
 }
 
-// ── Chart (copy of the admin statistics chart) ────────────────────────
+// Activity chart
 
-function chartHours(daily)
-{
+function chartHours(daily) {
     // Map API daily entries (seconds) to whole hours for the chart.
     return (daily || []).map(d => ({
         ts: d.ts,
@@ -259,14 +233,12 @@ function chartHours(daily)
     }));
 }
 
-function barChartHtml(daily, getSub, opts)
-{
+function barChartHtml(daily, getSub, opts) {
     const max = Math.max(...daily.map(d => d.count), 1);
     const min = Math.min(...daily.map(d => d.count));
     const hasData = daily.some(d => d.count > 0);
     const last = daily.length - 1;
-    const bars = daily.map((d, i) =>
-    {
+    const bars = daily.map((d, i) => {
         const h = d.count > 0 ? Math.max((d.count / max) * 100, 4) : 0;
         const cls = d.count > 0 ? 'bar' : 'bar bar-empty';
         const today = d.count > 0 && i === last && opts?.highlightLast !== false ? ' bar-today' : '';
@@ -289,14 +261,11 @@ function barChartHtml(daily, getSub, opts)
     `;
 }
 
-function animateBars(container)
-{
-    if(!container) return;
+function animateBars(container) {
+    if (!container) return;
     const bars = container.querySelectorAll('.bar');
-    requestAnimationFrame(() => requestAnimationFrame(() =>
-    {
-        bars.forEach(bar =>
-        {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        bars.forEach(bar => {
             bar.style.height = (bar.dataset.h || '0') + '%';
         });
     }));
@@ -304,10 +273,8 @@ function animateBars(container)
 
 let barTooltipEl = null;
 
-function getBarTooltip()
-{
-    if(!barTooltipEl)
-    {
+function getBarTooltip() {
+    if (!barTooltipEl) {
         barTooltipEl = document.createElement('div');
         barTooltipEl.className = 'bar-tooltip';
         document.body.appendChild(barTooltipEl);
@@ -317,21 +284,19 @@ function getBarTooltip()
     return barTooltipEl;
 }
 
-function moveBarTooltip(e)
-{
+function moveBarTooltip(e) {
     const tip = getBarTooltip();
     const r = tip.getBoundingClientRect();
     let x = e.clientX + 12;
     let y = e.clientY - r.height - 10;
-    if(x + r.width > window.innerWidth - 8) x = e.clientX - r.width - 12;
-    if(y < 8) y = e.clientY + 12;
-    if(y + r.height > window.innerHeight - 8) y = window.innerHeight - r.height - 8;
+    if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - 12;
+    if (y < 8) y = e.clientY + 12;
+    if (y + r.height > window.innerHeight - 8) y = window.innerHeight - r.height - 8;
     tip.style.left = x + 'px';
     tip.style.top = y + 'px';
 }
 
-function showBarTooltip(e)
-{
+function showBarTooltip(e) {
     const bar = e.currentTarget.querySelector('.bar') || e.currentTarget;
     const tip = getBarTooltip();
     tip.innerHTML =
@@ -343,39 +308,32 @@ function showBarTooltip(e)
     moveBarTooltip(e);
 }
 
-function hideBarTooltip()
-{
-    if(barTooltipEl)
-    {
+function hideBarTooltip() {
+    if (barTooltipEl) {
         barTooltipEl.style.opacity = '0';
         barTooltipEl.style.visibility = 'hidden';
     }
 }
 
-function bindChartTooltips(container, onClick)
-{
-    if(!container) return;
-    container.querySelectorAll('.bar-col').forEach(col =>
-    {
+function bindChartTooltips(container, onClick) {
+    if (!container) return;
+    container.querySelectorAll('.bar-col').forEach(col => {
         const bar = col.querySelector('.bar');
-        if(!bar) return;
+        if (!bar) return;
         col.addEventListener('mousemove', moveBarTooltip);
         col.addEventListener('mouseenter', showBarTooltip);
         col.addEventListener('mouseleave', hideBarTooltip);
-        if(typeof onClick === 'function' && !bar.classList.contains('bar-empty'))
-        {
+        if (typeof onClick === 'function' && !bar.classList.contains('bar-empty')) {
             col.addEventListener('click', () => onClick(bar));
         }
     });
 }
 
-function fmtHour(h)
-{
+function fmtHour(h) {
     return h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`;
 }
 
-function hourlyItems(hourly)
-{
+function hourlyItems(hourly) {
     const ordered = hourly.slice(1).concat(hourly[0]);
     return ordered.map((n, idx) => ({
         label: fmtHour((idx + 1) % 24),
@@ -383,36 +341,31 @@ function hourlyItems(hourly)
     }));
 }
 
-function dateRangeText(daily)
-{
-    if(!Array.isArray(daily) || daily.length === 0 || !daily.some(d => d.count > 0)) return 'No data yet.';
+function dateRangeText(daily) {
+    if (!Array.isArray(daily) || daily.length === 0 || !daily.some(d => d.count > 0)) return 'No data yet.';
     const first = daily[0].label;
     const last = daily[daily.length - 1].label;
     return first === last ? first : `${first} – ${last}`;
 }
 
-// X-axis labels under the bars; thins out on long ranges so they never crowd.
-function chartLabelsHtml(daily)
-{
+// X-axis labels, thinned on long ranges.
+function chartLabelsHtml(daily) {
     const step = Math.max(1, Math.ceil(daily.length / 7));
-    const items = daily.map((d, i) =>
-    {
+    const items = daily.map((d, i) => {
         const show = i % step === 0 || i === daily.length - 1;
         return `<span>${show ? escapeHtml(d.label) : ''}</span>`;
     }).join('');
     return `<div class="chart-xlabels">${items}</div>`;
 }
 
-function skeletonChartHtml()
-{
+function skeletonChartHtml() {
     const bars = [38, 62, 45, 78, 54, 68, 40, 64, 50, 72, 34, 58, 70, 46].map(h =>
         `<div class="bar-col"><div class="bar skel-bar" style="height:${h}%"></div></div>`
     ).join('');
     return `<div class="stats-chart"><span class="chart-gridline" style="top:25%"></span><span class="chart-gridline" style="top:50%"></span><span class="chart-gridline" style="top:75%"></span><span class="chart-gridline chart-gridline-base"></span>${bars}</div>`;
 }
 
-function emptyStateHtml(text)
-{
+function emptyStateHtml(text) {
     return `
         <div class="chart-empty">
             <div class="flex flex-col items-center gap-2 text-center px-6">
@@ -423,8 +376,7 @@ function emptyStateHtml(text)
     `;
 }
 
-function hourlyWrapHtml(label, items)
-{
+function hourlyWrapHtml(label, items) {
     return `
         <div class="hourly-wrap">
             <div class="flex items-center justify-between gap-3 pb-2 mb-1 border-b border-white/10">
@@ -436,25 +388,22 @@ function hourlyWrapHtml(label, items)
     `;
 }
 
-async function expandHourly(ts, bar)
-{
+async function expandHourly(ts, bar) {
     const el = document.getElementById('dash-activity-chart');
-    if(!el || !ts) return;
-    if(state.expanded && state.expanded.ts === ts)
-    {
+    if (!el || !ts) return;
+    if (state.expanded && state.expanded.ts === ts) {
         collapseHourly();
         return;
     }
     const dateStr = (bar && bar.dataset && bar.dataset.date) || '';
-    if(!dateStr) return;
+    if (!dateStr) return;
     const dayLabel = bar.dataset.label || dateStr;
     let hourly = null;
-    try
-    {
+    try {
         const data = await loadDashboard({ day: dateStr });
         hourly = (data.activity && data.activity.hourly) || null;
-    } catch(e) { return; }
-    if(!Array.isArray(hourly)) return;
+    } catch (e) { return; }
+    if (!Array.isArray(hourly)) return;
     const items = hourlyItems(hourly);
     hideBarTooltip();
     el.innerHTML = hourlyWrapHtml(dayLabel, items);
@@ -464,20 +413,17 @@ async function expandHourly(ts, bar)
     state.expanded = { ts: Number(ts) };
 }
 
-function collapseHourly()
-{
+function collapseHourly() {
     const el = document.getElementById('dash-activity-chart');
     state.expanded = null;
-    if(!el) return;
+    if (!el) return;
     hideBarTooltip();
     renderChart(el);
 }
 
-function renderChart(el)
-{
+function renderChart(el) {
     const daily = chartHours(state.data.activity.daily);
-    if(daily.length === 0)
-    {
+    if (daily.length === 0) {
         el.innerHTML = emptyStateHtml('No activity yet.');
         document.getElementById('dash-activity-date-range').textContent = 'No data yet.';
         return;
@@ -495,67 +441,55 @@ function renderChart(el)
         rangeText === 'No data yet.' ? rangeText : `${rangeText} · ${totalSessions} session${totalSessions === 1 ? '' : 's'} · EU/Athens`;
 }
 
-// ── Licenses tab ──────────────────────────────────────────────────────
+// Licenses
 
 const copyIcon = `<svg class="copy-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>`;
 const checkIcon = `<svg class="check-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
 
-function copyKey(btn, val)
-{
-    const done = () =>
-    {
+function copyKey(btn, val) {
+    const done = () => {
         btn.classList.add('success');
         setTimeout(() => btn.classList.remove('success'), 1200);
     };
-    if(navigator.clipboard && navigator.clipboard.writeText)
-    {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(val).then(done).catch(() => fallbackCopy(val, done));
-    }
-    else
-    {
+    } else {
         fallbackCopy(val, done);
     }
 }
 
-function fallbackCopy(val, done)
-{
+function fallbackCopy(val, done) {
     const el = document.createElement('textarea');
     el.value = val;
     document.body.appendChild(el);
     el.select();
-    try { document.execCommand('copy'); } catch(e) {}
+    try { document.execCommand('copy'); } catch (e) {}
     document.body.removeChild(el);
     done();
 }
 
-function licenseStatusBadge(status)
-{
+function licenseStatusBadge(status) {
     return `<span class="license-status ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
 }
 
-function renderLicenses()
-{
+function renderLicenses() {
     const list = document.getElementById('dash-license-list');
-    if(!list || !state.data) return;
+    if (!list || !state.data) return;
 
     const licenses = state.data.licenses || [];
-    const filtered = licenses.filter(l =>
-    {
-        if(state.filter === 'active') return isActiveLicense(l);
-        if(state.filter === 'inactive') return !isActiveLicense(l);
+    const filtered = licenses.filter(l => {
+        if (state.filter === 'active') return isActiveLicense(l);
+        if (state.filter === 'inactive') return !isActiveLicense(l);
         return true;
-    }).sort((a, b) =>
-    {
+    }).sort((a, b) => {
         const sa = isActiveLicense(a) ? 0 : 1;
         const sb = isActiveLicense(b) ? 0 : 1;
-        if(sa !== sb) return sa - sb;
+        if (sa !== sb) return sa - sb;
         return (b.created_at || 0) - (a.created_at || 0);
     });
 
-    // Summary line: what the user owns at a glance.
     const summary = document.getElementById('dash-license-summary');
-    if(summary)
-    {
+    if (summary) {
         const active = licenses.filter(isActiveLicense).length;
         const inactive = licenses.length - active;
         summary.textContent = licenses.length === 0
@@ -564,8 +498,7 @@ function renderLicenses()
     }
 
     list.innerHTML = '';
-    if(filtered.length === 0)
-    {
+    if (filtered.length === 0) {
         const p = document.createElement('p');
         p.className = 'text-neutral-500 text-sm py-6 text-center';
         p.textContent = licenses.length === 0 ? 'No licenses found.' : 'No licenses match this filter.';
@@ -582,8 +515,7 @@ function renderLicenses()
     table.style.minWidth = '900px';
 
     const colgroup = document.createElement('colgroup');
-    ['26%', '14%', '11%', '15%', '14%', '15%', '5%'].forEach(w =>
-    {
+    ['26%', '14%', '11%', '15%', '14%', '15%', '5%'].forEach(w => {
         const col = document.createElement('col');
         col.style.width = w;
         colgroup.appendChild(col);
@@ -601,13 +533,11 @@ function renderLicenses()
         { label: 'Last activity', cls: 'td-num' },
         { label: '', cls: '' }
     ];
-    headCells.forEach(cell =>
-    {
+    headCells.forEach(cell => {
         const th = document.createElement('th');
         th.textContent = cell.label;
-        if(cell.cls) th.classList.add(cell.cls);
-        if(cell.label)
-        {
+        if (cell.cls) th.classList.add(cell.cls);
+        if (cell.label) {
             const resizer = document.createElement('span');
             resizer.className = 'col-resizer';
             th.appendChild(resizer);
@@ -618,8 +548,7 @@ function renderLicenses()
     table.appendChild(thead);
 
     const tbody = document.createElement('tbody');
-    filtered.forEach(lic =>
-    {
+    filtered.forEach(lic => {
         const tr = document.createElement('tr');
 
         const tdKey = document.createElement('td');
@@ -631,9 +560,9 @@ function renderLicenses()
         tdProd.textContent = lic.product || 'License';
 
         let status;
-        if(lic.banned) status = 'banned';
-        else if(lic.disabled) status = 'disabled';
-        else if(lic.expires_at !== -1 && Date.now() > lic.expires_at) status = 'expired';
+        if (lic.banned) status = 'banned';
+        else if (lic.disabled) status = 'disabled';
+        else if (lic.expires_at !== -1 && Date.now() > lic.expires_at) status = 'expired';
         else status = 'active';
 
         const tdStatus = document.createElement('td');
@@ -673,43 +602,40 @@ function renderLicenses()
     wrapper.appendChild(table);
     list.appendChild(wrapper);
 
-    if(window.ResizableColumns) window.ResizableColumns.attach(table);
+    if (window.ResizableColumns) window.ResizableColumns.attach(table);
 }
 
-// ── Data loading ──────────────────────────────────────────────────────
+// Data loading
 
-async function loadDashboard(extra)
-{
+async function loadDashboard(extra) {
     const token = DiscordAuth.GetSessionToken();
     const user = await DiscordAuth.GetUser();
-    if(!token || !user) return null;
+    if (!token || !user) return null;
 
     const body = {
         discordId: user.id,
         loginToken: token,
         days: String(state.range)
     };
-    if(state.end) body.end = state.end;
-    if(extra && extra.day) body.day = extra.day;
+    if (state.end) body.end = state.end;
+    if (extra && extra.day) body.day = extra.day;
 
     const apiUrl = await Api.GetApiUrl();
     const response = await fetch(`${apiUrl}/auth/dashboard`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     });
     const data = await response.json();
-    if(!data.ok) throw new Error(data.message || 'Failed to load dashboard');
+    if (!data.ok) throw new Error(data.message || 'Failed to load dashboard');
     return data;
 }
 
-function showError(message)
-{
+function showError(message) {
     const chart = document.getElementById('dash-activity-chart');
-    if(chart) chart.innerHTML = emptyStateHtml(message || 'Failed to load. Refresh to try again.');
+    if (chart) chart.innerHTML = emptyStateHtml(message || 'Failed to load. Refresh to try again.');
     const list = document.getElementById('dash-license-list');
-    if(list)
-    {
+    if (list) {
         list.innerHTML = '';
         const p = document.createElement('p');
         p.className = 'text-neutral-500 text-sm py-6 text-center';
@@ -718,14 +644,11 @@ function showError(message)
     }
 }
 
-async function loadAll()
-{
+async function loadAll() {
     const chart = document.getElementById('dash-activity-chart');
-    try
-    {
+    try {
         const data = await loadDashboard();
-        if(!data)
-        {
+        if (!data) {
             window.location.href = '/';
             return;
         }
@@ -734,24 +657,22 @@ async function loadAll()
         renderUsageProgress();
         renderChart(chart);
         renderLicenses();
-    } catch(e)
-    {
+    } catch (e) {
         console.error('Dashboard load failed:', e);
         showError();
     }
 }
 
-// ── Init ──────────────────────────────────────────────────────────────
+// Init
 
-function switchTab(tab)
-{
+function switchTab(tab) {
     document.querySelectorAll('.side-nav-btn[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     document.getElementById('tab-overview').classList.toggle('hidden', tab !== 'overview');
     document.getElementById('tab-licenses').classList.toggle('hidden', tab !== 'licenses');
     const title = document.getElementById('dash-page-title');
     const sub = document.getElementById('dash-page-sub');
-    if(title) title.textContent = tab === 'licenses' ? 'Licenses' : 'Overview';
-    if(sub) sub.textContent = tab === 'licenses' ? 'View and copy your license keys' : 'Your usage, stats and licenses';
+    if (title) title.textContent = tab === 'licenses' ? 'Licenses' : 'Overview';
+    if (sub) sub.textContent = tab === 'licenses' ? 'View and copy your license keys' : 'Your usage, stats and licenses';
 }
 
 // Bridge for the command palette (and anything else) to reuse dashboard internals.
@@ -760,77 +681,61 @@ window.DashBridge = {
     copyKey,
     getLicenses: () => (state.data && state.data.licenses) || [],
     getState: () => state,
-    copyText: function(val)
-    {
+    copyText: function(val) {
         const done = () => window.NotifySuccess && window.NotifySuccess('Copied to clipboard');
-        if(navigator.clipboard && navigator.clipboard.writeText)
-        {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(val).then(done).catch(() => fallbackCopy(val, done));
-        }
-        else
-        {
+        } else {
             fallbackCopy(val, done);
         }
     }
 };
 
-window.onload = () =>
-{
-    if(typeof initParticles === 'function')
-    {
+window.onload = () => {
+    if (typeof initParticles === 'function') {
         initParticles();
     }
-    if(!DiscordAuth.GetSessionToken())
-    {
+    if (!DiscordAuth.GetSessionToken()) {
         window.location.href = '/';
         return;
     }
     loadAll();
 };
 
-document.querySelectorAll('.side-nav-btn[data-tab]').forEach(btn =>
-{
-    btn.addEventListener('click', () =>
-    {
+document.querySelectorAll('.side-nav-btn[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
         switchTab(btn.dataset.tab);
         closeSidebarDrawer();
     });
 });
 
-// ── Sidebar: desktop collapse (icon rail) + mobile drawer ─────────────
+// Sidebar: desktop collapse + mobile drawer
 
-function closeSidebarDrawer()
-{
+function closeSidebarDrawer() {
     const sb = document.getElementById('dash-sidebar');
     const bd = document.getElementById('dash-sidebar-backdrop');
-    if(sb) sb.classList.remove('open');
-    if(bd) bd.classList.remove('show');
+    if (sb) sb.classList.remove('open');
+    if (bd) bd.classList.remove('show');
 }
 
-(function initSidebar()
-{
+(function initSidebar() {
     const sb = document.getElementById('dash-sidebar');
     const toggle = document.getElementById('dash-sidebar-toggle');
     const backdrop = document.getElementById('dash-sidebar-backdrop');
     const drawerBtn = document.getElementById('dash-drawer-btn');
 
-    if(sb && toggle)
-    {
-        if(localStorage.getItem('dash_sidebar_collapsed') === '1')
-        {
+    if (sb && toggle) {
+        if (localStorage.getItem('dash_sidebar_collapsed') === '1') {
             document.body.classList.add('sidebar-collapsed');
         }
-        toggle.addEventListener('click', () =>
-        {
+        toggle.addEventListener('click', () => {
             const collapsed = document.body.classList.toggle('sidebar-collapsed');
             localStorage.setItem('dash_sidebar_collapsed', collapsed ? '1' : '0');
         });
     }
 
-    if(sb && drawerBtn && backdrop)
-    {
-        drawerBtn.addEventListener('click', () =>
-        {
+    if (sb && drawerBtn && backdrop) {
+        drawerBtn.addEventListener('click', () => {
             sb.classList.add('open');
             backdrop.classList.add('show');
         });
@@ -838,10 +743,8 @@ function closeSidebarDrawer()
     }
 })();
 
-document.querySelectorAll('.dash-filter-btn').forEach(btn =>
-{
-    btn.addEventListener('click', () =>
-    {
+document.querySelectorAll('.dash-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
         document.querySelectorAll('.dash-filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         state.filter = btn.dataset.filter;
@@ -849,46 +752,39 @@ document.querySelectorAll('.dash-filter-btn').forEach(btn =>
     });
 });
 
-document.getElementById('dash-activity-range').addEventListener('change', async function()
-{
+document.getElementById('dash-activity-range').addEventListener('change', async function() {
     const raw = this.value;
     state.range = raw === 'all' ? 'all' : (parseInt(raw, 10) || 14);
     state.expanded = null;
     const chart = document.getElementById('dash-activity-chart');
     chart.innerHTML = skeletonChartHtml();
-    try
-    {
+    try {
         const data = await loadDashboard();
-        if(!data) { window.location.href = '/'; return; }
+        if (!data) { window.location.href = '/'; return; }
         state.data = data;
         renderChart(chart);
         renderLicenses();
-    } catch(e)
-    {
+    } catch (e) {
         showError();
     }
 });
 
-// End-date picker (admin statistics style): YYYY-MM-DD in the Athens calendar.
+// End-date picker, Athens calendar.
 const endInput = document.getElementById('dash-activity-end');
-if(endInput)
-{
+if (endInput) {
     endInput.max = athensDateStrClient(Date.now());
-    endInput.addEventListener('change', async function()
-    {
+    endInput.addEventListener('change', async function() {
         state.end = this.value;
         state.expanded = null;
         const chart = document.getElementById('dash-activity-chart');
         chart.innerHTML = skeletonChartHtml();
-        try
-        {
+        try {
             const data = await loadDashboard();
-            if(!data) { window.location.href = '/'; return; }
+            if (!data) { window.location.href = '/'; return; }
             state.data = data;
             renderChart(chart);
             renderLicenses();
-        } catch(e)
-        {
+        } catch (e) {
             showError();
         }
     });

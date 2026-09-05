@@ -11,7 +11,7 @@
 
         const key = storageKey || ('cols_' + (table.id || Math.random().toString(36).slice(2, 8)));
 
-        // If the table has no <colgroup>, generate one so we have a persistent target for widths.
+        // Generate a colgroup if missing so widths have a target.
         let colgroup = table.querySelector('colgroup');
         if (!colgroup) {
             const headers = table.querySelectorAll('thead th');
@@ -33,7 +33,7 @@
 
         function cols() { return Array.from(colgroup.querySelectorAll('col')); }
 
-        // Remember the HTML-default widths so a double-click can restore them.
+        // Remember defaults so double-click can restore them.
         const initialWidths = cols().map(c => c.style.width || '');
 
         function saveWidths() {
@@ -65,8 +65,7 @@
                 if (!col || !nextCol) return;
 
                 const ths = Array.from(table.querySelectorAll('thead th'));
-                // The table box can measure 0 inside a collapsed flex/overflow wrapper, so
-                // derive the real width from the header cells, which always report correctly.
+                // Header cells always report correctly, the table box can read 0.
                 const tableWidth = ths.reduce((s, th) => s + th.getBoundingClientRect().width, 0) || 1;
                 const colPct = (colEl, th) => {
                     const s = colEl.style.width;
@@ -83,10 +82,7 @@
                 document.body.style.userSelect = 'none';
 
                 function onMove(ev) {
-                    // Trade width between this column and its neighbour, keeping their
-                    // combined width constant. Because every column stays a percentage that
-                    // sums to 100%, the browser can't auto-scale — the dragged column gets
-                    // exactly the width shown, so narrowing it truncates the cell (…) as expected.
+                    // Trade width with the neighbour, keeping the pair total constant.
                     const deltaPct = ((ev.clientX - startX) / tableWidth) * 100;
                     let newPct = startPct + deltaPct;
                     newPct = Math.max(minPct, Math.min(pairPct - minPct, newPct));
@@ -105,7 +101,7 @@
                 document.addEventListener('mouseup', onUp);
             });
 
-            // Double-click a handle to reset every column to its default width.
+            // Double-click resets every column to its default width.
             handle.addEventListener('dblclick', (e) => {
                 e.stopPropagation();
                 const c = cols();

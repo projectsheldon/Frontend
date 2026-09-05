@@ -1,18 +1,24 @@
-import Api from "../util/backend.js";
-import { CheckAuthStatus, DiscordAuth, UpdateUI } from "./auth.js";
-import "../util/site_notice.js"; // sets window.SheldonCookies; auto-shows the prompt on main pages only
+import Api from '../util/backend.js';
+import { CheckAuthStatus, DiscordAuth, UpdateUI } from './auth.js';
+import '../util/site_notice.js'; // sets window.SheldonCookies; auto-shows the prompt on main pages only
 
 let cookieChoiceFinal = false; // a Sure/No choice was recorded → the menu button never returns
 
 let userMenu = null;
 
 // Resolve elements lazily — topbar may be injected asynchronously via topbar.js
-function getDiscordBtn(){ return document.getElementById('discord-login-btn'); }
-function getUserProfileTrigger(){ return document.getElementById('user-profile-trigger'); }
+function getDiscordBtn()
+{
+    return document.getElementById('discord-login-btn');
+}
+function getUserProfileTrigger()
+{
+    return document.getElementById('user-profile-trigger');
+}
 const discordBtn = getDiscordBtn();
 const userProfileTrigger = getUserProfileTrigger();
 
-window.addEventListener('message', function(event)
+window.addEventListener('message', function (event)
 {
     // Only accept messages from our own origin — the OAuth-callback popup — so third-party
     // pages can't plant a session token by postMessage from an attacker-controlled window.
@@ -118,7 +124,7 @@ if(discordBtn)
     attachDiscordButtons();
 }
 // Delegated fallback — catches buttons added after this module ran (shared-topbar injection, dynamic content)
-document.addEventListener('click', function(e)
+document.addEventListener('click', function (e)
 {
     const target = e.target && e.target.closest ? e.target.closest('#discord-login-btn, .discord-login-btn') : null;
     if(!target) return;
@@ -144,18 +150,9 @@ function CreateAccountMenu()
 
     userMenu = document.createElement('div');
     userMenu.id = 'user-dropdown-menu';
-    userMenu.style.cssText = `
-        position: fixed;
-        width: 320px;
-        background: rgba(30, 30, 30, 0.98);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 16px;
-        padding: 16px;
-        z-index: 10000;
-        display: none;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    `;
+    userMenu.style.cssText = 'position:fixed;width:320px;background:rgba(30,30,30,0.98);' +
+        'backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.15);border-radius:16px;' +
+        'padding:16px;z-index:10000;display:none;box-shadow:0 10px 40px rgba(0,0,0,0.5);';
     document.body.appendChild(userMenu);
     return userMenu;
 }
@@ -223,14 +220,14 @@ function appendCookieSettingsButton(menu)
     menu.append(wrap);
 }
 
-window.addEventListener('sheldon-consent', function()
+window.addEventListener('sheldon-consent', function ()
 {
     cookieChoiceFinal = true;
     const btn = document.getElementById('cookie-settings-btn');
     if(btn) btn.remove();
 });
 
-window.addEventListener('sheldon-consent-state', function(e)
+window.addEventListener('sheldon-consent-state', function (e)
 {
     if(e && e.detail && e.detail.consent === 'accepted')
     {
@@ -252,9 +249,7 @@ async function RenderAccountMenu()
     const token = DiscordAuth.GetSessionToken();
     if(!token)
     {
-        menu.innerHTML = `
-            <div class="text-neutral-400 text-sm text-center py-4">Please log in to view your account</div>
-        `;
+        menu.innerHTML = '<div class="text-neutral-400 text-sm text-center py-4">Please log in to view your account</div>';
         return;
     }
 
@@ -302,7 +297,7 @@ function attachProfileTrigger()
     if(trg && !trg.dataset.sheldonBound)
     {
         trg.dataset.sheldonBound = '1';
-        trg.addEventListener("click", function(e)
+        trg.addEventListener('click', function (e)
         {
             e.stopPropagation();
             const menu = CreateAccountMenu();
@@ -313,7 +308,7 @@ function attachProfileTrigger()
 }
 attachProfileTrigger();
 // Delegated fallback for profile trigger that wasn't bound yet
-document.addEventListener('click', function(e)
+document.addEventListener('click', function (e)
 {
     const trg = e.target && e.target.closest ? e.target.closest('#user-profile-trigger') : null;
     if(trg)
@@ -340,7 +335,7 @@ if(document.readyState !== 'loading') { attachDiscordButtons(); attachProfileTri
 // Presence heartbeat: while a logged-in tab is open, keep touching /discord/me
 // so the backend's "Website Active Now" counts the visitor the whole time they
 // are on the site — not just on the initial page load.
-(function()
+(function ()
 {
     const HEARTBEAT_MS = 30000;
     setInterval(async () =>

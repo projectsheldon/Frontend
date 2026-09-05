@@ -13,15 +13,13 @@ const loginRequiredEl = document.getElementById('login-required');
 const paymentFormEl = document.getElementById('payment-form');
 const personalUseSection = document.getElementById('personal-use-section');
 
-document.addEventListener("DOMContentLoaded", async function()
-{
+document.addEventListener('DOMContentLoaded', async function() {
     await LoadProductInfo();
-    if(window.productUnavailable) return;
+    if (window.productUnavailable) return;
 
     const isLoggedIn = await CheckAuthStatus();
 
-    if(isLoggedIn)
-    {
+    if (isLoggedIn) {
         await ShowCheckout();
         return;
     }
@@ -131,7 +129,7 @@ function SetupPlanB() {
     window.copyPlanBWallet = function(coin) {
         const info = coins.find(c => c.coin === coin);
         if (!info) return;
-        try { navigator.clipboard.writeText(info.address || ''); } catch(e) {}
+        try { navigator.clipboard.writeText(info.address || ''); } catch (e) {}
         const statusEl = document.getElementById('planb-status');
         if (statusEl) {
             statusEl.style.cssText = 'display:block;margin-top:10px;padding:10px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.2);';
@@ -247,85 +245,70 @@ function showPlanBError(msg) {
     }
 }
 
-function ShowLoginForm()
-{
+function ShowLoginForm() {
     TogglePaymentForm(false);
 
     const loginBtn = loginRequiredEl?.querySelector('.discord-login-btn');
-    if(loginBtn && !loginBtn.dataset.sheldonBound)
-    {
-        // Mark as bound so the delegated handler in topbar_buttons.js doesn't double-fire,
-        // but use the same robust popup flag handling there. This local handler is a
-        // fallback for pages where topbar_buttons hasn't loaded yet.
+    if (loginBtn && !loginBtn.dataset.sheldonBound) {
+        // Bound flag stops the topbar delegated handler double-firing; this is a fallback.
         loginBtn.dataset.sheldonBound = '1';
-        loginBtn.addEventListener('click', async () =>
-        {
-            if(loginBtn.classList.contains('is-loading')) return;
-            if(window._discordLoginPopupOpen)
-            {
+        loginBtn.addEventListener('click', async () => {
+            if (loginBtn.classList.contains('is-loading')) return;
+            if (window._discordLoginPopupOpen) {
                 const ov = document.getElementById('discord-app-overlay');
-                if(ov){ try{ ov.querySelector('button')?.focus(); }catch(e){} return; }
+                if (ov){ try{ ov.querySelector('button')?.focus(); }catch (e){} return; }
             }
             loginBtn.classList.add('is-loading');
-            try { await window.DiscordAuth.LoginPopup(); } catch(e) {}
+            try { await window.DiscordAuth.LoginPopup(); } catch (e) {}
             finally { loginBtn.classList.remove('is-loading'); }
         });
     }
 
-    window.addEventListener('message', async function handleLogin(event)
-    {
+    window.addEventListener('message', async function handleLogin(event) {
         // Reject cross-origin messages so an attacker window can't plant a session token.
-        if(event.origin !== window.location.origin) return;
-        if(event.data && event.data.type === 'discord_session')
-        {
+        if (event.origin !== window.location.origin) return;
+        if (event.data && event.data.type === 'discord_session') {
             window.DiscordAuth.SetSessionToken(event.data.token);
             const isLoggedIn = await CheckAuthStatus();
 
-            if(isLoggedIn)
-            {
+            if (isLoggedIn) {
                 window.removeEventListener('message', handleLogin);
                 await ShowCheckout();
             }
         }
     });
 }
-function TogglePaymentForm(enabled)
-{
-    if(loginRequiredEl) loginRequiredEl.style.display = enabled ? 'none' : 'flex';
-    if(paymentFormEl) paymentFormEl.style.display = enabled ? 'flex' : 'none';
+function TogglePaymentForm(enabled) {
+    if (loginRequiredEl) loginRequiredEl.style.display = enabled ? 'none' : 'flex';
+    if (paymentFormEl) paymentFormEl.style.display = enabled ? 'flex' : 'none';
 }
 
-async function LoadProductInfo()
-{
-    if(productKey === "free")
-    {
+async function LoadProductInfo() {
+    if (productKey === "free") {
         const nameEl = document.getElementById('product-name');
-        if(nameEl) nameEl.textContent = 'Free Key';
+        if (nameEl) nameEl.textContent = 'Free Key';
 
         const sidebar = document.querySelector('.sidebar');
-        if(sidebar)
-        {
+        if (sidebar) {
             const subtotalRow = document.getElementById('subtotal-price')?.parentElement;
-            if(subtotalRow) subtotalRow.style.display = 'none';
+            if (subtotalRow) subtotalRow.style.display = 'none';
             const discountRow = document.getElementById('discount-row');
-            if(discountRow) discountRow.style.display = 'none';
+            if (discountRow) discountRow.style.display = 'none';
             const couponSection = document.getElementById('coupon-section');
-            if(couponSection) couponSection.style.display = 'none';
+            if (couponSection) couponSection.style.display = 'none';
         }
 
         try
         {
             const response = await fetch(`${await Api.GetApiUrl()}/products/get?product=free`);
-            if(!response.ok) { ShowProductUnavailable(); return; }
+            if (!response.ok) { ShowProductUnavailable(); return; }
             const product = await response.json();
-            if(product && product.price)
-            {
+            if (product && product.price) {
                 window.basePrice = parseFloat(product.price) || 0.9;
                 const totalEl = document.getElementById('final-total-price');
-                if(totalEl) totalEl.textContent = `${(window.basePrice * window.quantity).toFixed(1)} Balance`;
+                if (totalEl) totalEl.textContent = `${(window.basePrice * window.quantity).toFixed(1)} Balance`;
             }
-        } catch(e)
-        {
+        } catch (e) {
             ShowProductUnavailable();
         }
 
@@ -338,13 +321,12 @@ async function LoadProductInfo()
     try
     {
         const response = await fetch(`${await Api.GetApiUrl()}/products/get?product=${productKey}`);
-        if(response.status === 404) { ShowProductUnavailable(); return; }
+        if (response.status === 404) { ShowProductUnavailable(); return; }
         const product = await response.json();
 
-        if(product && product.name)
-        {
-            if(nameEl) nameEl.textContent = product.name;
-            if(priceEl) priceEl.textContent = '€' + parseFloat(product.price).toFixed(2);
+        if (product && product.name) {
+            if (nameEl) nameEl.textContent = product.name;
+            if (priceEl) priceEl.textContent = '€' + parseFloat(product.price).toFixed(2);
             window.basePrice = parseFloat(product.price) || 0;
             await window.fetchPriceFromApi();
         }
@@ -353,28 +335,25 @@ async function LoadProductInfo()
             // Unknown / stale product key (e.g. an old ?product=… link) — no product data.
             ShowProductUnavailable();
         }
-    } catch(error)
-    {
+    } catch (error) {
         console.error('Failed to load product:', error);
         ShowProductUnavailable();
     }
 }
 
-// Covers the checkout when the requested product no longer exists (stale links such as
-// ?product=monthly) or the backend is unreachable — no disabled buttons left hanging.
-function ShowProductUnavailable()
-{
-    if(window.productUnavailable) return;
+// Covers stale product links and backend outages, no buttons left hanging.
+function ShowProductUnavailable() {
+    if (window.productUnavailable) return;
     window.productUnavailable = true;
 
     const loginEl = document.getElementById('login-required');
     TogglePaymentForm(false); // hides payment form — note this re-shows login-required, so hide it after
-    if(loginEl) loginEl.style.display = 'none';
+    if (loginEl) loginEl.style.display = 'none';
     const ticket = document.getElementById('ticket-section');
-    if(ticket) ticket.style.display = 'none';
+    if (ticket) ticket.style.display = 'none';
 
     const existing = document.getElementById('product-unavailable-card');
-    if(existing) existing.remove();
+    if (existing) existing.remove();
 
     const mainContent = document.querySelector('.main-content');
     const card = document.createElement('div');
@@ -400,66 +379,58 @@ function ShowProductUnavailable()
 
     card.append(title, body, backBtn);
 
-    if(mainContent) mainContent.prepend(card);
+    if (mainContent) mainContent.prepend(card);
 }
 
-function HideProductUnavailable()
-{
+function HideProductUnavailable() {
     window.productUnavailable = false;
     const card = document.getElementById('product-unavailable-card');
-    if(card) card.remove();
+    if (card) card.remove();
 }
 
-async function ShowCheckout()
-{
+async function ShowCheckout() {
     const ticketSection = document.getElementById('ticket-section');
-    if(ticketSection) ticketSection.style.display = 'none';
+    if (ticketSection) ticketSection.style.display = 'none';
     
     TogglePaymentForm(true);
 
-    if(productKey === 'free')
-    {
+    if (productKey === 'free') {
         await ShowBalanceCheckout();
         return;
     }
     
     SetupTicketButton();
 
-    if(ticketSection) ticketSection.style.display = 'block';
+    if (ticketSection) ticketSection.style.display = 'block';
     await CheckResellerStatus();
 }
 
-function SetupTicketButton()
-{
+function SetupTicketButton() {
     const createBtn = document.getElementById('create-ticket-btn');
-    if(!createBtn) return;
+    if (!createBtn) return;
 
-    createBtn.addEventListener('click', function()
-    {
+    createBtn.addEventListener('click', function() {
         const modal = document.getElementById('ticket-modal');
-        if(modal) modal.classList.remove('hidden');
+        if (modal) modal.classList.remove('hidden');
     });
 
     SetupTicketModal();
 }
 
-function SetupTicketModal()
-{
+function SetupTicketModal() {
     const modal = document.getElementById('ticket-modal');
     const checkbox = document.getElementById('ticket-confirm-checkbox');
     const confirmBtn = document.getElementById('ticket-confirm-btn');
     const closeBtn = document.getElementById('ticket-modal-close');
-    if(!modal || !checkbox || !confirmBtn) return;
+    if (!modal || !checkbox || !confirmBtn) return;
 
     const FILL_DURATION = 3000;
     let fillTimer = null;
     let filling = false;
 
-    function resetFill()
-    {
+    function resetFill() {
         filling = false;
-        if(fillTimer)
-        {
+        if (fillTimer) {
             clearTimeout(fillTimer);
             fillTimer = null;
         }
@@ -468,17 +439,14 @@ function SetupTicketModal()
         confirmBtn.disabled = true;
     }
 
-    function closeModal()
-    {
+    function closeModal() {
         checkbox.checked = false;
         resetFill();
         modal.classList.add('hidden');
     }
 
-    checkbox.addEventListener('change', function()
-    {
-        if(!checkbox.checked)
-        {
+    checkbox.addEventListener('change', function() {
+        if (!checkbox.checked) {
             resetFill();
             return;
         }
@@ -486,20 +454,17 @@ function SetupTicketModal()
         confirmBtn.disabled = false;
         confirmBtn.classList.add('filling');
         filling = true;
-        fillTimer = setTimeout(function()
-        {
+        fillTimer = setTimeout(function() {
             fillTimer = null;
-            if(!filling) return;
+            if (!filling) return;
             // Fill completed: arm the button. No auto ticket — the user clicks to confirm.
             filling = false;
             confirmBtn.classList.add('armed');
         }, FILL_DURATION);
     });
 
-    confirmBtn.addEventListener('click', function(e)
-    {
-        if(filling || confirmBtn.disabled)
-        {
+    confirmBtn.addEventListener('click', function(e) {
+        if (filling || confirmBtn.disabled) {
             e.preventDefault();
             return;
         }
@@ -508,32 +473,28 @@ function SetupTicketModal()
         CreatePurchaseTicket();
     });
 
-    if(closeBtn) closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', function(e)
-    {
-        if(e.target === modal) closeModal();
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
     });
 }
 
-async function CreatePurchaseTicket()
-{
+async function CreatePurchaseTicket() {
     const createBtn = document.getElementById('create-ticket-btn');
-    if(!createBtn) return;
+    if (!createBtn) return;
 
     const statusEl = document.getElementById('ticket-status');
     const originalText = createBtn.innerHTML;
 
     createBtn.disabled = true;
     createBtn.innerHTML = '<div class="install-spinner" style="border-top-color: #000;"></div> Creating...';
-    if(statusEl) { statusEl.style.display = 'none'; }
+    if (statusEl) { statusEl.style.display = 'none'; }
 
     try
     {
         const token = window.DiscordAuth?.GetSessionToken();
-        if(!token)
-        {
-            if(statusEl)
-            {
+        if (!token) {
+            if (statusEl) {
                 statusEl.style.cssText = 'display: block; margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);';
                 statusEl.textContent = 'You must be logged in to create a ticket.';
             }
@@ -559,8 +520,7 @@ async function CreatePurchaseTicket()
 
         const data = await res.json();
 
-        if(data.ok)
-        {
+        if (data.ok) {
             createBtn.innerHTML = 'Ticket Created';
             createBtn.style.background = 'rgba(34,197,94,0.2)';
             createBtn.style.color = '#22c55e';
@@ -568,20 +528,16 @@ async function CreatePurchaseTicket()
         }
         else
         {
-            if(statusEl)
-            {
+            if (statusEl) {
                 statusEl.style.cssText = 'display: block; margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);';
                 statusEl.textContent = data.message || 'Failed to create ticket.';
             }
             createBtn.innerHTML = originalText;
             createBtn.disabled = false;
         }
-    }
-    catch(err)
-    {
+    } catch (err) {
         const statusEl = document.getElementById('ticket-status');
-        if(statusEl)
-        {
+        if (statusEl) {
             statusEl.style.cssText = 'display: block; margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);';
             statusEl.textContent = 'Failed to create ticket. Please try again.';
         }
@@ -590,14 +546,13 @@ async function CreatePurchaseTicket()
     }
 }
 
-function renderBalanceState(message, action)
-{
+function renderBalanceState(message, action) {
     const paymentForm = document.getElementById('payment-form');
-    if(!paymentForm) return;
+    if (!paymentForm) return;
 
     let btn = '';
-    if(action === 'login') btn = '<button id="balance-login-btn" class="btn-action" style="max-width:300px;padding-top:15px;padding-bottom:15px;">Log in with Discord</button>';
-    else if(action === 'retry') btn = '<button id="balance-retry-btn" class="btn-action" style="max-width:300px;padding-top:15px;padding-bottom:15px;">Try Again</button>';
+    if (action === 'login') btn = '<button id="balance-login-btn" class="btn-action" style="max-width:300px;padding-top:15px;padding-bottom:15px;">Log in with Discord</button>';
+    else if (action === 'retry') btn = '<button id="balance-retry-btn" class="btn-action" style="max-width:300px;padding-top:15px;padding-bottom:15px;">Try Again</button>';
 
     paymentForm.innerHTML = `
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;width:100%;text-align:center;gap:22px;">
@@ -606,26 +561,24 @@ function renderBalanceState(message, action)
         </div>`;
 
     const loginBtn = document.getElementById('balance-login-btn');
-    if(loginBtn) loginBtn.addEventListener('click', () => { try { window.DiscordAuth.LoginPopup(); } catch(e) {} });
+    if (loginBtn) loginBtn.addEventListener('click', () => { try { window.DiscordAuth.LoginPopup(); } catch (e) {} });
     const retryBtn = document.getElementById('balance-retry-btn');
-    if(retryBtn) retryBtn.addEventListener('click', () => { ShowBalanceCheckout(); });
+    if (retryBtn) retryBtn.addEventListener('click', () => { ShowBalanceCheckout(); });
 }
 
-async function ShowBalanceCheckout()
-{
+async function ShowBalanceCheckout() {
     const authToken = DiscordAuth.GetSessionToken();
-    if(!authToken) { renderBalanceState('Please log in to redeem your balance for a key.', 'login'); return; }
+    if (!authToken) { renderBalanceState('Please log in to redeem your balance for a key.', 'login'); return; }
 
     const apiUrl = await Api.GetApiUrl();
 
     try
     {
-        // Form body with the session token inside — a CORS simple request (no preflight),
-        // so it works behind the Cloudflare challenge like /workink/generate.
+        // Form body keeps this a CORS simple request (no preflight).
         const body = new URLSearchParams();
-        if(authToken) body.set('sessionToken', authToken);
+        if (authToken) body.set('sessionToken', authToken);
         const identity = await GetIdentityPayload();
-        for(const [k, v] of identity.entries()) body.set(k, v);
+        for (const [k, v] of identity.entries()) body.set(k, v);
 
         const response = await fetch(`${apiUrl}/discord/balance`, {
             method: 'POST',
@@ -634,7 +587,7 @@ async function ShowBalanceCheckout()
         });
         const data = await response.json();
 
-        if(!data || !data.ok) { renderBalanceState('Your session may have expired. Please log in again.', 'login'); return; }
+        if (!data || !data.ok) { renderBalanceState('Your session may have expired. Please log in again.', 'login'); return; }
 
         const balance = data.balance || 0;
         const adRewardBalance = data.ad_reward_balance || 0.1;
@@ -651,28 +604,26 @@ async function ShowBalanceCheckout()
         {
             const productRes = await fetch(`${apiUrl}/products/get?product=free`);
             const productData = await productRes.json();
-            if(productData && productData.duration) durationHours = productData.duration;
+            if (productData && productData.duration) durationHours = productData.duration;
         }
-        catch(e) {}
+        catch (e) {}
 
         const workinkLink = await Api.GetLink('workink');
 
         let cooldownTimer = null;
         let rateLimitTimer = null;
 
-        function formatCooldown(ms)
-        {
+        function formatCooldown(ms) {
             const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
-            if(hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
-            if(minutes > 0) return `${minutes}m ${seconds}s`;
+            if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+            if (minutes > 0) return `${minutes}m ${seconds}s`;
             return `${seconds}s`;
         }
 
-        function renderCheckout()
-        {
+        function renderCheckout() {
             const qty = window.quantity || 1;
             const totalCost = qty * freeKeyCost;
             const canAfford = balance >= totalCost;
@@ -683,9 +634,9 @@ async function ShowBalanceCheckout()
             const rateLimitRemaining = (isRateLimited && rateLimitedUntil > now) ? rateLimitedUntil - now : 0;
 
             const paymentForm = document.getElementById('payment-form');
-            if(!paymentForm) return;
+            if (!paymentForm) return;
 
-            if(rateLimitTimer) { clearInterval(rateLimitTimer); rateLimitTimer = null; }
+            if (rateLimitTimer) { clearInterval(rateLimitTimer); rateLimitTimer = null; }
 
             paymentForm.innerHTML = `
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; width: 100%; text-align: center; gap: 24px;">
@@ -720,55 +671,46 @@ async function ShowBalanceCheckout()
             `;
 
             const totalEl = document.getElementById('final-total-price');
-            if(totalEl) totalEl.textContent = `${totalCost.toFixed(1)} Balance`;
+            if (totalEl) totalEl.textContent = `${totalCost.toFixed(1)} Balance`;
 
-            if(isRateLimited && rateLimitRemaining > 0)
-            {
-                rateLimitTimer = setInterval(() =>
-                {
+            if (isRateLimited && rateLimitRemaining > 0) {
+                rateLimitTimer = setInterval(() => {
                     const remaining = rateLimitedUntil - Date.now();
-                    if(remaining <= 0)
-                    {
+                    if (remaining <= 0) {
                         clearInterval(rateLimitTimer);
                         rateLimitTimer = null;
                         renderCheckout();
                         return;
                     }
                     const msgEl = document.getElementById('rate-limit-msg');
-                    if(msgEl) msgEl.textContent = `Rate limited — max balance reached. Try again in ${formatCooldown(remaining)}.`;
+                    if (msgEl) msgEl.textContent = `Rate limited — max balance reached. Try again in ${formatCooldown(remaining)}.`;
                 }, 1000);
             }
 
-            if(isOnCooldown)
-            {
-                if(cooldownTimer) clearInterval(cooldownTimer);
-                cooldownTimer = setInterval(() =>
-                {
+            if (isOnCooldown) {
+                if (cooldownTimer) clearInterval(cooldownTimer);
+                cooldownTimer = setInterval(() => {
                     const remaining = freeKeyCooldownUntil - Date.now();
-                    if(remaining <= 0)
-                    {
+                    if (remaining <= 0) {
                         clearInterval(cooldownTimer);
                         cooldownTimer = null;
                         renderCheckout();
                         return;
                     }
                     const btn = document.getElementById('purchase-balance-btn');
-                    if(btn) btn.textContent = `COOLDOWN — ${formatCooldown(remaining)}`;
+                    if (btn) btn.textContent = `COOLDOWN — ${formatCooldown(remaining)}`;
                 }, 1000);
             }
             else
             {
-                if(cooldownTimer)
-                {
+                if (cooldownTimer) {
                     clearInterval(cooldownTimer);
                     cooldownTimer = null;
                 }
 
                 const purchaseBtn = document.getElementById('purchase-balance-btn');
-                if(purchaseBtn && canAfford)
-                {
-                    purchaseBtn.addEventListener('click', async () =>
-                    {
+                if (purchaseBtn && canAfford) {
+                    purchaseBtn.addEventListener('click', async () => {
                         purchaseBtn.disabled = true;
                         purchaseBtn.textContent = 'Processing...';
 
@@ -776,9 +718,9 @@ async function ShowBalanceCheckout()
                         {
                             const purchaseBody = new URLSearchParams();
                             purchaseBody.set('quantity', String(qty));
-                            if(authToken) purchaseBody.set('sessionToken', authToken);
+                            if (authToken) purchaseBody.set('sessionToken', authToken);
                             const purchaseIdentity = await GetIdentityPayload();
-                            for(const [k, v] of purchaseIdentity.entries()) purchaseBody.set(k, v);
+                            for (const [k, v] of purchaseIdentity.entries()) purchaseBody.set(k, v);
 
                             const purchaseRes = await fetch(`${apiUrl}/discord/purchase-free-key`, {
                                 method: 'POST',
@@ -787,11 +729,11 @@ async function ShowBalanceCheckout()
                             });
                             const purchaseData = await purchaseRes.json();
 
-                            if(purchaseData.ok)
+                            if (purchaseData.ok)
                             {
-                                try { localStorage.removeItem('cache_licenses'); } catch(e) {}
+                                try { localStorage.removeItem('cache_licenses'); } catch (e) {}
 
-                                if(purchaseData.licenses && purchaseData.licenses.length > 0)
+                                if (purchaseData.licenses && purchaseData.licenses.length > 0)
                                 {
                                     const params = purchaseData.licenses.map(l =>
                                         `${encodeURIComponent(l.key)}:${encodeURIComponent(l.product || 'License')}`
@@ -810,7 +752,7 @@ async function ShowBalanceCheckout()
                                 purchaseBtn.textContent = `PURCHASE ${qty} KEY${qty > 1 ? 'S' : ''} (${totalCost.toFixed(1)} Balance)`;
                             }
                         }
-                        catch(err)
+                        catch (err)
                         {
                             alert('Purchase failed');
                             purchaseBtn.disabled = false;
@@ -828,26 +770,23 @@ async function ShowBalanceCheckout()
         const qtyPlus = document.getElementById('qty-plus');
         const qtyValue = document.getElementById('qty-value');
         const rerender = () => setTimeout(renderCheckout, 50);
-        if(qtyMinus) qtyMinus.addEventListener('click', rerender);
-        if(qtyPlus) qtyPlus.addEventListener('click', rerender);
-        if(qtyValue) qtyValue.addEventListener('change', rerender);
-    }
-    catch(error)
-    {
+        if (qtyMinus) qtyMinus.addEventListener('click', rerender);
+        if (qtyPlus) qtyPlus.addEventListener('click', rerender);
+        if (qtyValue) qtyValue.addEventListener('change', rerender);
+    } catch (error) {
         console.error('Failed to load balance:', error);
         renderBalanceState('Couldn\'t load your balance. Check your connection and try again.', 'retry');
     }
 }
 
 // Backend came back (visitor solved the connection check) — reload what failed.
-if(window.SheldonBackend)
-{
+if (window.SheldonBackend) {
     window.SheldonBackend.OnRecovered(async () =>
     {
         HideProductUnavailable();
         await LoadProductInfo();
-        if(window.productUnavailable) return;
+        if (window.productUnavailable) return;
         const loggedIn = await CheckAuthStatus();
-        if(loggedIn) await ShowCheckout();
+        if (loggedIn) await ShowCheckout();
     });
 }

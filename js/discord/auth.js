@@ -1,4 +1,4 @@
-import Api from "../util/backend.js";
+import Api from '../util/backend.js';
 
 export async function CheckAuthStatus()
 {
@@ -7,9 +7,7 @@ export async function CheckAuthStatus()
 
     try
     {
-        const endpoint = token
-            ? `${apiUrl}/discord/me`
-            : `${apiUrl}/discord/me`;
+        const endpoint = `${apiUrl}/discord/me`;
 
         const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
         const timer = controller ? setTimeout(() => controller.abort(), 8000) : null;
@@ -154,7 +152,7 @@ class DiscordUser {
     }
 
     get Avatar() {
-        if (this.avatar) {
+        if(this.avatar) {
             return `https://cdn.discordapp.com/avatars/${this.id}/${this.avatar}.png?size=256`;
         }
         return null;
@@ -178,7 +176,7 @@ const DiscordAuth = {
         // Only follow the URL if it actually points at Discord's OAuth endpoint. Guards
         // against a compromised backend response (or a cache-poisoned Api.GetApiUrl)
         // returning `javascript:...` or an off-domain phishing URL.
-        if (typeof data.url === 'string' && /^https:\/\/discord\.com\//i.test(data.url)) {
+        if(typeof data.url === 'string' && /^https:\/\/discord\.com\//i.test(data.url)) {
             window.location.href = data.url;
         }
     },
@@ -207,12 +205,12 @@ const DiscordAuth = {
         const token = this.GetSessionToken();
 
         const headers = {};
-        if (token) headers['Authorization'] = `Bearer ${token}`;
+        if(token) headers['Authorization'] = `Bearer ${token}`;
 
         const response = await fetch(`${apiUrl}/discord/me`, { headers });
         const data = await response.json();
 
-        if (!data.success || !data.user) {
+        if(!data.success || !data.user) {
             return null;
         }
 
@@ -284,9 +282,8 @@ const DiscordAuth = {
         // Single teardown for scroll lock, key listener and focus restore. Called both from
         // closeOverlay() here and from _PollForToken's removeOverlay(), so cleanup happens no
         // matter which path tears the overlay down.
-        window._discordOverlayCleanup = function()
-        {
-            document.removeEventListener('keydown', onKeyDown);
+        window._discordOverlayCleanup = function ()
+        {            document.removeEventListener('keydown', onKeyDown);
             document.body.style.overflow = previousBodyOverflow;
             if(previouslyFocused && typeof previouslyFocused.focus === 'function')
             {
@@ -397,7 +394,7 @@ const DiscordAuth = {
         const oauthUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${encodeURIComponent(origin)}`;
         const discordAppUrl = `discord://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${encodeURIComponent(authCode)}`;
 
-        this._PromptDiscordApp(function(choice) {
+        this._PromptDiscordApp(function (choice) {
             if(!configOk || !clientId)
             {
                 const modal = document.querySelector('#discord-app-modal');
@@ -664,7 +661,7 @@ const DiscordAuth = {
             }
 
             // Resolver used by the manual code-entry Submit button.
-            window._resolveAuthPoll = function(token, error)
+            window._resolveAuthPoll = function (token, error)
             {
                 if(token) tryFinish(token);
                 else keepOpen('Login Cancelled', error || 'You are not logged in yet. Try again.');
@@ -768,7 +765,7 @@ const DiscordAuth = {
 
             // Wrap cleanup to also remove hash listener
             const origCleanup = cleanup;
-            cleanup = function(){ window.removeEventListener('hashchange', onHash); origCleanup(); };
+            cleanup = function () { window.removeEventListener('hashchange', onHash); origCleanup(); };
 
             // Safety net: after the code's server-side lifetime, stop polling but KEEP the
             // overlay with a retry. We deliberately do NOT redirect the user anywhere.
@@ -790,7 +787,7 @@ const DiscordAuth = {
 window.DiscordAuth = DiscordAuth;
 
 // Pick up token or error from URL hash (redirect fallback from callback.html)
-(function() {
+(function () {
     const hash = window.location.hash;
     if(hash.startsWith('#discord_token='))
     {

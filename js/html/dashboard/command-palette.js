@@ -1,8 +1,7 @@
 // Command palette (Ctrl/Cmd+K) — jump between tabs, copy license keys, quick links.
 // Pattern adapted from the admin panel's CommandPalette component.
-(function()
-{
-    if(window.__DashCommandPaletteLoaded) return;
+(function() {
+    if (window.__DashCommandPaletteLoaded) return;
     window.__DashCommandPaletteLoaded = true;
 
     const bridge = () => window.DashBridge || {};
@@ -20,7 +19,7 @@
         { id: 'tab:overview', title: 'Overview', sub: 'Stats, usage progress and activity', icon: 'grid', run: () => bridge().switchTab('overview') },
         { id: 'tab:licenses', title: 'Licenses', sub: 'View and copy your license keys', icon: 'key', run: () => bridge().switchTab('licenses') },
         { id: 'act:checkout', title: 'Buy a license', sub: 'Open the checkout page', icon: 'cart', run: () => { window.location.href = '/checkout/'; } },
-        { id: 'act:discord', title: 'Join Discord', sub: 'Open the Discord server', icon: 'discord', run: () => { if(window.RedirectToPlatform) window.RedirectToPlatform('discord_invite'); } }
+        { id: 'act:discord', title: 'Join Discord', sub: 'Open the Discord server', icon: 'discord', run: () => { if (window.RedirectToPlatform) window.RedirectToPlatform('discord_invite'); } }
     ];
 
     let _open = false;
@@ -30,44 +29,37 @@
     let _list = null;
     let _modal = null;
 
-    function fuzzyScore(needle, hay)
-    {
+    function fuzzyScore(needle, hay) {
         needle = needle.toLowerCase();
         hay = hay.toLowerCase();
         let hi = 0, score = 0, streak = 0;
-        for(let i = 0; i < needle.length; i++)
-        {
+        for (let i = 0; i < needle.length; i++) {
             const idx = hay.indexOf(needle[i], hi);
-            if(idx === -1) return -1;
+            if (idx === -1) return -1;
             streak = (idx === hi) ? streak + 1 : 0;
             score += 10 - Math.min(idx - hi, 10) + streak * 3;
             hi = idx + 1;
         }
-        if(hay.startsWith(needle)) score += 40;
+        if (hay.startsWith(needle)) score += 40;
         return score;
     }
 
-    function statusOf(lic)
-    {
-        if(lic.banned) return 'banned';
-        if(lic.disabled) return 'disabled';
-        if(lic.expires_at !== -1 && Date.now() > lic.expires_at) return 'expired';
+    function statusOf(lic) {
+        if (lic.banned) return 'banned';
+        if (lic.disabled) return 'disabled';
+        if (lic.expires_at !== -1 && Date.now() > lic.expires_at) return 'expired';
         return 'active';
     }
 
-    function dynamicItems(query)
-    {
+    function dynamicItems(query) {
         const out = [];
         const licenses = bridge().getLicenses() || [];
         const q = query.trim().toLowerCase();
 
-        if(q)
-        {
-            licenses.forEach((lic, i) =>
-            {
+        if (q) {
+            licenses.forEach((lic, i) => {
                 const hay = (lic.key + ' ' + (lic.product || '')).toLowerCase();
-                if(hay.indexOf(q) !== -1)
-                {
+                if (hay.indexOf(q) !== -1) {
                     out.push({
                         id: 'lic:' + i,
                         title: lic.key,
@@ -77,11 +69,8 @@
                     });
                 }
             });
-        }
-        else
-        {
-            licenses.slice(0, 3).forEach((lic, i) =>
-            {
+        } else {
+            licenses.slice(0, 3).forEach((lic, i) => {
                 out.push({
                     id: 'lic:' + i,
                     title: 'Copy ' + (lic.product || 'license') + ' key',
@@ -94,18 +83,14 @@
         return out;
     }
 
-    function render()
-    {
+    function render() {
         const q = _input.value.trim();
         const staticItems = STATIC_ACTIONS.map(a => ({ ...a }));
 
         let scored;
-        if(!q)
-        {
+        if (!q) {
             scored = staticItems;
-        }
-        else
-        {
+        } else {
             scored = staticItems
                 .map(a => ({ item: a, score: Math.max(fuzzyScore(q, a.title), fuzzyScore(q, a.sub || '')) }))
                 .filter(x => x.score > -1)
@@ -118,8 +103,7 @@
         _items = combined;
         _active = 0;
 
-        if(combined.length === 0)
-        {
+        if (combined.length === 0) {
             _list.innerHTML = '<div class="cmdp-empty">No matches. Try a tab name or a license key.</div>';
             return;
         }
@@ -135,52 +119,41 @@
             </div>
         `).join('');
 
-        _list.querySelectorAll('.cmdp-item').forEach(el =>
-        {
+        _list.querySelectorAll('.cmdp-item').forEach(el => {
             el.addEventListener('mouseenter', () => setActive(parseInt(el.dataset.cmdpIdx, 10)));
             el.addEventListener('click', () => run(parseInt(el.dataset.cmdpIdx, 10)));
         });
     }
 
-    function setActive(i)
-    {
+    function setActive(i) {
         _active = i;
-        _list.querySelectorAll('.cmdp-item').forEach((el, idx) =>
-        {
+        _list.querySelectorAll('.cmdp-item').forEach((el, idx) => {
             el.classList.toggle('active', idx === i);
         });
     }
 
-    function run(i)
-    {
+    function run(i) {
         const item = _items[i];
-        if(!item || typeof item.run !== 'function') return;
+        if (!item || typeof item.run !== 'function') return;
         close();
         item.run();
     }
 
-    function onKey(e)
-    {
-        if(e.key === 'ArrowDown')
-        {
+    function onKey(e) {
+        if (e.key === 'ArrowDown') {
             e.preventDefault();
-            if(_items.length) setActive((_active + 1) % _items.length);
-        }
-        else if(e.key === 'ArrowUp')
-        {
+            if (_items.length) setActive((_active + 1) % _items.length);
+        } else if (e.key === 'ArrowUp') {
             e.preventDefault();
-            if(_items.length) setActive((_active - 1 + _items.length) % _items.length);
-        }
-        else if(e.key === 'Enter')
-        {
+            if (_items.length) setActive((_active - 1 + _items.length) % _items.length);
+        } else if (e.key === 'Enter') {
             e.preventDefault();
             run(_active);
         }
     }
 
-    function open()
-    {
-        if(!_modal) return;
+    function open() {
+        if (!_modal) return;
         _open = true;
         _modal.classList.add('show');
         _modal.setAttribute('aria-hidden', 'false');
@@ -189,59 +162,50 @@
         setTimeout(() => _input.focus(), 30);
     }
 
-    function close()
-    {
-        if(!_modal) return;
+    function close() {
+        if (!_modal) return;
         _open = false;
         _modal.classList.remove('show');
         _modal.setAttribute('aria-hidden', 'true');
     }
 
-    function toggle()
-    {
+    function toggle() {
         _open ? close() : open();
     }
 
-    function init()
-    {
+    function init() {
         _input = document.getElementById('cmdpInput');
         _list = document.getElementById('cmdpList');
         _modal = document.getElementById('commandPalette');
-        if(!_input || !_list || !_modal) return;
+        if (!_input || !_list || !_modal) return;
 
         document.getElementById('dash-cmdp-btn')?.addEventListener('click', () => toggle());
 
         _input.addEventListener('input', () => render());
         _input.addEventListener('keydown', onKey);
 
-        document.addEventListener('keydown', (e) =>
-        {
+        document.addEventListener('keydown', (e) => {
             const isPaletteKey = (e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey);
-            if(isPaletteKey)
-            {
+            if (isPaletteKey) {
                 e.preventDefault();
                 toggle();
-            }
-            else if(e.key === 'Escape' && _open)
-            {
+            } else if (e.key === 'Escape' && _open) {
                 e.preventDefault();
                 close();
             }
         });
 
-        _modal.addEventListener('mousedown', (e) =>
-        {
-            if(e.target === _modal) close();
+        _modal.addEventListener('mousedown', (e) => {
+            if (e.target === _modal) close();
         });
     }
 
-    function escapeHtml(s)
-    {
+    function escapeHtml(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         })[c]);
     }
 
-    if(document.readyState !== 'loading') init();
+    if (document.readyState !== 'loading') init();
     else document.addEventListener('DOMContentLoaded', init);
 })();

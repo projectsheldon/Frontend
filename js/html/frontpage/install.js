@@ -82,9 +82,8 @@ let _installing = false;
 let imModal, imLoader, imTitle, imSub, imProgressWrap, imProgressBar,
     imActions, imError, imErrorActions;
 
-function ensureModal()
-{
-    if(_inited) return;
+function ensureModal() {
+    if (_inited) return;
 
     const style = document.createElement('style');
     style.textContent = MODAL_CSS;
@@ -112,17 +111,14 @@ function ensureModal()
     const closeModal = () => imModal.classList.remove('show');
     imClose?.addEventListener('click', closeModal);
     imCloseError?.addEventListener('click', closeModal);
-    imModal.addEventListener('click', (e) => { if(e.target === imModal) closeModal(); });
+    imModal.addEventListener('click', (e) => { if (e.target === imModal) closeModal(); });
 
-    imSaveAgain?.addEventListener('click', () =>
-    {
-        if(_lastDeliverable) saveBlob(_lastDeliverable.blob, _lastDeliverable.name);
+    imSaveAgain?.addEventListener('click', () => {
+        if (_lastDeliverable) saveBlob(_lastDeliverable.blob, _lastDeliverable.name);
     });
 
-    // Last resort: if in-browser install fails, hand over the raw .7z link (same auth gate)
-    // so the user is never stuck with no way to get the file.
-    imFallback?.addEventListener('click', async () =>
-    {
+    // Last resort: hand over the raw .7z link so the user is never stuck.
+    imFallback?.addEventListener('click', async () => {
         try
         {
             const token = window.DiscordAuth?.GetSessionToken?.();
@@ -132,26 +128,24 @@ function ensureModal()
                 headers: token ? { Authorization: `Bearer ${token}` } : undefined
             });
             const data = await res.json().catch(() => null);
-            if(data && data.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
-        } catch(e) {}
+            if (data && data.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
+        } catch (e) {}
     });
 
     _inited = true;
 }
 
-function imClearState()
-{
+function imClearState() {
     imLoader.style.display = 'none';
     imTitle.style.display = 'none';
     imSub.style.display = 'none';
-    if(imProgressWrap) imProgressWrap.style.display = 'none';
-    if(imActions) imActions.style.display = 'none';
+    if (imProgressWrap) imProgressWrap.style.display = 'none';
+    if (imActions) imActions.style.display = 'none';
     imError.style.display = 'none';
-    if(imErrorActions) imErrorActions.style.display = 'none';
+    if (imErrorActions) imErrorActions.style.display = 'none';
 }
 
-function imShowLoading(title, sub)
-{
+function imShowLoading(title, sub) {
     imClearState();
     imModal.classList.add('show');
     imLoader.style.display = 'block';
@@ -161,37 +155,32 @@ function imShowLoading(title, sub)
     imSub.textContent = sub;
 }
 
-function imSetProgress(pct)
-{
+function imSetProgress(pct) {
     imTitle.textContent = 'Loading…';
     imSub.textContent = pct + '%';
-    if(imProgressWrap) imProgressWrap.style.display = 'block';
-    if(imProgressBar) imProgressBar.style.width = pct + '%';
+    if (imProgressWrap) imProgressWrap.style.display = 'block';
+    if (imProgressBar) imProgressBar.style.width = pct + '%';
 }
 
-function imShowDone(name)
-{
+function imShowDone(name) {
     imClearState();
     imTitle.style.display = 'block';
     imSub.style.display = 'block';
     imTitle.textContent = 'Installer ready ✓';
     imSub.textContent = 'Saved "' + name + '" to your device. If it didn\'t start, tap Save file.';
-    if(imActions) imActions.style.display = 'flex';
+    if (imActions) imActions.style.display = 'flex';
 }
 
-function imShowError(msg)
-{
+function imShowError(msg) {
     imClearState();
     imError.textContent = msg;
     imError.style.display = 'block';
-    if(imErrorActions) imErrorActions.style.display = 'flex';
+    if (imErrorActions) imErrorActions.style.display = 'flex';
 }
 
-async function readWithProgress(res, onPct)
-{
+async function readWithProgress(res, onPct) {
     const total = Number(res.headers.get('Content-Length')) || 0;
-    if(!res.body || !total)
-    {
+    if (!res.body || !total) {
         const buf = new Uint8Array(await res.arrayBuffer());
         onPct(100);
         return buf;
@@ -200,10 +189,9 @@ async function readWithProgress(res, onPct)
     const reader = res.body.getReader();
     const chunks = [];
     let received = 0;
-    while(true)
-    {
+    while (true) {
         const { done, value } = await reader.read();
-        if(done) break;
+        if (done) break;
         chunks.push(value);
         received += value.length;
         onPct(Math.min(99, Math.floor((received / total) * 100)));
@@ -211,15 +199,14 @@ async function readWithProgress(res, onPct)
 
     const out = new Uint8Array(received);
     let pos = 0;
-    for(const c of chunks) { out.set(c, pos); pos += c.length; }
+    for (const c of chunks) { out.set(c, pos); pos += c.length; }
     onPct(100);
     return out;
 }
 
-export async function runInstall()
-{
+export async function runInstall() {
     ensureModal();
-    if(_installing) return;
+    if (_installing) return;
     _installing = true;
     _lastDeliverable = null;
 
@@ -236,8 +223,8 @@ export async function runInstall()
             headers: token ? { Authorization: `Bearer ${token}` } : undefined
         });
 
-        if(res.status === 401) throw new Error('Please log in again to continue.');
-        if(!res.ok) throw new Error('Install failed. Please try again.');
+        if (res.status === 401) throw new Error('Please log in again to continue.');
+        if (!res.ok) throw new Error('Install failed. Please try again.');
 
         const bytes = await readWithProgress(res, imSetProgress);
 
@@ -250,8 +237,7 @@ export async function runInstall()
 
         imShowDone(deliverable.name);
     }
-    catch(err)
-    {
+    catch (err) {
         imShowError((err && err.message) ? err.message : 'Installation failed. Please try again.');
     }
     finally

@@ -1,7 +1,7 @@
 // License page script
-import Api from "../../util/backend.js";
-import { DiscordAuth } from "../../discord/auth.js";
-import { GetBrowserFingerprint } from "../../util/fingerprint.js";
+import Api from '../../util/backend.js';
+import { DiscordAuth } from '../../discord/auth.js';
+import { GetBrowserFingerprint } from '../../util/fingerprint.js';
 
 let keys = [];
 
@@ -36,11 +36,10 @@ function render()
         list.innerHTML = '<p class="text-neutral-500">No licenses found.</p>';
         return;
     }
-    // Build via createElement + textContent + dataset so no user-controlled value
-    // ever reaches HTML/JS parsing. This closes the &#x27; → ' entity-decode XSS that
-    // would fire if we interpolated into onclick="..." even with escapeHtml.
+    // Safe render: no user value touches HTML parsing.
     list.innerHTML = '';
-    keys.forEach(item => {
+    keys.forEach(item =>
+    {
         const wrapper = document.createElement('div');
         wrapper.className = 'license-item';
 
@@ -127,8 +126,7 @@ async function loadLicenses()
     const urlParams = new URLSearchParams(window.location.search);
     const list = document.getElementById('license-list');
 
-    // Trim: the WorkInk destination URL has a trailing space after `?token=`, so the token
-    // arrives as " <uuid>" — untrimmed, the leading space becomes %20 and work.ink rejects it.
+    // Trim: WorkInk token arrives with a leading space.
     const token = (urlParams.get('token') || '').trim();
     if(token)
     {
@@ -158,11 +156,7 @@ async function loadLicenses()
 
             const apiUrl = await Api.GetApiUrl();
 
-            // Send as application/x-www-form-urlencoded — a CORS "simple request" that needs
-            // NO preflight. The JSON body forced an OPTIONS preflight, and the browser can't
-            // attach the Cloudflare clearance cookie to a preflight, so behind a VPN the
-            // preflight got challenged and blocked ("No Access-Control-Allow-Origin"). As a
-            // simple request it carries the clearance cookie and clearance.js can recover it.
+            // Simple request: avoids preflight so clearance cookie is sent.
             const genBody = new URLSearchParams();
             genBody.set('token', token);
             if(discordId) genBody.set('discordId', discordId);
@@ -207,7 +201,7 @@ async function loadLicenses()
             } else
             {
                 keys = [];
-                if(data.message === "Not logged in" || data.message === "Invalid session")
+                if(data.message === 'Not logged in' || data.message === 'Invalid session')
                 {
                     list.innerHTML = '<p class="text-neutral-500">Please log in with Discord first to claim your free license.</p>';
                     return;
@@ -284,12 +278,13 @@ async function loadLicenses()
     render();
 }
 
-function renderUsageProgress() {
+function renderUsageProgress()
+{
     const seconds = parseFloat(sessionStorage.getItem('usage_seconds') || '0');
     const threshold = parseFloat(sessionStorage.getItem('usage_threshold') || '0');
-    if (!threshold || threshold <= 0) return;
+    if(!threshold || threshold <= 0) return;
     const list = document.getElementById('license-list');
-    if (!list) return;
+    if(!list) return;
 
     const pct = Math.min(100, Math.round((seconds / threshold) * 100));
     const hours = Math.floor(seconds / 3600);
@@ -308,22 +303,24 @@ function renderUsageProgress() {
             <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#c7b18f,#e2c9a1);border-radius:3px;transition:width 0.5s ease"></div>
         </div>
         <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px;text-align:center">
-            ${rewarded ? "Free key claimed. Counter reset — use Sheldon another " + thresholdHours + " hours this week for the next." : (remaining > 0 ? "Use Sheldon " + remaining + " more hour" + (remaining === 1 ? "" : "s") + " this week to earn a free key without watching an ad." : "Threshold met! Your next ad grants a free key.")}
+            ${rewarded ? 'Free key claimed. Counter reset — use Sheldon another ' + thresholdHours + ' hours this week for the next.' : (remaining > 0 ? 'Use Sheldon ' + remaining + ' more hour' + (remaining === 1 ? '' : 's') + ' this week to earn a free key without watching an ad.' : 'Threshold met! Your next ad grants a free key.')}
         </div>
     `;
     list.appendChild(wrap);
 }
 
 // Confetti on license success
-function triggerConfetti() {
-  if (typeof confetti !== 'undefined') {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#bb86fc', '#c7b18f', '#5865F2', '#22c55e', '#fbbf24']
-    });
-  }
+function triggerConfetti()
+{
+    if(typeof confetti !== 'undefined')
+    {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#bb86fc', '#c7b18f', '#5865F2', '#22c55e', '#fbbf24']
+        });
+    }
 }
 
 // Initialize
@@ -338,18 +335,22 @@ window.onload = () =>
 
 // Trigger confetti after render if success
 const originalRender = render;
-render = function() {
-  originalRender.apply(this, arguments);
-  if (keys.length > 0) {
-    setTimeout(triggerConfetti, 500);
-  }
+render = function()
+{
+    originalRender.apply(this, arguments);
+    if(keys.length > 0)
+    {
+        setTimeout(triggerConfetti, 500);
+    }
 };
 
 const originalLoadLicenses = loadLicenses;
-loadLicenses = async function() {
-  await originalLoadLicenses.apply(this, arguments);
-  renderUsageProgress();
-  if (keys.length > 0) {
-    setTimeout(triggerConfetti, 800);
-  }
+loadLicenses = async function()
+{
+    await originalLoadLicenses.apply(this, arguments);
+    renderUsageProgress();
+    if(keys.length > 0)
+    {
+        setTimeout(triggerConfetti, 800);
+    }
 };

@@ -1,4 +1,4 @@
-import Api from "./backend.js";
+import Api from './backend.js';
 
 export async function RedirectToPlatform(platform, newTab = true)
 {
@@ -13,7 +13,7 @@ export async function RedirectToPlatform(platform, newTab = true)
         else
             window.location.href = link;
     }
-};
+}
 export default RedirectToPlatform;
 
-window.RedirectToPlatform = RedirectToPlatform; 
+window.RedirectToPlatform = RedirectToPlatform;

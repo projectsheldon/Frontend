@@ -1,15 +1,15 @@
-import Api from "../../util/backend.js";
+import Api from '../../util/backend.js';
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
 class Product
 {
-    constructor (data)
+    constructor(data)
     {
         this.name = data.name || 'Unknown';
         this.price = data.price;
         this.duration = data.duration;
-        this.duration_text = data["duration_text"];
+        this.duration_text = data['duration_text'];
         this.key = data.key || '';
     }
 
@@ -35,29 +35,33 @@ class Product
     }
 }
 
-function getCachedProducts() {
-    try {
+function getCachedProducts()
+{
+    try
+    {
         const raw = localStorage.getItem('cache_products');
-        if (!raw) return null;
+        if(!raw) return null;
         const item = JSON.parse(raw);
-        if (Date.now() - item.timestamp < TEN_MINUTES) return item.data;
+        if(Date.now() - item.timestamp < TEN_MINUTES) return item.data;
         localStorage.removeItem('cache_products');
-    } catch (e) {}
+    } catch(e) {}
     return null;
 }
 
-function setCachedProducts(products) {
-    try {
+function setCachedProducts(products)
+{
+    try
+    {
         localStorage.setItem('cache_products', JSON.stringify({ data: products, timestamp: Date.now() }));
-    } catch (e) {}
+    } catch(e) {}
 }
 
 const ProductsManager =
 {
-    async FetchProducts() 
+    async FetchProducts()
     {
         const cached = getCachedProducts();
-        if (cached) return cached.map(p => new Product(p));
+        if(cached) return cached.map(p => new Product(p));
 
         const response = await fetch(`${await Api.GetApiUrl()}/products/getall`);
         const rawProducts = await response.json();

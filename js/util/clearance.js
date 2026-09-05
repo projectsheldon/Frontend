@@ -24,7 +24,7 @@ const BACKEND_HOSTS = new Set([
 function isBackendUrl(url)
 {
     try { return BACKEND_HOSTS.has(new URL(url, location.href).host); }
-    catch (e) { return false; }
+    catch(e) { return false; }
 }
 
 function backendBase()
@@ -41,16 +41,16 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 let clearing = null;
 function runClearance()
 {
-    if (clearing) return clearing;
+    if(clearing) return clearing;
     clearing = new Promise((resolve) =>
     {
         let done = false;
         const iframe = document.createElement('iframe');
         const finish = () =>
         {
-            if (done) return;
+            if(done) return;
             done = true;
-            try { iframe.remove(); } catch (e) {}
+            try { iframe.remove(); } catch(e) {}
             clearing = null;
             resolve();
         };
@@ -69,7 +69,7 @@ function runClearance()
 
 export function installBackendFetchGuard()
 {
-    if (typeof window === 'undefined' || window.__backendFetchGuard) return;
+    if(typeof window === 'undefined' || window.__backendFetchGuard) return;
     window.__backendFetchGuard = true;
 
     const orig = window.fetch.bind(window);
@@ -77,12 +77,12 @@ export function installBackendFetchGuard()
     window.fetch = async function (input, init)
     {
         const url = typeof input === 'string' ? input : (input && input.url) || '';
-        if (!isBackendUrl(url)) return orig(input, init);
+        if(!isBackendUrl(url)) return orig(input, init);
 
         init = init ? { ...init } : {};
         // cf_clearance is same-site to the API but still cross-origin, so it only rides along
         // when credentials are included. Preserve an explicit choice if the caller set one.
-        if (init.credentials === undefined) init.credentials = 'include';
+        if(init.credentials === undefined) init.credentials = 'include';
 
         // Only auto-retry idempotent methods. A non-idempotent request (POST) may have already
         // reached the backend and had a side effect before the response was lost — retrying it
@@ -103,20 +103,20 @@ export function installBackendFetchGuard()
         {
             return await orig(input, init);
         }
-        catch (err)
+        catch(err)
         {
             // Opaque failure — most often a Cloudflare challenge (the 403 challenge response
             // has no CORS headers, so the browser surfaces it as "Failed to fetch"), sometimes
             // a transient network blip. Clear once so the client is evaluated/cleared.
-            try { await runClearance(); } catch (e) {}
+            try { await runClearance(); } catch(e) {}
             // Let the page (banner / retry UI) know the backend is unreachable, and fire the
             // operation-specific recovery callbacks once a probe succeeds.
-            try { window.SheldonBackend && window.SheldonBackend.NotifyBackendFailure(); } catch (e) {}
-            if (!canRetry) throw err;
-            for (let attempt = 0; attempt < 2; attempt++)
+            try { window.SheldonBackend && window.SheldonBackend.NotifyBackendFailure(); } catch(e) {}
+            if(!canRetry) throw err;
+            for(let attempt = 0; attempt < 2; attempt++)
             {
                 try { return await orig(input, init); }
-                catch (e) { if (attempt === 0) await sleep(900); else throw e; }
+                catch(e) { if(attempt === 0) await sleep(900); else throw e; }
             }
             throw err;
         }

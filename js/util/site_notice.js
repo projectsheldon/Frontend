@@ -3,8 +3,8 @@
 // saved SERVER-SIDE against the device identity — final once recorded. A dismiss (X)
 // records nothing and the prompt returns on the next visit. Also exposes window.SheldonCookies
 // so the "View Licenses" menu can re-open the prompt and read the consent status.
-import Api from "./backend.js";
-import { GetIdentityPayload } from "./fingerprint.js";
+import Api from './backend.js';
+import { GetIdentityPayload } from './fingerprint.js';
 
 let consentStatus = null; // null = undecided, 'accepted', 'declined'
 let bannerEl = null;

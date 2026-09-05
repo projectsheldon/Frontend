@@ -10,12 +10,10 @@ if (isHomepage) {
     const navTabs = document.querySelectorAll('.nav-tab');
     const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
 
-    navTabs.forEach(tab =>
-    {
-        tab.addEventListener('click', (e) =>
-        {
+    navTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
             const href = tab.getAttribute('href');
-            if(!href || href === '#') {
+            if (!href || href === '#') {
                 e.preventDefault();
                 navTabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
@@ -24,7 +22,7 @@ if (isHomepage) {
             
             const targetPath = new URL(href, window.location.origin).pathname.replace(/\/$/, '') || '/';
             
-            if(targetPath === currentPath) {
+            if (targetPath === currentPath) {
                 e.preventDefault();
                 navTabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
@@ -36,9 +34,8 @@ if (isHomepage) {
 // pricing
 const productsContainer = document.getElementById('products-grid');
 
-function RenderProductsError()
-{
-    if(!productsContainer) return;
+function RenderProductsError() {
+    if (!productsContainer) return;
 
     productsContainer.innerHTML = `
         <div class="glass-card p-5 rounded-2xl flex flex-col items-center justify-center text-center col-span-full min-h-[200px]">
@@ -49,30 +46,25 @@ function RenderProductsError()
     `;
 
     const retryBtn = productsContainer.querySelector('.products-retry-btn');
-    if(retryBtn) retryBtn.addEventListener('click', () => { LoadProducts(); });
+    if (retryBtn) retryBtn.addEventListener('click', () => { LoadProducts(); });
 }
 
-async function LoadProducts()
-{
-    if(!productsContainer) return;
+async function LoadProducts() {
+    if (!productsContainer) return;
 
     productsContainer.innerHTML = '';
 
     let products;
-    try
-    {
+    try {
         products = await ProductsManager.FetchProducts();
-    }
-    catch(e)
-    {
+    } catch (e) {
         RenderProductsError();
         return;
     }
 
-    products.forEach((product, index) =>
-    {
+    products.forEach((product, index) => {
         let cardClass = 'glass-card p-5 rounded-2xl flex flex-col justify-between h-full min-h-[200px]';
-        if(product.IsLifetime) cardClass += ' border border-[#c7b18f]/40';
+        if (product.IsLifetime) cardClass += ' border border-[#c7b18f]/40';
 
         const staggerClass = `stagger-${Math.min(index + 1, 4)}`;
 
@@ -99,73 +91,55 @@ async function LoadProducts()
         productsContainer.insertAdjacentHTML('beforeend', html);
     });
 
-    document.querySelectorAll('.product-btn').forEach(btn =>
-    {
-        btn.addEventListener('click', function()
-        {
+    document.querySelectorAll('.product-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
             const productKey = this.getAttribute('data-product');
             window.location.href = `/checkout/?product=${productKey}`;
         });
     });
 
-    if(window.animateOnScrollObserver)
-    {
-        document.querySelectorAll('#products-grid .glass-card').forEach(el =>
-        {
+    if (window.animateOnScrollObserver) {
+        document.querySelectorAll('#products-grid .glass-card').forEach(el => {
             window.animateOnScrollObserver.observe(el);
         });
     }
 }
 document.addEventListener('DOMContentLoaded', LoadProducts);
 
-document.getElementById('hero-cta')?.addEventListener('click', async () =>
-{
+document.getElementById('hero-cta')?.addEventListener('click', async () => {
     const loggedIn = !!(window.DiscordAuth && window.DiscordAuth.currentUser);
-    if(!loggedIn)
-    {
-        if(typeof window.Notify === 'function') window.Notify('You must log in with Discord to download Sheldon.', 'warning', 6000);
+    if (!loggedIn) {
+        if (typeof window.Notify === 'function') window.Notify('You must log in with Discord to download Sheldon.', 'warning', 6000);
 
-        // Give the auth module a moment to load (it registers window.DiscordAuth) before
-        // giving up on the popup flow. If it never arrives — module load failure, adblocker —
-        // fall back to a full-page Discord OAuth redirect via /discord/login so the click
-        // ALWAYS lands the user in a login flow instead of doing nothing.
-        if(!window.DiscordAuth)
-        {
+        // Wait for the auth module, else fall back to full-page Discord OAuth.
+        if (!window.DiscordAuth) {
             const startedAt = Date.now();
-            while(!window.DiscordAuth && Date.now() - startedAt < 3000)
-            {
+            while (!window.DiscordAuth && Date.now() - startedAt < 3000) {
                 await new Promise(r => setTimeout(r, 100));
             }
         }
 
-        if(window.DiscordAuth && typeof window.DiscordAuth.LoginPopup === 'function')
-        {
-            try { await window.DiscordAuth.LoginPopup(); } catch(e) {}
-        }
-        else
-        {
-            try
-            {
+        if (window.DiscordAuth && typeof window.DiscordAuth.LoginPopup === 'function') {
+            try { await window.DiscordAuth.LoginPopup(); } catch (e) {}
+        } else {
+            try {
                 const apiUrl = await Api.GetApiUrl();
                 const res = await fetch(`${apiUrl}/discord/login`);
                 const data = await res.json();
-                if(data && typeof data.url === 'string' && /^https:\/\/discord\.com\//i.test(data.url))
+                if (data && typeof data.url === 'string' && /^https:\/\/discord\.com\//i.test(data.url))
                 {
                     window.location.href = data.url;
                 }
-            } catch(e) {}
+            } catch (e) {}
         }
         return;
     }
 
-    try
-    {
+    try {
         const mod = await import('./install.js');
         await mod.runInstall();
-    }
-    catch(e)
-    {
-        if(typeof window.Notify === 'function') window.Notify('Could not start the installer. Please try again.', 'error', 5000);
+    } catch (e) {
+        if (typeof window.Notify === 'function') window.Notify('Could not start the installer. Please try again.', 'error', 5000);
     }
 });
 
@@ -186,10 +160,8 @@ function setCachedServerCount(count) {
     } catch (e) {}
 }
 
-async function updateMemberCount()
-{
-    try
-    {
+async function updateMemberCount() {
+    try {
         const cached = getCachedServerCount();
         const el = document.getElementById('discord-count');
         if (cached) {
@@ -200,13 +172,11 @@ async function updateMemberCount()
         const apiUrl = await Api.GetApiUrl();
         const res = await fetch(`${apiUrl}/discord/servercount`);
         const data = await res.json();
-        if(el && data.count !== undefined)
-        {
+        if (el && data.count !== undefined) {
             el.textContent = data.count.toLocaleString();
             setCachedServerCount(data.count);
         }
-    } catch(e)
-    {
+    } catch (e) {
     }
 }
 
@@ -214,82 +184,60 @@ updateMemberCount();
 setInterval(updateMemberCount, 600000);
 
 // Backend came back (visitor solved the connection check) — reload what failed.
-if(window.SheldonBackend)
-{
-    window.SheldonBackend.OnRecovered(() =>
-    {
+if (window.SheldonBackend) {
+    window.SheldonBackend.OnRecovered(() => {
         LoadProducts();
         updateMemberCount();
     });
 }
 
-// ─── WorkInk reward claim, handled inline on the homepage ────────────────────────────
-// When WorkInk redirects here with ?token=… (point its destination at
-// https://www.projectsheldon.me/?token= instead of /license/?token=), we claim the reward
-// right here and play the balance gain animation — no hop through the /license page.
+// WorkInk reward claim, handled inline on the homepage.
 
-function claimFingerprint()
-{
-    try
-    {
+function claimFingerprint() {
+    try {
         let fp = localStorage.getItem('sheldon_fp');
-        if(!fp)
-        {
+        if (!fp) {
             fp = (window.crypto && crypto.randomUUID)
                 ? crypto.randomUUID()
                 : (Date.now().toString(36) + Math.random().toString(36).slice(2));
             localStorage.setItem('sheldon_fp', fp);
         }
         return fp;
-    } catch(e) { return null; }
+    } catch (e) { return null; }
 }
 
-// Resolve with the session token as soon as one exists, or null on timeout. We read
-// localStorage DIRECTLY rather than waiting for window.DiscordAuth.currentUser — that flag
-// is only set after CheckAuthStatus()'s /discord/me round-trip, which can lag behind
-// Cloudflare, wrongly making a logged-in user look logged-out and delaying (or expiring) the
-// claim. The backend validates the session token itself, so the presence of the token is all
-// we need to fire immediately; discordId is optional (the server derives it from the session).
-function waitForLogin(timeoutMs)
-{
-    const readToken = () =>
-    {
-        try { const t = localStorage.getItem('discord_session'); if(t) return t; } catch(e) {}
-        try { return window.DiscordAuth?.GetSessionToken?.() || null; } catch(e) { return null; }
+// Read localStorage directly: currentUser lags behind Cloudflare, the token is enough.
+function waitForLogin(timeoutMs) {
+    const readToken = () => {
+        try { const t = localStorage.getItem('discord_session'); if (t) return t; } catch (e) {}
+        try { return window.DiscordAuth?.GetSessionToken?.() || null; } catch (e) { return null; }
     };
-    return new Promise(resolve =>
-    {
+    return new Promise(resolve => {
         const start = Date.now();
-        (function check()
-        {
+        (function check() {
             const t = readToken();
-            if(t) return resolve(t);
-            if(Date.now() - start > timeoutMs) return resolve(null);
+            if (t) return resolve(t);
+            if (Date.now() - start > timeoutMs) return resolve(null);
             setTimeout(check, 200);
         })();
     });
 }
 
-// Fire the existing homepage balance-gain animation (global fn from index.html) once the
-// balance chip is on screen.
-function playBalanceGain(added, oldBalance)
-{
-    if(!(added > 0)) return;
-    const poll = setInterval(() =>
-    {
+// Fire the homepage balance-gain animation once the balance chip is visible.
+function playBalanceGain(added, oldBalance) {
+    if (!(added > 0)) return;
+    const poll = setInterval(() => {
         const el = document.querySelector('.user-balance');
-        if(el && el.offsetParent !== null)
-        {
+        if (el && el.offsetParent !== null) {
             clearInterval(poll);
-            setTimeout(() => { try { window.animateBalanceGain(added, oldBalance); } catch(e) {} }, 600);
+            setTimeout(() => { try { window.animateBalanceGain(added, oldBalance); } catch (e) {} }, 600);
         }
     }, 100);
     setTimeout(() => clearInterval(poll), 10000);
 }
 
 // Minimal, XSS-safe modal for the rare usage-reward free key.
-function showRewardKey(key, product)
-{
+function showRewardKey(key, product) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;';
     const box = document.createElement('div');
@@ -316,119 +264,94 @@ function showRewardKey(key, product)
     overlay.append(box);
     document.body.appendChild(overlay);
     const close = () => overlay.remove();
-    overlay.addEventListener('click', e => { if(e.target === overlay) close(); });
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
     closeBtn.addEventListener('click', close);
-    copyBtn.addEventListener('click', async () =>
-    {
-        try { await navigator.clipboard.writeText(String(key)); copyBtn.textContent = 'Copied'; } catch(e) {}
+    copyBtn.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(String(key)); copyBtn.textContent = 'Copied'; } catch (e) {}
     });
-    if(window.confetti) { try { window.confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } }); } catch(e) {} }
+    if (window.confetti) { try { window.confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } }); } catch (e) {} }
 }
 
-async function claimWorkinkToken()
-{
+async function claimWorkinkToken() {
     const params = new URLSearchParams(location.search);
     let token = params.get('token');
 
-    if(token)
-    {
+    if (token) {
         // Stash it so it survives a full-page login redirect, then strip it from the URL so a
         // refresh can't re-submit a single-use token.
-        try { sessionStorage.setItem('pending_workink_token', token); } catch(e) {}
+        try { sessionStorage.setItem('pending_workink_token', token); } catch (e) {}
         history.replaceState({}, '', location.pathname + location.hash);
+    } else {
+        try { token = sessionStorage.getItem('pending_workink_token'); } catch (e) {}
     }
-    else
-    {
-        try { token = sessionStorage.getItem('pending_workink_token'); } catch(e) {}
-    }
-    // The WorkInk destination URL has a trailing space after `?token=`, so the token arrives
-    // as " <uuid>" — the leading space becomes %20 server-side and work.ink rejects it. Trim.
-    if(token) token = token.trim();
-    if(!token) return;
+        // The token arrives with a leading space (" <uuid>") — trim it.
+    if (token) token = token.trim();
+    if (!token) return;
 
     let sessionToken = await waitForLogin(4000);
-    if(!sessionToken)
-    {
-        if(typeof window.Notify === 'function') window.Notify('Log in with Discord to claim your reward.', 'info', 5000);
-        try { window.DiscordAuth?.LoginPopup?.(); } catch(e) {}
+    if (!sessionToken) {
+        if (typeof window.Notify === 'function') window.Notify('Log in with Discord to claim your reward.', 'info', 5000);
+        try { window.DiscordAuth?.LoginPopup?.(); } catch (e) {}
         sessionToken = await waitForLogin(180000);
-        if(!sessionToken) return;
+        if (!sessionToken) return;
     }
 
     // About to consume the token — clear the stash so it can't loop.
-    try { sessionStorage.removeItem('pending_workink_token'); } catch(e) {}
+    try { sessionStorage.removeItem('pending_workink_token'); } catch (e) {}
 
-    try
-    {
+    try {
         const apiUrl = await Api.GetApiUrl();
 
-        // Resolve the real Discord id: use the already-loaded profile, else wait briefly for
-        // the topbar's auth check to populate it, else ask /discord/me directly (authoritative
-        // — it's derived from this same session, so it can never mismatch). The token's ~7-min
-        // lifetime leaves plenty of room for this quick lookup.
+        // Prefer the loaded profile, else /discord/me (authoritative for this session).
         let discordId = window.DiscordAuth?.currentUser?.id || null;
-        if(!discordId)
-        {
+        if (!discordId) {
             const startedAt = Date.now();
-            while(!discordId && Date.now() - startedAt < 3000)
-            {
+            while (!discordId && Date.now() - startedAt < 3000) {
                 await new Promise(r => setTimeout(r, 150));
                 discordId = window.DiscordAuth?.currentUser?.id || null;
             }
         }
-        if(!discordId)
-        {
-            try
-            {
+        if (!discordId) {
+            try {
                 const meRes = await fetch(`${apiUrl}/discord/me`, {
                     headers: { Authorization: 'Bearer ' + sessionToken },
                     credentials: 'include'
                 });
                 const meData = await meRes.json();
-                if(meData && meData.success && meData.user && meData.user.id) discordId = String(meData.user.id);
-            } catch(e) {}
+                if (meData && meData.success && meData.user && meData.user.id) discordId = String(meData.user.id);
+            } catch (e) {}
         }
 
-        // Form-urlencoded = a CORS simple request (no preflight), so it works behind the
-        // Cloudflare challenge — same reason the /license page was switched over.
+        // Form-urlencoded keeps this a CORS simple request (no preflight).
         const body = new URLSearchParams();
         body.set('token', token);
-        if(discordId) body.set('discordId', discordId);
+        if (discordId) body.set('discordId', discordId);
         body.set('sessionToken', sessionToken);
         const fp = claimFingerprint();
-        if(fp) body.set('fingerprint', fp);
-        try { const bfp = await GetBrowserFingerprint(); if(bfp) body.set('browserFp', bfp); } catch(e) {}
+        if (fp) body.set('fingerprint', fp);
+        try { const bfp = await GetBrowserFingerprint(); if (bfp) body.set('browserFp', bfp); } catch (e) {}
 
         const res = await fetch(`${apiUrl}/workink/generate`, { method: 'POST', body });
         const data = await res.json().catch(() => null);
 
-        if(data && data.ok && data.license)
-        {
+        if (data && data.ok && data.license) {
             showRewardKey(data.license.key, data.license.product);
-        }
-        else if(data && data.ok && data.new_balance !== undefined)
-        {
+        } else if (data && data.ok && data.new_balance !== undefined) {
             const added = (typeof data.added === 'number' && !isNaN(data.added)) ? data.added : 0;
             const oldBalance = Math.max(0, data.new_balance - added);
-            if(added > 0) playBalanceGain(added, oldBalance);
-            if(data.capped && typeof window.Notify === 'function')
+            if (added > 0) playBalanceGain(added, oldBalance);
+            if (data.capped && typeof window.Notify === 'function')
                 window.Notify('Daily balance maxed — come back later.', 'info', 5000);
-            else if(added <= 0 && typeof window.Notify === 'function')
+            else if (added <= 0 && typeof window.Notify === 'function')
                 window.Notify('Balance updated.', 'success', 3000);
-        }
-        else if((res.status === 429 || (data && data.rate_limited_until)))
-        {
-            if(typeof window.Notify === 'function')
+        } else if ((res.status === 429 || (data && data.rate_limited_until))) {
+            if (typeof window.Notify === 'function')
                 window.Notify((data && data.message) || 'Daily limit reached — try again later.', 'warning', 6000);
+        } else if (data && data.message) {
+            if (typeof window.Notify === 'function') window.Notify(data.message, 'error', 5000);
         }
-        else if(data && data.message)
-        {
-            if(typeof window.Notify === 'function') window.Notify(data.message, 'error', 5000);
-        }
-    }
-    catch(e)
-    {
-        if(typeof window.Notify === 'function') window.Notify('Could not claim your reward. Please try again.', 'error', 5000);
+    } catch (e) {
+        if (typeof window.Notify === 'function') window.Notify('Could not claim your reward. Please try again.', 'error', 5000);
     }
 }
 

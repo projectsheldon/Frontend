@@ -1,4 +1,4 @@
-import "./clearance.js"; // installs a window.fetch guard that auto-recovers backend calls from Cloudflare challenges
+import './clearance.js'; // installs a window.fetch guard that auto-recovers backend calls from Cloudflare challenges
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
@@ -13,31 +13,41 @@ const ALLOWED_BACKEND_ORIGINS = new Set([
     'http://127.0.0.1:3350'
 ]);
 
-function isAllowedBackendUrl(candidate) {
-    if (typeof candidate !== 'string' || candidate.length === 0) return false;
-    try {
+function isAllowedBackendUrl(candidate)
+{
+    if(typeof candidate !== 'string' || candidate.length === 0) return false;
+    try
+    {
         const u = new URL(candidate);
         return ALLOWED_BACKEND_ORIGINS.has(u.origin);
-    } catch (e) {
+    }
+    catch(e)
+    {
         return false;
     }
 }
 
-(function migrateOldCache() {
-    try {
+(function migrateOldCache()
+{
+    try
+    {
         const old = localStorage.getItem('cache_backend_url');
-        if (old) {
+        if(old)
+        {
             const parsed = JSON.parse(old);
-            if (typeof parsed.data === 'string' && parsed.data.endsWith('/')) {
+            if(typeof parsed.data === 'string' && parsed.data.endsWith('/'))
+            {
                 parsed.data = parsed.data.replace(/\/+$/, '');
                 localStorage.setItem('cache_backend_url', JSON.stringify(parsed));
             }
             // Purge if the cached URL isn't in the allow-list (defence against a poisoned cache).
-            if (typeof parsed.data === 'string' && !isAllowedBackendUrl(parsed.data)) {
+            if(typeof parsed.data === 'string' && !isAllowedBackendUrl(parsed.data))
+            {
                 localStorage.removeItem('cache_backend_url');
             }
         }
-    } catch (e) {}
+    }
+    catch(e) {}
 })();
 
 function stripTrailingSlash(url) {
@@ -45,23 +55,30 @@ function stripTrailingSlash(url) {
 }
 
 const Cache = {
-    get(key, maxAge = TEN_MINUTES) {
-        try {
+    get(key, maxAge = TEN_MINUTES)
+    {
+        try
+        {
             const raw = localStorage.getItem(`cache_${key}`);
-            if (!raw) return null;
+            if(!raw) return null;
             const item = JSON.parse(raw);
-            if (Date.now() - item.timestamp < maxAge) return item.data;
+            if(Date.now() - item.timestamp < maxAge) return item.data;
             localStorage.removeItem(`cache_${key}`);
-        } catch (e) {}
+        }
+        catch(e) {}
         return null;
     },
-    set(key, data) {
-        try {
+    set(key, data)
+    {
+        try
+        {
             localStorage.setItem(`cache_${key}`, JSON.stringify({ data, timestamp: Date.now() }));
-        } catch (e) {}
+        }
+        catch(e) {}
     },
-    remove(key) {
-        try { localStorage.removeItem(`cache_${key}`); } catch (e) {}
+    remove(key)
+    {
+        try { localStorage.removeItem(`cache_${key}`); } catch(e) {}
     }
 };
 
@@ -72,7 +89,8 @@ const Api = {
     async _fetchBackendUrl()
     {
         const cached = Cache.get('backend_url');
-        if (cached && isAllowedBackendUrl(cached)) {
+        if(cached && isAllowedBackendUrl(cached))
+        {
             this._backendUrl = stripTrailingSlash(cached);
             return this._backendUrl;
         }
@@ -120,7 +138,8 @@ const Api = {
     async GetDiscordConfig()
     {
         const cached = Cache.get('discord_config');
-        if (cached) {
+        if(cached)
+        {
             this._discordConfig = cached;
             return cached;
         }
@@ -142,7 +161,7 @@ const Api = {
     async GetLink(platform)
     {
         const cached = Cache.get(`link_${platform}`, 600000);
-        if (cached) return cached;
+        if(cached) return cached;
 
         const apiUrl = await Api.GetApiUrl();
         const endpoint = `${apiUrl}/links/${platform}`;
@@ -150,7 +169,7 @@ const Api = {
         const response = await fetch(endpoint);
         const data = await response.json();
 
-        if (data.link) Cache.set(`link_${platform}`, data.link);
+        if(data.link) Cache.set(`link_${platform}`, data.link);
         return data.link;
     },
 
@@ -163,9 +182,10 @@ const Api = {
             body: JSON.stringify({ discordId, sessionToken })
         });
         const data = await response.json();
-        if (data.ok) {
-            if (data.user) Cache.set('discord_user', data.user);
-            if (data.licenses) Cache.set('licenses', data.licenses);
+        if(data.ok)
+        {
+            if(data.user) Cache.set('discord_user', data.user);
+            if(data.licenses) Cache.set('licenses', data.licenses);
             Cache.set('bulk_info_timestamp', Date.now());
         }
         return data;

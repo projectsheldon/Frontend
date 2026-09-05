@@ -1,5 +1,5 @@
-import { DiscordAuth, DiscordUser } from "../../discord/auth.js";
-import Api from "../../util/backend.js";
+import { DiscordAuth } from '../../discord/auth.js';
+import Api from '../../util/backend.js';
 
 export function CreatePaypalButtons() 
 {
@@ -26,10 +26,10 @@ export function CreatePaypalButtons()
             const sessionToken = DiscordAuth.GetSessionToken();
 
             const req = await fetch(`${await Api.GetApiUrl()}/paypal/create`, {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${sessionToken}`
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionToken}`
                 },
                 body: JSON.stringify({
                     discordId: discordId,
@@ -42,7 +42,7 @@ export function CreatePaypalButtons()
 
             if(!response.ok)
             {
-                window.Notify("Your order failed. Message: " + response.message, "error");
+                window.Notify('Your order failed. Message: ' + response.message, 'error');
                 return;
             }
 
@@ -53,8 +53,8 @@ export function CreatePaypalButtons()
             const orderId = data.orderID;
 
             const req = await fetch(`${await Api.GetApiUrl()}/paypal/capture`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     orderId: orderId
                 })
@@ -63,9 +63,11 @@ export function CreatePaypalButtons()
 
             if(response.ok && response.license)
             {
-                if (response.forResell) {
+                if(response.forResell)
+                {
                     window.location.href = '/resellers/';
-                } else {
+                } else
+                {
                     const licenseParams = response.license.map(l => `${l.key}:${encodeURIComponent(l.product)}`).join(',');
                     window.location.href = `/license/?showKeys=${licenseParams}`;
                 }

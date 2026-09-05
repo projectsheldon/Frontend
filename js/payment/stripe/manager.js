@@ -1,22 +1,26 @@
-import Api from "../../util/backend.js";
+import Api from '../../util/backend.js';
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
-function getCachedInfo() {
-    try {
+function getCachedInfo()
+{
+    try
+    {
         const raw = localStorage.getItem('cache_stripe_info');
-        if (!raw) return null;
+        if(!raw) return null;
         const item = JSON.parse(raw);
-        if (Date.now() - item.timestamp < TEN_MINUTES) return item.data;
+        if(Date.now() - item.timestamp < TEN_MINUTES) return item.data;
         localStorage.removeItem('cache_stripe_info');
-    } catch (e) {}
+    } catch(e) {}
     return null;
 }
 
-function setCachedInfo(info) {
-    try {
+function setCachedInfo(info)
+{
+    try
+    {
         localStorage.setItem('cache_stripe_info', JSON.stringify({ data: info, timestamp: Date.now() }));
-    } catch (e) {}
+    } catch(e) {}
 }
 
 const StripeManager = 
@@ -24,7 +28,7 @@ const StripeManager =
     async GetRemoteInfo()
     {
         const cached = getCachedInfo();
-        if (cached) return cached;
+        if(cached) return cached;
 
         const apiUrl = await Api.GetApiUrl();
         const req = await fetch(`${apiUrl}/stripe/info`);
@@ -33,12 +37,12 @@ const StripeManager =
         setCachedInfo(reqJ);
         return reqJ;
     },
-    async GetPublicKey() 
+    async GetPublicKey()
     {
         const info = await this.GetRemoteInfo();
         return info.publicKey || '';
     },
-    async GetCurrency() 
+    async GetCurrency()
     {
         const info = await this.GetRemoteInfo();
         return info.currency || 'EUR';

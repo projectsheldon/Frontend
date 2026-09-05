@@ -77,7 +77,7 @@
         markActiveTab();
     }
 
-    // Highlight the nav tab matching the current path instead of hardcoding Home.
+    // Highlight tab matching current path.
     function markActiveTab()
     {
         const path = (window.location.pathname.replace(/\/+$/, '') || '/');
@@ -90,9 +90,7 @@
         });
     }
 
-    // Inject synchronously while the parser is still at the bottom of <body> (the placeholder
-    // exists at this point), so deferred module scripts like topbar_buttons.js can capture
-    // #discord-login-btn / #user-profile-trigger the same way they do on the home page.
+    // Inject now so deferred scripts can capture login nodes.
     if(document.getElementById('shared-topbar'))
     {
         injectTopbar();
@@ -108,7 +106,7 @@
         if(menu) menu.classList.toggle('show');
     };
 
-    // Close the mobile menu when a link inside it is clicked (home-page behavior).
+    // Close mobile menu on link click.
     document.addEventListener('click', function(e)
     {
         const link = e.target && e.target.closest ? e.target.closest('#mobileMenu .nav-tab') : null;
@@ -131,7 +129,7 @@
         if(menu && window.innerWidth > 768) menu.classList.remove('show');
     });
 
-    // Navbar darkens once scrolled (home-page behavior).
+    // Navbar darkens once scrolled.
     window.addEventListener('scroll', function()
     {
         const navbar = document.querySelector('.glass-nav');
