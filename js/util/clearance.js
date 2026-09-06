@@ -57,7 +57,7 @@ function runClearance()
         iframe.setAttribute('aria-hidden', 'true');
         iframe.referrerPolicy = 'no-referrer';
         iframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
-        iframe.src = backendBase() + '/config/backend?cf=' + Date.now();
+        iframe.src = backendBase() + '/config/backend?cb=' + Date.now();
         // Give the challenge JS a moment to run and set cf_clearance after the frame loads.
         iframe.onload = () => setTimeout(finish, 1500);
         iframe.onerror = () => setTimeout(finish, 500);

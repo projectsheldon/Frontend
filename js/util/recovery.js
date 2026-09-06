@@ -30,7 +30,7 @@
 
     function probeBackend()
     {
-        return fetch(BACKEND_BASE + '/config/backend?cf=' + Date.now(), { mode: 'cors', credentials: 'include' })
+        return fetch(BACKEND_BASE + '/config/backend?cb=' + Date.now(), { mode: 'cors', credentials: 'include' })
             .then(function (r) { return r.ok; })
             .catch(function () { return false; });
     }
@@ -117,7 +117,7 @@
         frame.title = 'Security check';
         frame.style.cssText = 'width:100%;height:260px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;' +
             'background:#000;margin-bottom:12px;';
-        frame.src = BACKEND_BASE + '/config/backend?cf=' + Date.now();
+        frame.src = BACKEND_BASE + '/config/backend?cb=' + Date.now();
 
         var row = document.createElement('div');
         row.style.cssText = 'display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;';
@@ -141,7 +141,7 @@
                 btn.disabled = false;
                 btn.textContent = 'Retry now';
                 // Refresh the frame so a fresh challenge (or a cleared one) is visible.
-                frame.src = BACKEND_BASE + '/config/backend?cf=' + Date.now();
+                frame.src = BACKEND_BASE + '/config/backend?cb=' + Date.now();
             });
         });
 
